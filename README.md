@@ -1,27 +1,25 @@
+---
+id: eng:aios-v2-build
+title: "AI-OS v2 — Platform-VM & Company Brain"
+kind: product
+status: active
+priority: normal
+customer: "NCE First-Party (DEV-VM) + spätere Kunden (PROD-VM)"
+offering: offering:ai-os
+summary: >
+  Souveränes KI-Betriebssystem: Platform-VM + AIOS-CORE, Company Brain als
+  SSOT, Memory Gateway, Chat Capture, MCP-Konnektivität.
+next_step: "Siehe ROADMAP.md"
+tags: [ai-os, platform, company-brain]
+---
+
 # AI-OS v2
 
 **State-of-the-art souveränes KI-Betriebssystem — eine Implementierung, ein Stack**  
-**Basiert auf:** [1000-AI-OS](../1000-AI-OS) (v1, eingefroren Juli 2026)  
-**Repo:** [NextChapterExperts/ai-os-v2](https://github.com/NextChapterExperts/ai-os-v2)
+**Basiert auf:** [archive/ai-os-v1](../archive/ai-os-v1) (v1, eingefroren Juli 2026)
 
 **Erstes Lizenzprodukt:** Platform-VM + `AIOS-CORE` — *eine VM · eine Tür · ein Gedächtnis **pro VM***  
-→ [docs/11-PLATFORM-VM.md](docs/11-PLATFORM-VM.md) · **Isolation:** NCE-DEV-Brain ≠ Kunden-PROD-Brain
-
-**Aktueller Bau-Stand (verbindlich für „was läuft?“):** → **[docs/13-IST-STAND.md](docs/13-IST-STAND.md)**
-
----
-
-## Ist-Stand (2026-07-24)
-
-| Bereich | Status |
-|---------|--------|
-| Phase 0 — Infra, LangFuse, Schema, DEV-Bootstrap, GitHub | weitgehend erledigt |
-| Phase 1 — Orchestrator, Console, MCP-Skeleton | Skeleton lauffähig |
-| Phase 1b — Cursor → SQLite Memory | teilweise (Gemini/Antigravity offen) |
-| Offerings / Engagements / `daily_open_loops` | Seed + Packs + Intent |
-| Phase 2–6 — Platform-Gate, SDK, Fach-Agenten, GraphRAG | geplant |
-
-Auf der DEV-VM: Console `:8092`, Orchestrator `:8091`, MCP-Gateway `:8097`, Compose-Infra, Capture nach `/opt/ai-os/memory/`.
+→ [docs/11-PLATFORM-VM.md](docs/11-PLATFORM-VM.md) · **Isolation:** NCE-DEV-Brain ≠ Kunden-PROD-Brain; NCE nutzt Company Brain First-Party auf der Werkstatt-VM
 
 ---
 
@@ -67,28 +65,27 @@ Ein Agent, der keinen typisierten Datenprodukt-Output liefert, keine MCP-Adapter
 
 | Dokument | Inhalt |
 |----------|--------|
-| **[docs/13-IST-STAND.md](docs/13-IST-STAND.md)** | **Was heute läuft** (Ist vs. Ziel) |
-| **[ROADMAP.md](ROADMAP.md)** | Bauanleitung / Ziel-Spec — für LLMs und Entwickler |
-| [docs/00-VISION.md](docs/00-VISION.md) | Plattform-Vision |
-| [docs/01-ARCHITEKTUR.md](docs/01-ARCHITEKTUR.md) | Ziel-Architektur |
-| [docs/02-AGENT-SDK.md](docs/02-AGENT-SDK.md) | Agent-Contract |
+| **[ROADMAP.md](ROADMAP.md)** | **Sehr detaillierte Bauanleitung** — für LLMs und Entwickler |
+| [docs/00-VISION.md](docs/00-VISION.md) | Plattform-Vision (aus v1 aktualisiert) |
+| [docs/01-ARCHITEKTUR.md](docs/01-ARCHITEKTUR.md) | Vollständige v2-Architektur |
+| [docs/02-AGENT-SDK.md](docs/02-AGENT-SDK.md) | Agent-Contract — wie schreibt man einen Agenten? |
 | [docs/03-DATENPRODUKTE.md](docs/03-DATENPRODUKTE.md) | Schema-Catalog + Datenflusskarte |
-| [docs/04-DEPLOYMENT.md](docs/04-DEPLOYMENT.md) | Deploy-Modi (Ist + Ziel) |
+| [docs/04-DEPLOYMENT.md](docs/04-DEPLOYMENT.md) | 3 Deployment-Modi |
 | [docs/05-CONSOLE-IA.md](docs/05-CONSOLE-IA.md) | 3-Ebenen-UI-Konzept |
 | [docs/06-PRODUKT-DEPLOYMENT.md](docs/06-PRODUKT-DEPLOYMENT.md) | Produkt-Deployment & Abnahme |
-| [docs/07-LOKALES-MODELL-TESTPROTOKOLL.md](docs/07-LOKALES-MODELL-TESTPROTOKOLL.md) | Capability-Tests Ollama |
+| [docs/07-LOKALES-MODELL-TESTPROTOKOLL.md](docs/07-LOKALES-MODELL-TESTPROTOKOLL.md) | Capability-Tests lokales Modell (Ollama) |
 | [docs/08-MARKTVERGLEICH.md](docs/08-MARKTVERGLEICH.md) | Markt-/Wettbewerbsvergleich |
-| [docs/09-COMPANY-BRAIN.md](docs/09-COMPANY-BRAIN.md) | Company Brain (P18) |
-| [docs/10-MEMORY-EINFACH.md](docs/10-MEMORY-EINFACH.md) | Memory-Schichten |
-| [docs/11-PLATFORM-VM.md](docs/11-PLATFORM-VM.md) | Platform-VM (P19) |
-| [docs/12-LEITPRINZIPIEN.md](docs/12-LEITPRINZIPIEN.md) | P1–P19 im Detail |
-| [docs/ref/](docs/ref/) | Referenz aus v1 |
+| [docs/09-COMPANY-BRAIN.md](docs/09-COMPANY-BRAIN.md) | **Company Brain** (SSOT, org:*, MCP/DP-Regeln, P18) |
+| [docs/10-MEMORY-EINFACH.md](docs/10-MEMORY-EINFACH.md) | **Memory einfach** — alle Speicher + Art (Datei/Graph/Vektor/…) |
+| [docs/11-PLATFORM-VM.md](docs/11-PLATFORM-VM.md) | **Platform-VM** — erstes Produkt, Memory Gateway, Chat Capture |
+| [docs/12-LEITPRINZIPIEN.md](docs/12-LEITPRINZIPIEN.md) | **P1–P19 im Detail** — Regeln, Verbote, Abnahme |
+| [docs/ref/](docs/ref/) | Referenz-Dokumente aus v1 |
 
 ---
 
 ## Leitprinzipien (P1–P19)
 
-**Vollständig:** [docs/12-LEITPRINZIPIEN.md](docs/12-LEITPRINZIPIEN.md)  
+**Vollständig:** [docs/12-LEITPRINZIPIEN.md](docs/12-LEITPRINZIPIEN.md) (Intent · Regeln · Verboten · Abnahme)  
 Kurz: [ROADMAP.md](ROADMAP.md) Kap. 1 · [docs/00-VISION.md](docs/00-VISION.md)
 
 Kernauszug:
@@ -98,56 +95,43 @@ Kernauszug:
 - **Search + Memory Gateway** (P11) — eine Suche, eine Inference-Tür
 - **FinOps** (P12) — Ollama-Default, Cloud messbar
 - **Company Brain** (P18) — [docs/09-COMPANY-BRAIN.md](docs/09-COMPANY-BRAIN.md)
-- **Platform-VM first** (P19) — 1 VM = 1 Brain — [docs/11-PLATFORM-VM.md](docs/11-PLATFORM-VM.md)
+- **Platform-VM first** (P19) — 1 VM = 1 Brain; NCE First-Party — [docs/11-PLATFORM-VM.md](docs/11-PLATFORM-VM.md)
 
 ---
 
-## DEV-VM Bootstrap
+## DEV-VM Bootstrap (jetzt)
 
 Nach Ubuntu-Installation auf `ai-os-dev`: Tools + Dokus — siehe  
 [`appliance/BOOTSTRAP-DEV-VM.md`](appliance/BOOTSTRAP-DEV-VM.md)  
 Sync vom Host: `./appliance/sync-docs-to-vm.sh peter@VM_IP --with-installers`
 
----
+## Company-Brain-Seed (NCE First-Party)
 
-## Kurzstart (Ist — DEV-VM)
+Organisation, Offerings, Projekte, Policies — Obsidian-tauglich:
 
-```bash
-# Infra + Monitoring
-docker compose -f deploy/infra.yml -f deploy/monitoring.yml up -d
-
-# Core-Prozesse (lokal, nicht alles in Compose)
-./core/orchestrator/run.sh          # :8091
-./core/mcp_gateway/run.sh           # :8097
-cd core/console-web && npm run dev  # :8092 → http://localhost:8092
-
-# Optional: Cursor-Capture (systemd user unit oder npm start in core/capture)
-# Memory: /opt/ai-os/memory/memory.db
-```
-
-Lagebild-Feld → `POST /api/dispatch` → Orchestrator (`daily_open_loops`, `memory_ask`, …).
-
-Details & Smoke-Pfad: [docs/13-IST-STAND.md](docs/13-IST-STAND.md).
+[`customers/nextchapter/knowledge/seed/`](customers/nextchapter/knowledge/seed/)  
+Start: `seed/README.md` → `00-organization.md` → `06-projektmap-index.md`
 
 ---
 
-## Kurzstart (Ziel-Zustand — noch nicht vollständig im Repo)
+## Kurzstart (Ziel-Zustand)
 
 ```bash
-# Später: voller Core inkl. Search/Skill/… als Compose
+# Core OS + LangFuse starten
 docker compose -f deploy/infra.yml -f deploy/monitoring.yml -f deploy/core.yml up
 
-# Später: Platform-Agenten, dann Gate, dann Fach-Agenten
-# docker compose … -f deploy/platform-agents.yml up
-# python -m tests.platform_gate --tenant nextchapter
-# docker compose … -f deploy/agents/research.yml …
-```
+# + Platform-Agenten (vor Fach-Agenten Pflicht)
+docker compose -f deploy/infra.yml -f deploy/monitoring.yml \
+  -f deploy/core.yml -f deploy/platform-agents.yml up
 
-Dateien wie `platform-agents.yml` / `tests.platform_gate` sind **Ziel-Spec** — siehe Roadmap Phase 2+.
+# Platform-Gate, dann Fach-Agenten
+python -m tests.platform_gate --tenant nextchapter
+docker compose ... -f deploy/agents/research.yml -f deploy/agents/blog.yml up
+```
 
 ---
 
 ## v1-Referenz
 
-v1 ist eingefroren und bleibt als Read-only-Referenz.  
+v1 ist eingefroren und bleibt vollständig lauffähig als Read-only-Referenz.  
 Repo: [../1000-AI-OS](../1000-AI-OS) — Tag: `v1-freeze`

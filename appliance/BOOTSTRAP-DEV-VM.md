@@ -1,8 +1,7 @@
 # Bootstrap DEV-VM — Tools + Dokus (erster Tag)
 
-**Ziel:** Nach Ubuntu-Installation sofort arbeitsfähig: Obsidian, Cursor, Antigravity, AI-OS-v2-Dokus → danach Phase-0-Infra.  
-**VM:** `ai-os-dev` · Ubuntu 26.04 Desktop · NCE First-Party Company Brain (`DEFAULT_TENANT=nextchapter`).  
-**Nach Bootstrap — was läuft?** → [docs/13-IST-STAND.md](../docs/13-IST-STAND.md)
+**Ziel:** Nach Ubuntu-Installation sofort arbeitsfähig: Obsidian, Cursor, Antigravity, AI-OS-v2-Dokus.  
+**VM:** `ai-os-dev` · Ubuntu 26.04 Desktop · NCE First-Party Company Brain (später Docker).
 
 ---
 
@@ -17,20 +16,14 @@ sudo systemctl enable --now ssh
 
 # Docker (Compose v2 inklusive)
 curl -fsSL https://get.docker.com | sh
-sudo usermod -aG docker "$USER"
-# danach neu einloggen (oder: newgrp docker)
+sudo usermod -aG docker $USER
+# danach neu einloggen
 
-mkdir -p ~/Projekte ~/Transfers /opt/ai-os/ingest/inbox
-sudo chown -R "$USER:$USER" /opt/ai-os
+mkdir -p ~/Projekte /opt/ai-os ~/Transfers
 ```
 
-IP der VM notieren (vom Host aus SSH):
-
-```bash
-ip -4 -br a
-```
-
-Netzwerk: Wenn SSH vom Host nicht geht → in virt-manager Portweiterleitung `host 2222 → guest 22` oder Netzmodus **Bridge**.
+IP der VM notieren (`ip -4 a`) — vom Host aus erreichbar (NAT/Portweiterleitung oder Bridge).ip -4
+ip -a
 
 ---
 
@@ -40,32 +33,33 @@ Netzwerk: Wenn SSH vom Host nicht geht → in virt-manager Portweiterleitung `ho
 
 ```text
 ~/Projekte/1100-AI-OS-V2/     # Arbeitskopie + Obsidian-Vault-Root
-# optional:
-# sudo ln -sfn ~/Projekte/1100-AI-OS-V2 /opt/ai-os/repo
+# optional später Symlink:
+# sudo ln -s ~/Projekte/1100-AI-OS-V2 /opt/ai-os
 ```
 
-### Variante A — vom Host per Sync-Skript (bevorzugt)
+### Variante A — vom Host per `rsync` (bevorzugt)
 
-Auf dem **Tuxedo-Host** (VM läuft, SSH erreichbar). Repo-Root = wo `ROADMAP.md` liegt:
-
-```bash
-export VM=peter@192.168.122.XX   # IP der VM
-
-cd /path/to/1100-AI-OS-V2
-./appliance/sync-docs-to-vm.sh "$VM" --with-installers
-```
-
-Manuell:
+Auf dem **Tuxedo-Host** (VM muss laufen, SSH erreichbar):
 
 ```bash
-rsync -av --progress --exclude '.git/' \
-  /path/to/1100-AI-OS-V2/ \
+# USER/IP der VM anpassen
+export VM=peter@192.168.122.XX   # oder Hostname
+
+rsync -av --progress \
+  /home/peter/peters-brain/Projekte/1100-AI-OS-V2/ \
   "$VM:~/Projekte/1100-AI-OS-V2/"
+```
+
+Oder Skript:
+
+```bash
+cd /home/peter/peters-brain/Projekte/1100-AI-OS-V2
+./appliance/sync-docs-to-vm.sh peter@192.168.122.XX
 ```
 
 ### Variante B — Spice/virt-manager Ordnerfreigabe
 
-Host-Ordner `…/1100-AI-OS-V2` als Shared Folder → in der VM nach `~/Projekte/` kopieren.
+Host-Ordner `…/1100-AI-OS-V2` als Shared Folder einbinden → in der VM nach `~/Projekte/` kopieren.
 
 ### Variante C — Git (sobald Remote existiert)
 
@@ -75,78 +69,83 @@ git clone <ai-os-v2-remote> ~/Projekte/1100-AI-OS-V2
 
 **Einstieg lesen:** `README.md` → `docs/11-PLATFORM-VM.md` → `docs/12-LEITPRINZIPIEN.md` → `ROADMAP.md` Kap. 5.
 
+Optional zusätzlich (Referenz, nicht Pflicht Tag 1):
+
+```bash
+rsync -av /home/peter/peters-brain/Projekte/1000-AI-OS/docs/ \
+  "$VM:~/Projekte/1000-AI-OS-docs-ref/"
+```
+
 ---
 
 ## 2. Cursor
 
-Bevorzugt **`.deb`** (AppImage nur Fallback, siehe Roadmap §19).
+**Auf dem Host liegen bereits Debs**, z. B.:
+
+- `/home/peter/Downloads/cursor_3.2.21_amd64.deb` (neueste der vorhandenen)
+
+In die VM kopieren und installieren:
 
 ```bash
-# Host → VM (oder --with-installers am Sync-Skript):
-scp ~/Downloads/cursor_*_amd64.deb "$VM:~/Transfers/"
+# Host:
+scp /home/peter/Downloads/cursor_3.2.21_amd64.deb "$VM:~/Transfers/"
 
 # VM:
-sudo apt install -y ~/Transfers/cursor_*_amd64.deb
-# oder neuestes Deb aus ~/Downloads/
+sudo apt install -y ~/Transfers/cursor_*.deb
+# oder: sudo dpkg -i ~/Transfers/cursor_*.deb && sudo apt -f install -y
 ```
 
-Workspace: `~/Projekte/1100-AI-OS-V2`.
+Workspace öffnen: `~/Projekte/1100-AI-OS-V2`.
 
 ---
 
 ## 3. Antigravity
 
+Host hat u. a. `/home/peter/Downloads/Antigravity.tar.gz` bzw. entpackt `Antigravity-x64/`.
+
 ```bash
-# Host → VM (oder Sync --with-installers)
-scp ~/Downloads/Antigravity*.tar.gz "$VM:~/Transfers/"
+# Host:
+scp /home/peter/Downloads/Antigravity.tar.gz "$VM:~/Transfers/"
 
 # VM:
 cd ~
-tar -xzf ~/Transfers/Antigravity*.tar.gz
-# typisch: ~/Antigravity-x64/antigravity
-chmod +x ~/Antigravity-x64/antigravity
-# optional: ~/.local/share/applications/antigravity.desktop
+tar -xzf ~/Transfers/Antigravity.tar.gz
+# Pfad je nach Archiv — typisch:
+# ~/Antigravity-x64/antigravity  oder ähnlich
+chmod +x ~/Antigravity*/antigravity 2>/dev/null || true
+# Desktop-Starter optional selbst anlegen
 ```
 
-**Inbox für späteres Capture:**
+**Inbox für späteres Capture (jetzt schon anlegen):**
 
 ```bash
 sudo mkdir -p /opt/ai-os/ingest/inbox
 sudo chown -R "$USER:$USER" /opt/ai-os
 ```
 
+Antigravity/Cursor-Notizen später hier oder unter `~/Projekte/1100-AI-OS-V2/` ablegen.
+
 ---
 
 ## 4. Obsidian
 
 ```bash
+# Flatpak (einfach, Updates über Flathub)
 flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 flatpak install -y flathub md.obsidian.Obsidian
 flatpak run md.obsidian.Obsidian
 ```
 
-**Vault:** `~/Projekte/1100-AI-OS-V2`  
-(Markdown unter `docs/` + `ROADMAP.md` / `README.md` im Root.)
+Oder offizielles `.deb`/AppImage von https://obsidian.md/download → `~/Transfers/`.
+
+**Vault öffnen:** Ordner `~/Projekte/1100-AI-OS-V2`  
+(Markdown-Dokus liegen unter `docs/` + `ROADMAP.md` / `README.md` im Root.)
+
+Empfohlen in Obsidian: „Detect all file extensions“ aus, Git später optional.
 
 ---
 
-## 5. Phase-0-Infra (nach Tools)
-
-```bash
-cd ~/Projekte/1100-AI-OS-V2
-cp -n .env.example .env
-# OLLAMA_HOST auf LAN-Ollama setzen (kein Ollama-Secret).
-# Secrets nur für Postgres/LangFuse; OpenRouter-Key erst bei balanced/premium.
-
-docker compose -f deploy/infra.yml -f deploy/monitoring.yml --env-file .env up -d
-curl -sf http://localhost:3000/api/public/health   # LangFuse
-```
-
-Tenant-Default: `DEFAULT_TENANT=nextchapter` (NCE First-Party auf dieser VM).
-
----
-
-## 6. Checkliste „loslegen“
+## 5. Checkliste „loslegen“
 
 | # | Erledigt? | Schritt |
 |---|-----------|---------|
@@ -156,16 +155,17 @@ Tenant-Default: `DEFAULT_TENANT=nextchapter` (NCE First-Party auf dieser VM).
 | 4 | ☐ | Antigravity startet |
 | 5 | ☐ | Obsidian-Vault = dieser Ordner |
 | 6 | ☐ | Gelesen: `docs/11-PLATFORM-VM.md` + `docs/12-LEITPRINZIPIEN.md` |
-| 7 | ☐ | `.env` aus `.env.example` · `deploy/infra.yml` + `monitoring.yml` up |
+| 7 | ☐ | Obsidian: Vault-Ordner inkl. `customers/nextchapter/knowledge/seed/` (Company Brain) |
+| 8 | ☐ | (als Nächstes) `deploy/infra.yml` — noch nicht Tag-1-Pflicht |
 
 ---
 
-## Reihenfolge
+## Reihenfolge heute
 
 1. Ubuntu fertig installieren  
-2. Dokus syncen  
-3. Cursor + Antigravity + Obsidian  
-4. Roadmap Phase 0 lesen  
-5. Compose-Infra starten (Schritt 5)  
+2. Dokus rsyncen  
+3. Cursor + Antigravity + Obsidian installieren  
+4. In Obsidian/Cursor Roadmap Phase 0 lesen  
+5. **Danach** Docker-Compose-Infra im Repo anlegen/starten  
 
-Host-Hinweis Ubuntu-26.04 in virt-manager: [`fix-osinfo-ubuntu-2604.md`](fix-osinfo-ubuntu-2604.md).
+Netzwerk: Wenn SSH von Host nicht geht → in virt-manager für die VM Portweiterleitung `host 2222 → guest 22` oder Netzmodus **Bridge**.

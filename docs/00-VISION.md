@@ -1,8 +1,7 @@
 # AI-OS v2 — Vision
 
 **Stand:** Juli 2026 · **Basis:** [v1 00-VISION.md](../../1000-AI-OS/docs/platform/00-VISION.md)  
-**Operativ:** [ROADMAP.md](../ROADMAP.md) · **Architektur:** [01-ARCHITEKTUR.md](01-ARCHITEKTUR.md)  
-**Bau-Ist:** [13-IST-STAND.md](13-IST-STAND.md) — dieses Dokument beschreibt die **Ziel-Vision**; Formulierungen wie „erzwingt“ / „Tag 1“ gelten für den fertigen Stack.
+**Operativ:** [ROADMAP.md](../ROADMAP.md) · **Architektur:** [01-ARCHITEKTUR.md](01-ARCHITEKTUR.md)
 
 ---
 

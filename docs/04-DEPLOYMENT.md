@@ -1,29 +1,6 @@
 # AI-OS v2 — Deployment: 3 Modi
 
-**Stand:** Juli 2026 (Platform-VM 2026-07-24) · **Verwandt:** [01-ARCHITEKTUR.md](01-ARCHITEKTUR.md) · [11-PLATFORM-VM.md](11-PLATFORM-VM.md) · [ROADMAP.md](../ROADMAP.md)  
-**Bau-Ist:** [13-IST-STAND.md](13-IST-STAND.md)
-
----
-
-## Ist auf der DEV-VM (2026-07-24)
-
-```bash
-# Was heute üblich ist:
-docker compose -f deploy/infra.yml -f deploy/monitoring.yml up -d
-./core/orchestrator/run.sh          # :8091
-./core/mcp_gateway/run.sh           # :8097
-cd core/console-web && npm run dev  # :8092
-```
-
-| Service | Heute |
-|---------|--------|
-| Infra (Qdrant, Postgres, LiteLLM, SearXNG, Letta SQLite, LangFuse) | Compose |
-| Orchestrator / Console / MCP-Gateway | lokal via `run.sh` / `npm` |
-| Cursor Capture | `core/capture` → `/opt/ai-os/memory` |
-| `deploy/core.yml` | optional Profile `core-docker` (nur Orchestrator) |
-| Modus 2/3 (`platform-agents.yml`, `agents/*`) | **noch nicht im Repo** |
-
-Die Abschnitte **Modus 1–3** unten beschreiben den **Ziel-Zustand**.
+**Stand:** Juli 2026 (Platform-VM 2026-07-24) · **Verwandt:** [01-ARCHITEKTUR.md](01-ARCHITEKTUR.md) · [11-PLATFORM-VM.md](11-PLATFORM-VM.md) · [ROADMAP.md](../ROADMAP.md)
 
 ---
 
@@ -83,8 +60,6 @@ services:
 ---
 
 ## Modus 1 — Core OS
-
-> **Ziel-Spec.** Vollständige Service-Liste und Health-Checks unten sind noch nicht alle implementiert — siehe Ist-Abschnitt oben.
 
 **Zweck:** Minimales OS — keine Agenten, kein Memory-Curator, kein Scheduler.  
 **Gut für:** Entwicklung, Testing, neuen Tenant anlegen.

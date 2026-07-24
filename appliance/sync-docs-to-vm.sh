@@ -31,12 +31,8 @@ rsync -av --progress \
 
 if [[ "${WITH_INSTALLERS}" -eq 1 ]]; then
   echo "==> Copy installers → ${TARGET}:~/Transfers/"
-  # Prefer clean names; also accept "Antigravity (1).tar.gz" style
   CURSOR_DEB="$(ls -1t "${HOST_DOWNLOADS}"/cursor_*_amd64.deb 2>/dev/null | head -1 || true)"
-  AG_TAR="$(ls -1t "${HOST_DOWNLOADS}"/Antigravity*.tar.gz "${HOST_DOWNLOADS}"/Antigravity*.tgz 2>/dev/null | head -1 || true)"
-  if [[ -z "${AG_TAR}" ]]; then
-    AG_TAR="$(ls -1t "${HOST_DOWNLOADS}"/Antigravity*.tar.gz 2>/dev/null | head -1 || true)"
-  fi
+  AG_TAR="$(ls -1t "${HOST_DOWNLOADS}"/Antigravity*.tar.gz 2>/dev/null | head -1 || true)"
   [[ -n "${CURSOR_DEB}" ]] && rsync -av --progress "${CURSOR_DEB}" "${TARGET}:~/Transfers/"
   [[ -n "${AG_TAR}" ]] && rsync -av --progress "${AG_TAR}" "${TARGET}:~/Transfers/"
   [[ -z "${CURSOR_DEB}" && -z "${AG_TAR}" ]] && echo "Warnung: keine Cursor/Antigravity-Pakete in ${HOST_DOWNLOADS}" >&2

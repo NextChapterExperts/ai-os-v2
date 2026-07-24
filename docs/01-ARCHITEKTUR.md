@@ -1,8 +1,7 @@
 # AI-OS v2 — Systemarchitektur
 
 **Stand:** Juli 2026 (Platform-VM / P19 2026-07-24) · **Basis:** [v1 01-ARCHITEKTUR.md](../../1000-AI-OS/docs/platform/01-ARCHITEKTUR.md) + [19-OPTIMAL-ARCHITEKTUR.md](../../1000-AI-OS/docs/platform/19-OPTIMAL-ARCHITEKTUR.md)  
-**Operativ:** [ROADMAP.md](../ROADMAP.md) · **Deployment:** [04-DEPLOYMENT.md](04-DEPLOYMENT.md) · **Platform-VM:** [11-PLATFORM-VM.md](11-PLATFORM-VM.md)  
-**Bau-Ist:** [13-IST-STAND.md](13-IST-STAND.md) — Diagramme unten = **Zielbild**. Heute: Console + Orchestrator + MCP-Stubs + Cursor-Capture + Compose-Infra.
+**Operativ:** [ROADMAP.md](../ROADMAP.md) · **Deployment:** [04-DEPLOYMENT.md](04-DEPLOYMENT.md) · **Platform-VM:** [11-PLATFORM-VM.md](11-PLATFORM-VM.md)
 
 ---
 
