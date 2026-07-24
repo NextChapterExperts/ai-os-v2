@@ -57,6 +57,8 @@ export async function POST(req: Request) {
       model: result.model,
       sources: result.sources ?? [],
       sourceCount: result.sourceCount ?? 0,
+      curatedCount: result.curatedCount,
+      rawFileCount: result.rawFileCount,
       intent: data.intent,
       context_bundle: data.context_bundle,
       stats: memoryStats(),

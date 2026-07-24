@@ -258,6 +258,28 @@ body {
   grid-template-columns: 1fr !important;
 }
 
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+}
+
+.badge[data-variant="curated"] {
+  background: color-mix(in oklab, var(--ink) 8%, transparent);
+  color: var(--ink);
+}
+
+.badge[data-variant="raw"] {
+  background: color-mix(in oklab, var(--danger) 10%, transparent);
+  color: var(--danger);
+}
+
 .answer-panel {
   border-top: 1px solid var(--line);
   padding-top: 1.25rem;

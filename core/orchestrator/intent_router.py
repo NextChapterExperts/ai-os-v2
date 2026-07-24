@@ -35,6 +35,19 @@ def route_intent(raw: str, params: dict[str, Any] | None = None) -> str:
     if any(
         k in lower
         for k in (
+            "haben wir schon mal",
+            "schon mal daran gearbeitet",
+            "durchsuche",
+            "suche nach",
+            "finde dateien",
+            "in welchem projekt",
+        )
+    ):
+        return "unified_search"
+
+    if any(
+        k in lower
+        for k in (
             "was haben wir",
             "zusammenfass",
             "gedächtnis",

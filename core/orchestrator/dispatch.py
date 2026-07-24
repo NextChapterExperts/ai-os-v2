@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .handlers import daily_open_loops, mail_triage, memory_ask
+from .handlers import daily_open_loops, mail_triage, memory_ask, unified_search
 
 
 async def dispatch(
@@ -29,6 +29,9 @@ async def dispatch(
 
     if intent == "mail_triage":
         return await mail_triage.run(context_bundle, tenant_id, params)
+
+    if intent == "unified_search":
+        return await unified_search.run(context_bundle, tenant_id, params)
 
     return {
         "answer": f"Unbekannter Intent «{intent}» — Fallback memory_ask.",
