@@ -2,7 +2,6 @@
 
 **Stand:** 2026-07-24 · **Status:** verbindlich (nachgezogen aus v1 „Plattform-VM first“)  
 **Operativ:** [ROADMAP.md](../ROADMAP.md) · **Lizenz:** [06-PRODUKT-DEPLOYMENT.md](06-PRODUKT-DEPLOYMENT.md) · **Deployment:** [04-DEPLOYMENT.md](04-DEPLOYMENT.md)  
-**Bau-Ist:** [13-IST-STAND.md](13-IST-STAND.md) — DEV-VM läuft mit Compose-Infra + Core-Skeleton; Appliance-Image-Build und volles Memory Gateway noch offen. Cursor-Capture schreibt bereits ins VM-Memory.  
 **Quelle der Entscheidung:** [1000-AI-OS ROADMAP § v2](../../1000-AI-OS/ROADMAP.md) · [21-ZIELARCHITEKTUR-V2](../../1000-AI-OS/docs/platform/21-ZIELARCHITEKTUR-V2.md)
 
 ---
@@ -51,6 +50,7 @@ Fach-SKUs kommen erst nach Platform-Gate.
 - Kein automatischer Sync DEV → Kunden-Image. Bewusste Übergabe nur als **Seed/Doku/SKU**, nie als Roh-Chat-Dump.
 - Optional später: zweite NCE-VM „PROD-like“ für eigenen Betrieb ohne Cursor — gleiche Isolation, anderer Profil-Mix.
 - Tenant-IDs *innerhalb* einer VM bleiben möglich (z. B. Demo-Sandbox), ersetzen aber **nicht** die VM-Grenze zu Kunden.
+- Konkrete Umsetzung im Produkt-Repo (`.gitignore`, `customers/_template/`): [ADR 0001](adr/0001-customer-data-isolation.md).
 
 ---
 

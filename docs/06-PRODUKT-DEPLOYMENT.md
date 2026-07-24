@@ -313,6 +313,13 @@ Phase 0.5 — Produkt-Struktur validieren
 
 ---
 
+## Kundendaten-Isolation (verbindlich)
+
+`customers/<tenant>/` liegt zwar im Repo-*Baum*, wird aber **nie** mit
+anderen Kunden geteilt oder committed (Ausnahme: `customers/_template/`).
+Details, Begründung und Trade-offs: [ADR 0001 — Trennung von Produkt-Code,
+Tenant-Seed und Rohdaten](adr/0001-customer-data-isolation.md).
+
 ## Referenz: Verzeichnisstruktur (produktions-ready)
 
 ```

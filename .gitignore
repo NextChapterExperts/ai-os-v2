@@ -21,3 +21,9 @@ build/
 deploy/data/
 data/memory/
 /opt/ai-os/memory/
+
+# Kundendaten (Tier 2/3, siehe docs/adr/0001-customer-data-isolation.md):
+# nie im geteilten Produkt-Repo — jede VM pflegt ihren eigenen Tenant-Ordner lokal.
+customers/*
+!customers/_template
+!customers/_template/**

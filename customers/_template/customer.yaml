@@ -1,0 +1,16 @@
+# Tenant-Konfiguration — Vorlage für neuen Kunden
+# Kopieren nach customers/<customer-id>/customer.yaml und ausfüllen.
+# Dieser Ordner (_template) ist die einzige Ausnahme in .gitignore
+# (siehe docs/adr/0001-customer-data-isolation.md) — bleibt versioniert,
+# damit jede VM beim Bootstrap eine aktuelle Vorlage hat.
+id: __customer-id__
+name: "__Kundenname__"
+description: "__Kurzbeschreibung__"
+brand: "__Marke__"
+website: __https://kunde.example__
+default_locale: de
+active_packages:
+  - platform-core
+operator:
+  person_id: person:__ansprechpartner__
+  email: __ansprechpartner@kunde.example__
