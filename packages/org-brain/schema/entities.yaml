@@ -55,7 +55,9 @@ entities:
   org:KnowledgeAsset:
     key: asset_id
     required: [title, path, kind]
-    optional: [documents_refs, published]
+    # canonical: hoechstens ein Asset pro documents_refs-Ziel darf canonical=true sein
+    # (beantwortet Abnahmefrage 5, 09-COMPANY-BRAIN.md §8).
+    optional: [documents_refs, published, canonical]
     dp_class: OrgKnowledgeAsset
 
   org:Claim:

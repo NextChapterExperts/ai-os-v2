@@ -106,6 +106,9 @@ class OrgKnowledgeAsset(DataProduct):
     # ingest_recommended ist bei KnowledgeAsset kein Klassen-Fixwert, sondern
     # haengt vom einzelnen Asset ab ("nur wenn published" — 09-COMPANY-BRAIN §4).
     published: bool = False
+    # Beantwortet Abnahmefrage 5 (09-COMPANY-BRAIN §8): pro documents_ref-Ziel
+    # (z.B. ein Offering) darf hoechstens ein Asset canonical=True sein.
+    canonical: bool = False
 
 
 class OrgClaim(DataProduct):

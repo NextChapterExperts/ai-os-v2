@@ -221,13 +221,17 @@ def parse_knowledge_assets() -> list[tuple[str, dict[str, Any]]]:
         if not line.startswith("|") or "asset_id" in line or set(line.replace("|", "").strip()) <= {"-"}:
             continue
         cols = [c.strip() for c in line.strip("|").split("|")]
-        if len(cols) != 4:
+        # 5. Spalte "kanonisch" ist optional (Rueckwaertskompatibilitaet zu 4-Spalten-Zeilen).
+        if len(cols) == 4:
+            cols.append("")
+        if len(cols) != 5:
             continue
-        asset_id, title, orig_path, about = cols
+        asset_id, title, orig_path, about, canonical_col = cols
         asset_id = asset_id.strip("`")
         if not asset_id.startswith("asset:"):
             continue
         refs = [r.strip().strip("`") for r in re.split(r"[+,]", about) if r.strip().strip("`").count(":") == 1]
+        canonical = canonical_col.strip().lower() in {"x", "ja", "yes", "true", "✓"}
         out.append(
             (
                 "org:KnowledgeAsset",
@@ -238,6 +242,7 @@ def parse_knowledge_assets() -> list[tuple[str, dict[str, Any]]]:
                     "kind": "document",
                     "documents_refs": refs,
                     "published": True,
+                    "canonical": canonical,
                 },
             )
         )

@@ -257,6 +257,18 @@ Diese Fragen müssen **ohne** reine Vektor-Rate beantwortbar sein (G-Traverse + 
 
 Fail → kein GraphRAG-Marketing, kein „Company Brain“ in Produkttexten.
 
+**Getestet (2026-07-24, SQL-Traverse gegen `kg_nodes`/`kg_edges`, Seed-Stand):**
+
+| # | Ergebnis | Befund |
+|---|----------|--------|
+| 1 | ✅ | Kein direkter Decision→Offering-Edge, aber 2-Hop (`Decision -about-> Engagement -about-> Offering`) beantwortet sie: `decision:ir-not-raw-iflw` (active) → `eng:redrays-btp` → `offering:consulting`. |
+| 2 | ⏳ | `org:Meeting` + `decided_in` existieren noch nicht — planmäßig erst Phase 4 (time-agent). |
+| 3 | ✅ (Mechanik) | `applies_to`-Kanten sind belegt und traversierbar (z. B. `policy:no-tool-sales-consulting` → `offering:consulting`). Konkreter Content-Fall (LinkedIn-Teaser) erst mit Phase-4/6-Contentknoten testbar. |
+| 4 | ⏳ | `org:Claim` + `org:BlogPublished` + `supports` existieren noch nicht — planmäßig erst Phase 4/6. |
+| 5 | ✅ (nach Fix) | Ursprünglich 3 gleichrangige Kandidaten ohne Unterscheidung → `canonical`-Flag zu `OrgKnowledgeAsset` ergänzt (Schema + Seed + Ingest-Agent) und `docs/00-VISION.md` als fehlendes, echtes Vision-Asset nachgetragen. Jetzt eindeutig: `asset:aios-vision` ist kanonisch für `offering:ai-os`. |
+
+Fazit: Graph-Mechanik (Multi-Hop, `applies_to`, `documents`+`canonical`) funktioniert nachweisbar. Fragen 2/4 sind keine Fails, sondern erwartete Lücken vor Phase 4.
+
 ---
 
 ## 9. Build-Reihenfolge (einbettet in Phasen)
