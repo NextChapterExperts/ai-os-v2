@@ -1,0 +1,20 @@
+[Unit]
+Description=AI-OS File-Ingest-Watcher (Rohdateien Projekte/active -> Qdrant raw-files)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/Projekte/1100-AI-OS-V2/core/file_ingest_watcher
+Environment=WATCH_ROOTS=%h/Projekte/active
+Environment=QDRANT_URL=http://127.0.0.1:6333
+Environment=QDRANT_COLLECTION=raw-files
+Environment=SCAN_INTERVAL_SEC=300
+Environment=STATE_DB=/opt/ai-os/ingest/file_watcher_state.db
+Environment=GIT_SNAPSHOT_ENABLED=true
+Environment=GIT_SNAPSHOT_REPO=%h/Projekte
+ExecStart=%h/Projekte/1100-AI-OS-V2/core/file_ingest_watcher/run.sh
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target

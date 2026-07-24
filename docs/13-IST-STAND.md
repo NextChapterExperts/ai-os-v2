@@ -27,6 +27,7 @@ Auf der **NCE DEV-VM** läuft ein **Phase-0/1-Skeleton**: Infra (Compose), Conso
 | **6** | Multi-Tenant Runtime + GraphRAG | **offen** |
 
 Zusätzlich (nicht als eigene Roadmap-Phase, aber gebaut): **Offering vs Engagement** — Seed + Packs + Intent `daily_open_loops`.
+Zusätzlich: **File-Ingest-Watcher** (Rohdatei-Suche über `Projekte/active/`, Bridge bis Fach-Agenten stehen — [ADR 0002](adr/0002-file-ingest-watcher-und-rolle-von-cursor.md)).
 
 ---
 
@@ -40,6 +41,7 @@ Zusätzlich (nicht als eigene Roadmap-Phase, aber gebaut): **Offering vs Engagem
 | **Orchestrator** | `:8091` | `./core/orchestrator/run.sh` | FastAPI: `/health`, `POST /v1/dispatch`, Brain-Listen |
 | **MCP-Gateway** | `:8097` | `./core/mcp_gateway/run.sh` | Allowlist + Mail/Calendar-**Stubs** (nicht in Compose) |
 | **Cursor Capture** | systemd user / `npm start` | `core/capture/` | Pollt Cursor-Transkripte → `/opt/ai-os/memory/memory.db` |
+| **File-Ingest-Watcher** | systemd user | `core/file_ingest_watcher/` | Scannt `Projekte/active/**`, embedded lokal → Qdrant-Collection `raw-files` (Bridge, siehe [ADR 0002](adr/0002-file-ingest-watcher-und-rolle-von-cursor.md)) |
 | **Compose Infra** | diverse | `docker compose -f deploy/infra.yml -f deploy/monitoring.yml up -d` | Qdrant, Postgres, LiteLLM, SearXNG, Letta (SQLite), LangFuse |
 
 ### Orchestrator-Intents (heute)

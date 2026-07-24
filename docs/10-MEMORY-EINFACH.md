@@ -2,8 +2,7 @@
 
 **Stand:** Juli 2026  
 **Für:** Menschen, die das System verstehen wollen — ohne Architektur-Jargon  
-**Detail-Specs:** [09-COMPANY-BRAIN.md](09-COMPANY-BRAIN.md) · [ROADMAP.md §12](../ROADMAP.md#12-datenschicht-im-detail) · [01-ARCHITEKTUR.md](01-ARCHITEKTUR.md)  
-**Bau-Ist:** [13-IST-STAND.md](13-IST-STAND.md) — heute vor allem SQLite FTS unter `/opt/ai-os/memory/memory.db` (+ Seed-JSON); Qdrant/Letta/KG laut Tabelle = Zielbild.
+**Detail-Specs:** [09-COMPANY-BRAIN.md](09-COMPANY-BRAIN.md) · [ROADMAP.md §12](../ROADMAP.md#12-datenschicht-im-detail) · [01-ARCHITEKTUR.md](01-ARCHITEKTUR.md)
 
 ---
 
@@ -117,6 +116,22 @@ Typen u. a.: `platform:*`, `blog:*`, `email:*`, **`org:*`** (Company Brain: Pers
 | **Technologie** | **Qdrant** |
 | **Lebensdauer** | Rolling (z. B. 90 Tage) — nur kuratiert / published |
 | **Darf rein?** | Nein: Roh-Chat, Entwürfe, Working-Memory |
+
+---
+
+### 7b. raw-files — Rohdatei-Suche (Übergangslösung, kein Company Brain)
+
+| | |
+|--|--|
+| **Aufgabe** | „Haben wir an dem Thema nicht schon mal gearbeitet?“ — über rohe Projektdateien (Code, Markdown, PDFs unter `Projekte/active/`) |
+| **Art** | **Eigene Qdrant-Collection**, bewusst getrennt von L1 (`content`) |
+| **Technologie** | `core/file_ingest_watcher/` (systemd-Service, lokales Embedding via `fastembed`) |
+| **Lebensdauer** | Solange Fach-Agenten (Phase 4) Projektarbeit nicht direkt in AI-OS erledigen |
+| **Darf Firmenwahrheit sein?** | **Nein** — ungeprüfte Rohdateien, nie mit L1 vermischen |
+
+Grund: Solange echte Projektarbeit noch in Cursor statt in AI-OS
+passiert, sieht das Company Brain sonst nichts davon. Details/Ablösepfad:
+[ADR 0002](adr/0002-file-ingest-watcher-und-rolle-von-cursor.md).
 
 ---
 
@@ -254,3 +269,4 @@ Mit Company Brain bekommst du **die geltende Entscheidung**.
 | [11-PLATFORM-VM.md](11-PLATFORM-VM.md) | VM, Memory Gateway, Chat Capture (Gemini …) |
 | [ROADMAP.md §12.4](../ROADMAP.md#124-company-brain--wissensmanagement) | Verbindliche Bauanleitung |
 | [02-AGENT-SDK.md](02-AGENT-SDK.md) | Wie ein Agent speicherkonform arbeitet |
+| [ADR 0002](adr/0002-file-ingest-watcher-und-rolle-von-cursor.md) | File-Ingest-Watcher, `raw-files`, Cursor vs. Fach-Agenten |

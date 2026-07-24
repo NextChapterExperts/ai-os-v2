@@ -3,32 +3,11 @@
 **Für:** LLMs, Entwickler, die das System von Grund auf bauen  
 **Zweck:** Vollständige technische Spezifikation — ausreichend detailliert um ohne zusätzlichen Kontext zu starten  
 **Basis:** AI-OS v1 (../1000-AI-OS) — eingefroren Juli 2026  
-**Stand:** Juli 2026 (aktualisiert 2026-07-24 — Ist-Stand + Isolationsmodell)  
+**Stand:** Juli 2026 (aktualisiert 2026-07-24 — Isolationsmodell: eine VM = ein Company Brain; NCE First-Party)  
 **Modus:** **Eine Implementierung** — keine Alternativen in dieser Roadmap. Jede Entscheidung ist final.  
-**Ist vs. Ziel (was läuft heute):** → **[docs/13-IST-STAND.md](docs/13-IST-STAND.md)**  
 **Detail-Spec Company Brain:** [docs/09-COMPANY-BRAIN.md](docs/09-COMPANY-BRAIN.md) · **Memory einfach:** [docs/10-MEMORY-EINFACH.md](docs/10-MEMORY-EINFACH.md)  
 **Erstes Lizenzprodukt (VM):** [docs/11-PLATFORM-VM.md](docs/11-PLATFORM-VM.md)  
 **Leitprinzipien detailliert:** [docs/12-LEITPRINZIPIEN.md](docs/12-LEITPRINZIPIEN.md)
-
----
-
-## Fortschritt (Ist, 2026-07-24)
-
-Dieses Dokument bleibt die **Ziel-Spec**. Der Bau-Fortschritt steht in [docs/13-IST-STAND.md](docs/13-IST-STAND.md).
-
-| Phase | Status | Hinweis |
-|-------|--------|---------|
-| **0** Platform-VM Fundament & Tooling | **weitgehend erledigt** | Infra/Monitoring Compose, Schema, Bootstrap, Repo auf GitHub |
-| **1** Core OS + Memory Gateway | **Skeleton** | Orch `:8091`, Console `:8092`, MCP `:8097`; Search/Memory-Gateway/LangGraph **offen** |
-| **1b** Chat Capture | **teilweise** | Cursor → SQLite `/opt/ai-os/memory`; Gemini/Antigravity/UI **offen** |
-| **2** Platform-Agenten + Gate | **offen** | |
-| **3** Agent-SDK | **offen** | |
-| **4** Fach-Agenten | **gesperrt** | erst nach Platform-Gate |
-| **5** Console vollständig | **Skeleton** | 3 Routen; Workflows Platzhalter |
-| **6** Multi-Tenant + GraphRAG | **offen** | |
-| **Nebenpfad** Offerings / Engagements | **Seed + Packs** | `daily_open_loops`, `packages/offerings/*` |
-
-**Repo:** https://github.com/NextChapterExperts/ai-os-v2 · Branch `main`
 
 ---
 
@@ -66,7 +45,6 @@ Caddy · ntfy · Docling · Playwright-MCP
 
 ## Inhaltsverzeichnis
 
-0. [Fortschritt (Ist)](#fortschritt-ist-2026-07-24) · [docs/13-IST-STAND.md](docs/13-IST-STAND.md)
 1. [Kontext & Prinzipien](#1-kontext--prinzipien)
 2. [Repository-Struktur](#2-repository-struktur)
 3. [Technologie-Stack](#3-technologie-stack)
@@ -201,29 +179,6 @@ Produkt-Sicht + Isolationsmodell: [docs/11-PLATFORM-VM.md](docs/11-PLATFORM-VM.m
 
 ## 2. Repository-Struktur
 
-**Ist (heute im Repo):** siehe [docs/13-IST-STAND.md](docs/13-IST-STAND.md). Kurz:
-
-```
-ai-os-v2/                          # GitHub: NextChapterExperts/ai-os-v2
-├── README.md · ROADMAP.md · .env.example · docs/13-IST-STAND.md
-├── appliance/                     # Bootstrap-Docs, Scaffold image-build/cloud-init
-├── config/                        # litellm, searxng, init-platform.sql
-├── deploy/
-│   ├── infra.yml · monitoring.yml · core.yml (Profile core-docker)
-│   └── profiles/                  # dev-vm · prod-vm · delivery
-├── core/
-│   ├── orchestrator/              # FastAPI :8091 — dispatch + Intents
-│   ├── mcp_gateway/               # FastAPI :8097 — Allowlist + Stubs
-│   ├── capture/                   # Cursor → /opt/ai-os/memory
-│   ├── console-web/               # Next.js :8092
-│   └── console → console-web      # Symlink
-├── customers/nextchapter/         # Seed brain.json + Offering-Docs
-├── packages/offerings/            # sap-apim-training · studenten-beratung
-└── docs/                          # 00–13 + ref/
-```
-
-**Ziel-Baum (vollständige Spec — vieles noch nicht angelegt):**
-
 ```
 ai-os-v2/
 │
@@ -241,37 +196,160 @@ ai-os-v2/
 │   ├── infra.yml                       # Qdrant, Letta, Postgres, LiteLLM, SearXNG
 │   ├── monitoring.yml                  # LangFuse + postgres-langfuse (ab Tag 1, nicht optional)
 │   ├── core.yml                        # Modus 1: OS + Memory Gateway
-│   ├── platform-agents.yml             # Modus 2: + Platform-Agenten  ← ZIEL
-│   ├── chat-capture.yml                # Phase 1b: Gemini/Antigravity Capture  ← ZIEL
-│   ├── agents/                         # Modus 3: Fach-Agenten (erst nach Platform-Gate)  ← ZIEL
+│   ├── platform-agents.yml             # Modus 2: + Platform-Agenten
+│   ├── chat-capture.yml                # Phase 1b: Gemini/Antigravity Capture
+│   ├── agents/                         # Modus 3: Fach-Agenten (erst nach Platform-Gate)
 │   │   ├── research.yml
 │   │   ├── blog.yml
 │   │   ├── email.yml
 │   │   ├── time.yml
 │   │   └── news.yml
-│   └── profiles/                       # dev-vm.yml · prod-vm.yml · delivery.yml
+│   └── profiles/                       # dev-vm.yml (Cursor-Hinweise) · prod-vm.yml
 │
 ├── core/                               # Das OS — läuft ohne Agenten
-│   ├── orchestrator/                   # IST: Intent-Router, Dispatch, Audit-JSONL :8091
-│   ├── mcp_gateway/                    # IST: Allowlist + Mail/Calendar-Stubs :8097
-│   ├── capture/                        # IST: Cursor-Job → SQLite Memory
-│   ├── console-web/                    # IST: Next.js :8092 (Lagebild / workflows / platform)
-│   ├── search-service/                 # ZIEL — Unified Search :8094
-│   ├── model-gateway/ / memory-gateway/# ZIEL — Inference + Persist-Hook
-│   ├── workflow-engine/                # ZIEL — LangGraph
-│   ├── skill-service/                  # ZIEL — Skill-Loop :8095
-│   └── scheduler/                      # ZIEL — Cron :8096
+│   ├── orchestrator/                   # Intent-Router, Context-Builder, Audit
+│   │   ├── server.py                   # FastAPI :8091
+│   │   ├── intent_router.py            # Intent → Delegate
+│   │   ├── context_resolution.py       # Context Bundle (6 Slices) ← v1 portiert
+│   │   ├── dispatch.py                 # Generischer Delegate
+│   │   └── audit.py                   # AgentRun + Log
+│   │
+│   ├── search-service/                 # NEU v2 — Unified Search (Platform-Kern)
+│   │   ├── server.py                   # FastAPI :8094
+│   │   ├── unified_search.py           # L1 + G + SK + A — ein Endpoint
+│   │   └── index_hooks.py              # Auto-Index nach jedem DP-Commit
+│   │
+│   ├── model-gateway/                  # NEU v2 — LLM-Modellauswahl (Platform-Kern)
+│   │   ├── registry.py                 # Verfügbare Modelle (Ollama, OpenRouter, …)
+│   │   ├── compute_modes.py            # sovereign | balanced | premium
+│   │   └── finops.py                   # Kosten-Tracking → LangFuse + ai_os_log
+│   │
+│   ├── workflow-engine/                # LangGraph-basierte Workflow-Engine
+│   │   ├── engine.py                   # LangGraph StateGraph Wrapper
+│   │   ├── checkpoint_store.py         # Postgres-backed Checkpointing
+│   │   ├── workflows/                  # Workflow-Definitionen
+│   │   │   ├── daily_briefing.py
+│   │   │   ├── research_workflow.py
+│   │   │   └── blog_workflow.py
+│   │   └── human_in_loop.py           # interrupt() Primitive
+│   │
+│   ├── skill-service/                  # Skill-Loop
+│   │   ├── skill_store.py              # Markdown + Qdrant + SQLite-FTS5
+│   │   ├── skill_distiller.py          # Task → Skill-Dokument (LLM-gesteuert)
+│   │   ├── skill_loader.py             # Context-Bundle Integration
+│   │   └── skill_refiner.py           # Skill verbessern bei Wiederholung
+│   │
+│   ├── scheduler/                      # Cron-Runner
+│   │   ├── scheduler_service.py        # Cron-Store + Job-Runner
+│   │   ├── job_store.py                # Postgres: schedule_jobs
+│   │   ├── natural_language_parser.py  # «jeden Morgen um 7 Uhr» → Cron
+│   │   └── delivery.py                # MCP-Delivery an Kanäle
+│   │
+│   ├── mcp-gateway/                    # Einziger Konnektivitäts-Layer
+│   │   ├── gateway.py                  # FastAPI :8097
+│   │   ├── registry.py                 # Server-Allowlist + Caps
+│   │   ├── audit.py                   # Pro-Call-Audit
+│   │   └── adapters/                  # Native MCP-Adapter
+│   │       ├── web_search.py           # ← v1 portiert
+│   │       ├── mail.py                 # ← v1 portiert
+│   │       ├── cms_git.py              # ← v1 portiert
+│   │       ├── calendar.py             # ← v1 portiert
+│   │       ├── qdrant_search.py        # ← v1 portiert
+│   │       └── memory.py              # ← v1 portiert
+│   │
+│   ├── memory/                         # L1/L2/L3 Curators
+│   │   ├── l1_curator.py               # ← v1 portiert
+│   │   ├── l2_curator.py               # Episoden aus L1 verdichten
+│   │   └── l3_curator.py              # Fakten aus L2 → KG
+│   │
+│   └── console/                        # Next.js 15 — 3-Ebenen-IA
+│       ├── package.json
+│       ├── src/app/
+│       │   ├── page.tsx                # Ebene 1: Lagebild
+│       │   ├── workflows/              # Ebene 2: Workflows + Scheduler
+│       │   │   ├── page.tsx
+│       │   │   ├── [id]/page.tsx
+│       │   │   └── briefing/page.tsx
+│       │   ├── platform/               # Ebene 3: Plattform-Details
+│       │   │   ├── page.tsx
+│       │   │   ├── mcp/page.tsx
+│       │   │   ├── kg/page.tsx          # Knowledge Graph UI
+│       │   │   ├── skills/page.tsx
+│       │   │   ├── monitor/page.tsx
+│       │   │   └── agents/page.tsx
+│       │   └── api/                    # API-Routen (BFF)
+│       └── src/lib/
 │
-├── sdk/                                # ZIEL — Agent-SDK
-├── platform-agents/                    # ZIEL — Pipeline, Ingest, Memory, Guardrails, …
-├── agents/                             # ZIEL — Fach-SKUs
-├── packages/
-│   ├── offerings/                      # IST — sap-apim-training · studenten-beratung
-│   └── org-brain/                      # ZIEL — L0 Schema-Pack P18
-├── customers/nextchapter/              # IST — Seed brain.json
-├── config/                             # IST: litellm, searxng, init-platform.sql · ZIEL: weitere YAMLs
-├── tests/                              # ZIEL — inkl. platform_gate
-└── docs/                               # 00–13 + ref/
+├── sdk/                                # Agent-SDK — Contract für jeden Agenten
+│   ├── agent_base.py                   # Basisklasse: Input-DP, Output-DP, MCP
+│   ├── dataproduct.py                  # DP-Schema + Validator ← v1 portiert
+│   ├── schema_registry.py              # L0-Schemas ← v1 portiert
+│   ├── mcp_adapter.py                  # MCP-Wrapper
+│   ├── skill_hook.py                   # Post-Task Skill-Destillation
+│   ├── tenant_context.py               # Tenant-Kontext-Träger
+│   ├── contract_validator.py           # Prüft Agent-Contract zur Laufzeit
+│   ├── agent_template/                 # Scaffolding: `aios new-agent <name>`
+│   │   ├── agent.py.template
+│   │   ├── schema.yaml.template
+│   │   └── README.md.template
+│   └── tests/                          # Contract-Tests — alle Agenten müssen bestehen
+│       ├── test_contract.py
+│       ├── test_dataproduct.py         # ← v1 portiert + erweitert
+│       └── test_mcp_adapter.py
+│
+├── platform-agents/                    # OS-Schicht — separat deploybar
+│   ├── pipeline-agent/                 # RAG-Pipeline ← v1 portiert
+│   ├── ingest-agent/                   # Inbox-Polling ← v1 portiert
+│   ├── memory-agent/                   # L1/L2/L3 Curators
+│   ├── guardrails-agent/               # Policy-Enforcement ← v1 portiert + L3
+│   ├── monitor-agent/                  # Observability ← v1 portiert
+│   └── scheduler-agent/               # Cron-Runner (NEU)
+│
+├── agents/                             # Fach-Agenten — als SKU-Pakete
+│   ├── research/                       # AIOS-PACK-RESEARCH ← v1 portiert
+│   ├── blog/                           # AIOS-PACK-BLOG ← v1 portiert
+│   ├── email/                          # AIOS-PACK-EMAIL ← v1 portiert
+│   ├── time/                           # AIOS-PACK-TIME
+│   └── news/                           # AIOS-PACK-NEWS
+│
+├── packages/                           # Schema-/Seed-SKUs (nicht immer eigener Agent-Prozess)
+│   └── org-brain/                      # P18 Company Brain — L0 entities/edges + Seed-Hints
+│       ├── schema/entities.yaml
+│       ├── schema/edges.yaml
+│       └── README.md
+│
+├── customers/                          # Tenant-Profile ← v1 portiert
+│   ├── _template/
+│   ├── nextchapter/                    # NCE First-Party Tenant (DEV-VM Company Brain, P18/P19)
+│   └── platform-test/
+│
+├── config/                             # Zentrale YAML-Konfigurationen
+│   ├── agents-registry.yaml            # ← v1 portiert
+│   ├── assistants-registry.yaml        # ← v1 portiert
+│   ├── packages.yaml                   # SKU-Definitionen (inkl. org-brain)
+│   ├── kg-platform-schema.yaml         # Platform-KG-Kern (+ Verweis org-brain)
+│   ├── platform-storage-rules.yaml     # ← v1 portiert
+│   ├── kg-platform-schema.yaml         # ← v1 portiert
+│   ├── litellm-config.yaml             # ← v1 portiert
+│   └── compute.yaml                    # ← v1 portiert
+│
+├── tests/                              # Integrations + Golden Tests
+│   ├── test_contract.py                # Agent-Contract-Tests
+│   ├── test_dataproduct.py
+│   ├── test_workflow.py
+│   ├── test_mcp.py
+│   ├── test_context.py
+│   ├── test_skill_loop.py
+│   └── golden/                         # Golden-Query-Tests ← v1 portiert
+│
+└── docs/                               # Dokumentation
+    ├── 00-VISION.md
+    ├── 01-ARCHITEKTUR.md
+    ├── 02-AGENT-SDK.md
+    ├── 03-DATENPRODUKTE.md
+    ├── 04-DEPLOYMENT.md
+    ├── 05-CONSOLE-IA.md
+    └── ref/                            # Referenz-Dokumente aus v1
 ```
 
 ---
@@ -401,8 +479,6 @@ pydantic>=2.7           # SDK Contract-Validation (v1 hatte 1.x)
 ---
 
 ## 5. Phase 0 — Platform-VM Fundament & Tooling
-
-**Status:** weitgehend erledigt (2026-07-24) — Details: [docs/13-IST-STAND.md](docs/13-IST-STAND.md).
 
 **Dauer:** 2–4 Tage (Repo + Appliance-Scaffold + Infra)  
 **Ziel:** Repo mit Konventionen, **`appliance/`-Scaffold**, laufender Infra **inkl. LangFuse**, CI-Grundstruktur, DB-Schema, dokumentierter **DEV-VM-Bootstrap**  
@@ -667,8 +743,6 @@ CREATE INDEX idx_receipts_tenant ON run_receipts(tenant_id, created_at);
 ---
 
 ## 6. Phase 1 — Core OS + Memory Gateway
-
-**Status:** Skeleton (Orchestrator, Console, MCP-Gateway) — Unified Search, Memory Gateway, LangGraph, Skill/Scheduler **offen**. Siehe [docs/13-IST-STAND.md](docs/13-IST-STAND.md).
 
 **Dauer:** 1–1.5 Wochen  
 **Ziel:** Orchestrator, Workflow-Engine (LangGraph), MCP-Gateway, **Unified Search**, **Memory Gateway** (Model Gateway + Persist-Hook), LangFuse-Tracing, Console-Skeleton — alles **in der Platform-VM**  
@@ -1006,8 +1080,6 @@ curl http://localhost:8092                # → HTML
 
 ## 6b. Phase 1b — Chat Capture (externe Chats ins Gedächtnis)
 
-**Status:** teilweise — Cursor-Capture → `/opt/ai-os/memory/memory.db` läuft; Gemini/Antigravity/Console-UI **offen**.
-
 **Dauer:** ~1 Woche (kann mit Ende Phase 1 überlappen)  
 **Ziel:** Chats aus Gemini, Antigravity (und ChatGPT-Export) landen im **selben** Speicher wie Platform-Chats  
 **Spec:** [docs/11-PLATFORM-VM.md](docs/11-PLATFORM-VM.md) · v1-Port: `chat_import` / Antigravity-Import  
@@ -1037,8 +1109,6 @@ Gemini / Antigravity / ChatGPT-Export
 ---
 
 ## 7. Phase 2 — Platform-Agenten
-
-**Status:** offen — siehe [docs/13-IST-STAND.md](docs/13-IST-STAND.md).
 
 **Dauer:** 1–1.5 Wochen  
 **Ziel:** Alle Platform-Agenten laufen, Scheduler produktiv, **P9 Datenpersistenz durchgängig**, Platform-Gate bestanden  
@@ -1111,6 +1181,14 @@ class PipelineAgent(AgentBase):
 ### 7.2 Ingest-Agent
 
 Port von `stack/ingest-worker/` — hauptsächlich Inbox-Polling → Qdrant-Indexierung.
+
+> **Nicht verwechseln mit:** `core/file_ingest_watcher/` — ein vorgezogener,
+> bewusst provisorischer Übergangs-Dienst (Bridge bis Fach-Agenten stehen),
+> der rohe Projektdateien in eine separate Collection `raw-files` indexiert,
+> **ohne** DP-Commit/Company-Brain-Anbindung. Siehe
+> [ADR 0002](docs/adr/0002-file-ingest-watcher-und-rolle-von-cursor.md).
+> Der hier beschriebene Ingest-Agent (Phase 2) bleibt der Ziel-Weg mit
+> DP-Commit ins Company Brain.
 
 Neue Funktion: **DP-Commit nach Ingest** (in v1 war das implizit):
 
