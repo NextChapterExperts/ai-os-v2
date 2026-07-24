@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useCallback, useState, useTransition } from "react";
 
 type UnifiedHit = {
@@ -140,6 +141,14 @@ export function UnifiedSearch() {
                   <p className="mono muted mt-1 mb-0 text-xs">
                     {hit.relations.join(" · ")}
                   </p>
+                ) : null}
+                {hit.source_type === "graph" ? (
+                  <Link
+                    href={`/platform/kg?node=${hit.id}`}
+                    className="mono mt-1 inline-block text-xs text-signal underline"
+                  >
+                    Im Graph öffnen →
+                  </Link>
                 ) : null}
               </div>
             </div>

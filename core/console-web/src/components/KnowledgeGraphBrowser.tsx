@@ -1,6 +1,8 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState, useTransition } from "react";
+import Link from "next/link";
+import { useCallback, useEffect, useState, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
 
 type KgStats = {
   tenant_id: string;
@@ -21,17 +23,11 @@ type KgNodeSummary = {
 
 type KgEdgeRef = {
   edge_type: string;
-  node_id?: string;
   node_type?: string;
   external_id?: string;
   title?: string;
   to?: string;
   from?: string;
-};
-
-type KgSearchHit = KgNodeSummary & {
-  edges_out: KgEdgeRef[];
-  edges_in: KgEdgeRef[];
 };
 
 type KgNodeDetail = {
@@ -56,15 +52,12 @@ function titleOf(payload: Record<string, unknown>, externalId: string): string {
 }
 
 export function KnowledgeGraphBrowser() {
+  const searchParams = useSearchParams();
   const [stats, setStats] = useState<KgStats | null>(null);
   const [statsError, setStatsError] = useState<string | null>(null);
 
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [nodesOfType, setNodesOfType] = useState<KgNodeSummary[] | null>(null);
-
-  const [q, setQ] = useState("");
-  const [searchHits, setSearchHits] = useState<KgSearchHit[] | null>(null);
-  const [searchError, setSearchError] = useState<string | null>(null);
 
   const [selectedNode, setSelectedNode] = useState<KgNodeDetail | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
@@ -86,22 +79,6 @@ export function KnowledgeGraphBrowser() {
     loadStats();
   }, [loadStats]);
 
-  const openType = useCallback((nodeType: string) => {
-    setSelectedType(nodeType);
-    setSelectedNode(null);
-    setSearchHits(null);
-    startTransition(async () => {
-      try {
-        const data = await getJson<{ results: KgNodeSummary[] }>(
-          `/api/kg/nodes?node_type=${encodeURIComponent(nodeType)}`,
-        );
-        setNodesOfType(data.results);
-      } catch (err) {
-        setDetailError(err instanceof Error ? err.message : "Laden fehlgeschlagen");
-      }
-    });
-  }, []);
-
   const openNode = useCallback((id: string) => {
     startTransition(async () => {
       try {
@@ -114,25 +91,28 @@ export function KnowledgeGraphBrowser() {
     });
   }, []);
 
-  function onSearch(e: FormEvent) {
-    e.preventDefault();
-    const query = q.trim();
-    if (!query) return;
-    setSelectedType(null);
-    setNodesOfType(null);
+  // Deep-Link von der Suche (/search): Treffer vom Typ "graph" verlinken
+  // hierher mit ?node=<id>, damit man direkt im Detail landet statt erneut
+  // suchen zu muessen.
+  useEffect(() => {
+    const nodeId = searchParams.get("node");
+    if (nodeId) openNode(nodeId);
+  }, [searchParams, openNode]);
+
+  const openType = useCallback((nodeType: string) => {
+    setSelectedType(nodeType);
     setSelectedNode(null);
     startTransition(async () => {
       try {
-        setSearchError(null);
-        const data = await getJson<{ results: KgSearchHit[] }>(
-          `/api/kg/search?q=${encodeURIComponent(query)}`,
+        const data = await getJson<{ results: KgNodeSummary[] }>(
+          `/api/kg/nodes?node_type=${encodeURIComponent(nodeType)}`,
         );
-        setSearchHits(data.results);
+        setNodesOfType(data.results);
       } catch (err) {
-        setSearchError(err instanceof Error ? err.message : "Suche fehlgeschlagen");
+        setDetailError(err instanceof Error ? err.message : "Laden fehlgeschlagen");
       }
     });
-  }
+  }, []);
 
   return (
     <section className="rise">
@@ -141,6 +121,8 @@ export function KnowledgeGraphBrowser() {
           <h1 className="section-title">Knowledge Graph</h1>
           <p className="muted m-0 max-w-xl">
             Speicherverwaltung des Company Brain — Knoten, Kanten, Herkunft je Eintrag.
+            Zum Durchsuchen: <Link href="/search" className="text-signal underline">Suche</Link>{" "}
+            (findet auch Graph-Treffer und verlinkt hierher).
           </p>
         </div>
         <button type="button" className="btn-ghost" onClick={loadStats} disabled={pending}>
@@ -187,57 +169,9 @@ export function KnowledgeGraphBrowser() {
         <p className="muted">Graph-Stats werden geladen…</p>
       ) : null}
 
-      <form onSubmit={onSearch} className="search-bar mb-6">
-        <label className="sr-only" htmlFor="kg-search-q">
-          Graph durchsuchen
-        </label>
-        <input
-          id="kg-search-q"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder='z. B. „Welche Policy gilt für consulting?“'
-          autoComplete="off"
-        />
-        <button type="submit" className="btn-primary" disabled={pending}>
-          Graph durchsuchen
-        </button>
-      </form>
-
-      {searchError ? <p className="text-danger">{searchError}</p> : null}
-
       <div className="grid gap-8 md:grid-cols-2">
         <div>
-          {searchHits ? (
-            <>
-              <h2 className="section-title text-lg">Suchtreffer ({searchHits.length})</h2>
-              <div className="row-list">
-                {searchHits.map((hit) => (
-                  <div key={hit.id} className="search-hit" style={{ cursor: "pointer" }} onClick={() => openNode(hit.id)}>
-                    <div>
-                      <div className="flex flex-wrap items-baseline gap-2">
-                        <span className="badge" data-variant="graph">
-                          {hit.node_type}
-                        </span>
-                        <span className="font-medium">{hit.title}</span>
-                      </div>
-                      {hit.snippet ? (
-                        <p className="muted mt-1 mb-0 text-sm">{hit.snippet}</p>
-                      ) : null}
-                      {hit.edges_out.length + hit.edges_in.length > 0 ? (
-                        <p className="mono muted mt-1 mb-0 text-xs">
-                          {[...hit.edges_out, ...hit.edges_in]
-                            .slice(0, 4)
-                            .map((e) => `${e.edge_type} → ${e.external_id}`)
-                            .join(" · ")}
-                        </p>
-                      ) : null}
-                    </div>
-                  </div>
-                ))}
-                {searchHits.length === 0 ? <p className="muted py-4">Keine Treffer.</p> : null}
-              </div>
-            </>
-          ) : selectedType && nodesOfType ? (
+          {selectedType && nodesOfType ? (
             <>
               <h2 className="section-title text-lg">
                 {selectedType} ({nodesOfType.length})
@@ -257,7 +191,7 @@ export function KnowledgeGraphBrowser() {
               </div>
             </>
           ) : (
-            <p className="muted">Knoten-Typ oben wählen oder den Graph durchsuchen.</p>
+            <p className="muted">Knoten-Typ oben wählen, um die Liste zu durchblättern.</p>
           )}
         </div>
 
