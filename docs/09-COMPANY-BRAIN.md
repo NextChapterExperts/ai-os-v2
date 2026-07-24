@@ -3,7 +3,6 @@
 **Stand:** Juli 2026 · **Operativ:** [ROADMAP.md §12.4](../ROADMAP.md#124-company-brain--wissensmanagement)  
 **Einfach erklärt:** [10-MEMORY-EINFACH.md](10-MEMORY-EINFACH.md)  
 **Verwandt:** [01-ARCHITEKTUR.md](01-ARCHITEKTUR.md) · [03-DATENPRODUKTE.md](03-DATENPRODUKTE.md) · [02-AGENT-SDK.md](02-AGENT-SDK.md)  
-**Bau-Ist:** [13-IST-STAND.md](13-IST-STAND.md) — heute: JSON-Seed (`customers/nextchapter/knowledge/seed/brain.json`) + SQLite-Capture; kein voller KG/DP-Commit-Pfad.  
 **Impuls:** Leonard Schmedding — [„Wieso KI Second Brains scheitern“](https://www.youtube.com/watch?v=81pDusm5nZE) (Company Brain als SSOT)
 
 ---
@@ -140,9 +139,11 @@ Platform-Kanten bleiben Pflicht: `belongs_to_tenant`, `derived_from`, `governed_
 config/kg-platform-schema.yaml          # unverändert Kern
 packages/org-brain/schema/entities.yaml # NEU — org:* Entities
 packages/org-brain/schema/edges.yaml    # NEU — org:* Edges
-customers/nextchapter/knowledge/seed/   # Seed-Markdown → Ingest → DPs
+customers/nextchapter/knowledge/seed/   # Seed-Markdown → Ingest → DPs  ✅ angelegt (2026-07)
 customers/nextchapter/schema/overrides.yaml  # optional Tenant-Erweiterungen
 ```
+
+**Ist-Seed (pflege in Obsidian):** `customers/nextchapter/knowledge/seed/` — Organization, Offerings, People, Partners, Policies, Projektmap, Engagements, Decisions, KnowledgeAsset-Index.
 
 SKU `org-brain` ist ein **Platform-naher Fach-Seed-Paket**, kein Agent mit eigener Inference-Pipeline.  
 Aktivierung: Tenant `active_packages` enthält `org-brain` **nach** Platform-Gate.
