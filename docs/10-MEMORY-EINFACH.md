@@ -2,7 +2,8 @@
 
 **Stand:** Juli 2026  
 **Für:** Menschen, die das System verstehen wollen — ohne Architektur-Jargon  
-**Detail-Specs:** [09-COMPANY-BRAIN.md](09-COMPANY-BRAIN.md) · [ROADMAP.md §12](../ROADMAP.md#12-datenschicht-im-detail) · [01-ARCHITEKTUR.md](01-ARCHITEKTUR.md)
+**Detail-Specs:** [09-COMPANY-BRAIN.md](09-COMPANY-BRAIN.md) · [ROADMAP.md §12](../ROADMAP.md#12-datenschicht-im-detail) · [01-ARCHITEKTUR.md](01-ARCHITEKTUR.md)  
+**Bau-Ist:** [13-IST-STAND.md](13-IST-STAND.md) — heute vor allem SQLite FTS unter `/opt/ai-os/memory/memory.db` (+ Seed-JSON); Qdrant/Letta/KG laut Tabelle = Zielbild.
 
 ---
 

@@ -3,6 +3,7 @@
 **Stand:** Juli 2026 · **Operativ:** [ROADMAP.md §12.4](../ROADMAP.md#124-company-brain--wissensmanagement)  
 **Einfach erklärt:** [10-MEMORY-EINFACH.md](10-MEMORY-EINFACH.md)  
 **Verwandt:** [01-ARCHITEKTUR.md](01-ARCHITEKTUR.md) · [03-DATENPRODUKTE.md](03-DATENPRODUKTE.md) · [02-AGENT-SDK.md](02-AGENT-SDK.md)  
+**Bau-Ist:** [13-IST-STAND.md](13-IST-STAND.md) — heute: JSON-Seed (`customers/nextchapter/knowledge/seed/brain.json`) + SQLite-Capture; kein voller KG/DP-Commit-Pfad.  
 **Impuls:** Leonard Schmedding — [„Wieso KI Second Brains scheitern“](https://www.youtube.com/watch?v=81pDusm5nZE) (Company Brain als SSOT)
 
 ---

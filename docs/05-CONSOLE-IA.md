@@ -1,7 +1,17 @@
 # AI-OS v2 — Console: 3-Ebenen-Information-Architecture
 
-**Stand:** Juli 2026 · **Verwandt:** [01-ARCHITEKTUR.md](01-ARCHITEKTUR.md)  
-**Tech:** Next.js 15 · TypeScript · Tailwind CSS
+**Stand:** Juli 2026 · **Verwandt:** [01-ARCHITEKTUR.md](01-ARCHITEKTUR.md) · **Bau-Ist:** [13-IST-STAND.md](13-IST-STAND.md)  
+**Tech:** Next.js 15 · TypeScript · Tailwind CSS · Port **8092** (`core/console-web`)
+
+### Ist (Skeleton)
+
+| Route | Inhalt heute |
+|-------|----------------|
+| `/` Lagebild | Such-/Fragefeld → Orchestrator-Dispatch; Memory-Quellen optional; Ribbon |
+| `/workflows` | Platzhalter („nach Platform-Gate“) |
+| `/platform` | Live-Health-Probes (Infra/Core) |
+
+Wireframes und API-Listen unten = **Ziel-IA**.
 
 ---
 

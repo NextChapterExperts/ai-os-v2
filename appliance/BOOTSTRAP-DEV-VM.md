@@ -1,7 +1,8 @@
 # Bootstrap DEV-VM — Tools + Dokus (erster Tag)
 
 **Ziel:** Nach Ubuntu-Installation sofort arbeitsfähig: Obsidian, Cursor, Antigravity, AI-OS-v2-Dokus → danach Phase-0-Infra.  
-**VM:** `ai-os-dev` · Ubuntu 26.04 Desktop · NCE First-Party Company Brain (`DEFAULT_TENANT=nextchapter`).
+**VM:** `ai-os-dev` · Ubuntu 26.04 Desktop · NCE First-Party Company Brain (`DEFAULT_TENANT=nextchapter`).  
+**Nach Bootstrap — was läuft?** → [docs/13-IST-STAND.md](../docs/13-IST-STAND.md)
 
 ---
 
