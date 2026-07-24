@@ -1,0 +1,8 @@
+# PROD-VM — headless, kein Dev-Tooling
+# Usage:
+#   docker compose -f deploy/infra.yml -f deploy/monitoring.yml -f deploy/profiles/prod-vm.yml --env-file .env up -d
+
+x-ai-os-prod-notes:
+  tools: []
+  console: browser-only
+  license: /opt/ai-os/config/license.yaml

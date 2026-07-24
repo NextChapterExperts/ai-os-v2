@@ -1,0 +1,59 @@
+{
+  "tenant": "nextchapter",
+  "offerings": [
+    {
+      "id": "off-sap-apim-training",
+      "name": "SAP API Management Training",
+      "kind": "training",
+      "status": "craft",
+      "summary": "BAPI/API Management Schulung erstellen und halten — Agenda, Labs, Folien.",
+      "package": "packages/offerings/sap-apim-training"
+    },
+    {
+      "id": "off-studenten-beratung",
+      "name": "Studenten-Beratungsprojekt",
+      "kind": "consulting",
+      "status": "craft",
+      "summary": "Beratungsprojekt mit Studierenden — Konzept entwickeln und Durchführung begleiten.",
+      "package": "packages/offerings/studenten-beratung"
+    }
+  ],
+  "engagements": [
+    {
+      "id": "eng-sap-apim-kw-next",
+      "title": "SAP API Mgmt — nächster Kursblock",
+      "status": "pipeline",
+      "offering_id": "off-sap-apim-training",
+      "next_step": "Agenda v1 und Lab-Skizze fertigstellen",
+      "org_id": "org-internal-nce"
+    },
+    {
+      "id": "eng-studenten-ss26",
+      "title": "Studentenberatung Cohort SS26",
+      "status": "active",
+      "offering_id": "off-studenten-beratung",
+      "next_step": "Kickoff-Unterlagen und Rollen klären",
+      "org_id": "org-hochschule-partner"
+    }
+  ],
+  "meetings_today": [
+    {
+      "id": "meet-focus-craft",
+      "title": "Fokusblock Offering-Craft",
+      "when": "14:00–16:00",
+      "note": "SAP APIM Agenda oder Studenten-Kickoff — eines priorisieren"
+    }
+  ],
+  "organizations": [
+    {
+      "id": "org-internal-nce",
+      "name": "Next Chapter",
+      "kind": "internal"
+    },
+    {
+      "id": "org-hochschule-partner",
+      "name": "Hochschul-Partner (Studentenprojekt)",
+      "kind": "university"
+    }
+  ]
+}

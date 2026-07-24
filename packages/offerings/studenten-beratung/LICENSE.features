@@ -1,0 +1,5 @@
+console=true
+orchestrator=true
+mail_agent=false
+cursor_tools=false
+offering_id=off-studenten-beratung

@@ -1,0 +1,10 @@
+# AI-OS Platform-VM license example (Core only)
+license_id: "EXAMPLE-LICENSE"
+customer: "Next Chapter"
+sku: "AIOS-CORE"
+valid_until: "2099-12-31"
+features:
+  core: true
+  platform_agents: false
+  fach_agents: []
+signing_note: "Replace with signed license.yaml from issuer — example only."

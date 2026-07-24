@@ -1,0 +1,14 @@
+# DEV-VM overrides — Cursor/Antigravity Inbox, freiere Ports
+# Usage (optional):
+#   docker compose -f deploy/infra.yml -f deploy/monitoring.yml -f deploy/profiles/dev-vm.yml --env-file .env up -d
+
+services:
+  # Bind Inbox für späteres Chat-Capture (Phase 1b)
+  # Placeholder-Service-Kommentar: Capture hängt Volumes an /opt/ai-os/ingest/inbox
+  qdrant:
+    ports: ["6333:6333", "6334:6334"]
+
+x-ai-os-dev-notes:
+  inbox: /opt/ai-os/ingest/inbox
+  tenant: nextchapter
+  tools: [cursor, antigravity, obsidian]

@@ -1,0 +1,16 @@
+{
+  "id": "off-sap-apim-training",
+  "name": "SAP API Management Training",
+  "kind": "training",
+  "version": "0.1.0-craft",
+  "published": false,
+  "features": {
+    "console": true,
+    "orchestrator": true,
+    "mail_agent": false,
+    "cursor_tools": false
+  },
+  "knowledge_refs": [
+    "customers/nextchapter/knowledge/offerings/sap-apim-training.md"
+  ]
+}

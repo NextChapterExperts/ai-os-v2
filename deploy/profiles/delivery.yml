@@ -1,0 +1,26 @@
+# Delivery profile — Fertig-Projekt-VM / Offering-only runtime
+# Usage:
+#   OFFERING_PACK=sap-apim-training docker compose \
+#     -f deploy/infra.yml -f deploy/monitoring.yml \
+#     -f deploy/core.yml -f deploy/profiles/delivery.yml --env-file .env up -d
+#
+# Rules (P19):
+# - no Cursor / Antigravity in this profile
+# - only one published offering pack mounted
+# - no auto-sync from NCE DEV brain
+
+x-ai-os-delivery:
+  offering_pack: ${OFFERING_PACK:-sap-apim-training}
+  cursor_tools: false
+  mode: delivery
+
+services:
+  orchestrator:
+    environment:
+      AIOS_DELIVERY_MODE: "true"
+      OFFERING_PACK: ${OFFERING_PACK:-sap-apim-training}
+      AIOS_BRAIN_SEED: /app/customers/nextchapter/knowledge/seed/brain.json
+
+  # Document-only mount hint for future console/orchestrator images
+  # volumes:
+  #   - ../packages/offerings/${OFFERING_PACK}:/app/offering:ro

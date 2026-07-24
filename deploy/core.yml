@@ -1,0 +1,26 @@
+# Modus 1 — Core OS (Orchestrator)
+# Local preferred: ./core/orchestrator/run.sh
+# Docker (from repo root):
+#   docker compose -f deploy/core.yml --profile core-docker up -d --build
+
+services:
+  orchestrator:
+    build:
+      context: ..
+      dockerfile: core/orchestrator/Dockerfile
+    ports: ["8091:8091"]
+    env_file: ["../.env"]
+    environment:
+      AIOS_MEMORY_DB: /opt/ai-os/memory/memory.db
+      AIOS_MEMORY_PROJECT: home-peter-Projekte-1100-AI-OS-V2
+      AIOS_BRAIN_SEED: /app/customers/nextchapter/knowledge/seed/brain.json
+      OLLAMA_HOST: ${OLLAMA_HOST:-192.168.178.64}
+      OLLAMA_PORT: ${OLLAMA_PORT:-11434}
+      OLLAMA_DEFAULT_MODEL: ${OLLAMA_DEFAULT_MODEL:-qwen3.6-64k:latest}
+    volumes:
+      - /opt/ai-os/memory:/opt/ai-os/memory
+      - ../customers:/app/customers:ro
+      - ../packages/offerings:/app/packages/offerings:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    profiles: ["core-docker"]

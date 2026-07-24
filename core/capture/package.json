@@ -1,0 +1,13 @@
+{
+  "name": "aios-cursor-capture",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node cursor-job.mjs",
+    "once": "node cursor-job.mjs --once"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.1"
+  }
+}

@@ -1,0 +1,19 @@
+model_list:
+  - model_name: ai-os-sovereign
+    litellm_params:
+      model: openai/qwen3.6-64k:latest
+      api_base: http://host.docker.internal:11434/v1
+      api_key: dummy
+
+  - model_name: ai-os-balanced
+    litellm_params:
+      model: openrouter/google/gemini-2.5-flash-lite:floor
+      api_key: os.environ/OPENROUTER_API_KEY
+
+  - model_name: ai-os-premium
+    litellm_params:
+      model: openrouter/anthropic/claude-sonnet-4
+      api_key: os.environ/OPENROUTER_API_KEY
+
+litellm_settings:
+  drop_params: true

@@ -1,0 +1,16 @@
+[Unit]
+Description=AI-OS Cursor Chat Capture → Memory
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/Projekte/1100-AI-OS-V2/core/capture
+Environment=AIOS_MEMORY_ROOT=/opt/ai-os/memory
+Environment=CAPTURE_INTERVAL_MS=10000
+Environment=NVM_DIR=%h/.nvm
+ExecStart=/bin/bash -lc 'export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; node cursor-job.mjs'
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
