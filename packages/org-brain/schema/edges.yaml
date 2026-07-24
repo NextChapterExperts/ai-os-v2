@@ -1,0 +1,67 @@
+# org-brain L0-Schema — Edge-Typen (docs/09-COMPANY-BRAIN.md §3.2)
+#
+# Wie entities.yaml dokumentarisch; Erzeugung passiert deterministisch in
+# core/orchestrator/dp_service.py (_edges_for), nicht per LLM (P4).
+version: 1
+edges:
+  attended_by:
+    from: org:Meeting
+    to: org:Person
+    meaning: Teilnehmer
+
+  about:
+    from: [org:Meeting, org:Decision, org:Engagement]
+    to: [org:Offering, org:Engagement, org:Organization]
+    meaning: Thema
+
+  decided_in:
+    from: org:Decision
+    to: org:Meeting
+    meaning: Provenance
+
+  supersedes:
+    from: [org:Decision, org:Policy, platform:Skill]
+    to: same_type
+    meaning: Gueltigkeit
+
+  applies_to:
+    from: org:Policy
+    to: [org:Offering, org:Engagement, platform:Tenant]
+    meaning: Scope
+
+  documents:
+    from: org:KnowledgeAsset
+    to: [org:Decision, org:Meeting, org:Offering, org:Policy]
+    meaning: Kanonische Quelle in K
+
+  asserts:
+    from: [org:KnowledgeAsset, platform:AgentRun]
+    to: org:Claim
+    meaning: Fakt-Herkunft
+
+  supports:
+    from: org:Claim
+    to: [blog:BlogPublished, org:Offering, org:Engagement, org:Decision]
+    meaning: Belegkette
+
+  # Platform-Kanten (Pflicht laut Doku) — in Phase 2 MVP noch nicht als
+  # eigene kg_edges-Zeilen erzeugt, weil tenant_id/produced_by bereits als
+  # Spalten auf kg_nodes/kg_edges liegen. Nachziehen sobald Multi-Tenant
+  # Traversal (Phase 6) das als echte Kante braucht.
+  belongs_to_tenant:
+    from: any
+    to: platform:Tenant
+    meaning: Tenant-Zuordnung (aktuell Spalte, kein Edge)
+    status: not_materialized
+  derived_from:
+    from: any
+    to: any
+    status: not_materialized
+  governed_by:
+    from: any
+    to: org:Policy
+    status: not_materialized
+  produced_by:
+    from: any
+    to: platform:AgentRun
+    status: not_materialized

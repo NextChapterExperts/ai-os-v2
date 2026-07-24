@@ -8,8 +8,8 @@
 
 ## Kurzfazit
 
-Auf der **NCE DEV-VM** läuft ein **Phase-0/1-Skeleton**: Infra (Compose), Console, Orchestrator, MCP-Gateway-Stubs, Cursor→SQLite-Capture, Company-Brain-Seed (Offerings/Engagements).  
-**Noch nicht:** Unified Search, Memory Gateway (Persist-Hook), LangGraph, Platform-Agenten, SDK, Platform-Gate, echte MCP-Adapter, Appliance-Image-Build.
+Auf der **NCE DEV-VM** läuft ein **Phase-0/1-Skeleton** plus ein **Phase-2-Vorgriff** auf den Company Brain: Infra (Compose), Console, Orchestrator, MCP-Gateway-Stubs, Cursor→SQLite-Capture, Unified Search (`content` + `raw-files`), Knowledge Graph (`kg_nodes`/`kg_edges`) mit DP-Commit für `org:*`.  
+**Noch nicht:** Memory Gateway (Persist-Hook), LangGraph, Platform-Agenten-Laufzeit, SDK, Platform-Gate, echte MCP-Adapter, Appliance-Image-Build.
 
 ---
 
@@ -18,9 +18,9 @@ Auf der **NCE DEV-VM** läuft ein **Phase-0/1-Skeleton**: Infra (Compose), Conso
 | Phase | Thema | Status |
 |-------|--------|--------|
 | **0** | Infra + LangFuse + DB-Schema + DEV-VM-Bootstrap + Repo | **weitgehend erledigt** |
-| **1** | Core OS + Memory Gateway + Unified Search | **Skeleton** (Orch/Console/MCP; Search/Gateway fehlen) |
+| **1** | Core OS + Memory Gateway + Unified Search | **teilweise** (Orch/Console/MCP + Unified Search `content`+`raw-files`; Memory-Gateway-Persist-Hook fehlt) |
 | **1b** | Chat Capture | **teilweise** (Cursor→SQLite; Gemini/Antigravity/UI fehlen) |
-| **2** | Platform-Agenten + Platform-Gate | **offen** |
+| **2** | Platform-Agenten + Platform-Gate | **teilweise** (Company-Brain-DP-Commit + KG für `org:*` steht; Platform-Agenten-Laufzeit/Gate selbst offen) |
 | **3** | Agent-SDK | **offen** |
 | **4** | Fach-Agenten | **gesperrt** (vor Gate) |
 | **5** | Console vollständig | **Skeleton** (3 Routen) |
@@ -28,6 +28,8 @@ Auf der **NCE DEV-VM** läuft ein **Phase-0/1-Skeleton**: Infra (Compose), Conso
 
 Zusätzlich (nicht als eigene Roadmap-Phase, aber gebaut): **Offering vs Engagement** — Seed + Packs + Intent `daily_open_loops`.
 Zusätzlich: **File-Ingest-Watcher** (Rohdatei-Suche über `Projekte/active/`, Bridge bis Fach-Agenten stehen — [ADR 0002](adr/0002-file-ingest-watcher-und-rolle-von-cursor.md)).
+Zusätzlich: **Unified Search** (`unified_search`-Intent, foederiert `content` + `raw-files`, Console-Seite `/search`).
+Zusätzlich: **Ingest-Agent + Knowledge Graph** — `core/ingest_agent/` committet Company-Brain-Seed als `org:*`-DataProducts über `POST /v1/dataproduct/commit` in `kg_nodes`/`kg_edges` (Postgres) + Audit-Hash-Chain (`ai_os_log`); published `OrgKnowledgeAsset`s zusätzlich in Qdrant `content`. Details: [09-COMPANY-BRAIN.md](09-COMPANY-BRAIN.md), [03-DATENPRODUKTE.md](03-DATENPRODUKTE.md).
 
 ---
 
@@ -38,11 +40,12 @@ Zusätzlich: **File-Ingest-Watcher** (Rohdatei-Suche über `Projekte/active/`, B
 | Komponente | Port / Pfad | Start | Status |
 |------------|-------------|-------|--------|
 | **Console** `core/console-web` (`core/console` → Symlink) | `:8092` | `cd core/console-web && npm run dev` | Lagebild + Dispatch, `/platform` Health, `/workflows` Platzhalter |
-| **Orchestrator** | `:8091` | `./core/orchestrator/run.sh` | FastAPI: `/health`, `POST /v1/dispatch`, Brain-Listen |
+| **Orchestrator** | `:8091` | `./core/orchestrator/run.sh` | FastAPI: `/health`, `POST /v1/dispatch` (inkl. `unified_search`), Brain-Listen, `POST /v1/dataproduct/commit`, `GET /v1/kg/stats`, `GET /v1/dataproduct/resolve/{id}` |
 | **MCP-Gateway** | `:8097` | `./core/mcp_gateway/run.sh` | Allowlist + Mail/Calendar-**Stubs** (nicht in Compose) |
 | **Cursor Capture** | systemd user / `npm start` | `core/capture/` | Pollt Cursor-Transkripte → `/opt/ai-os/memory/memory.db` |
 | **File-Ingest-Watcher** | systemd user | `core/file_ingest_watcher/` | Scannt `Projekte/active/**`, embedded lokal → Qdrant-Collection `raw-files` (Bridge, siehe [ADR 0002](adr/0002-file-ingest-watcher-und-rolle-von-cursor.md)) |
-| **Compose Infra** | diverse | `docker compose -f deploy/infra.yml -f deploy/monitoring.yml up -d` | Qdrant, Postgres, LiteLLM, SearXNG, Letta (SQLite), LangFuse |
+| **Ingest-Agent** | systemd user Timer (täglich 03:30) | `core/ingest_agent/` | Company-Brain-Seed → DP-Commit (KG) + Qdrant `content` |
+| **Compose Infra** | diverse | `docker compose -f deploy/infra.yml -f deploy/monitoring.yml up -d` | Qdrant, Postgres (Host-Port `127.0.0.1:5432`), LiteLLM, SearXNG, Letta (SQLite), LangFuse |
 
 ### Orchestrator-Intents (heute)
 
@@ -52,12 +55,18 @@ Zusätzlich: **File-Ingest-Watcher** (Rohdatei-Suche über `Projekte/active/`, B
 | `daily_open_loops` | Engagements + Seed-Meetings + Mail-Stub-Actions → kurze Tageslage |
 | `memory_ask` | SQLite-FTS + Ollama (LAN) |
 | `mail_triage` | Stub über MCP-Client |
+| `unified_search` | Qdrant `content` + `raw-files` foederiert, `source_type`-markiert |
 
-Lagebild-Feld in der Console → `POST /api/dispatch` → Orchestrator.
+Lagebild-Feld in der Console → `POST /api/dispatch` → Orchestrator. Suche: Console-Seite `/search`.
 
-### Company Brain / Offerings (heute)
+### Company Brain / Knowledge Graph (heute)
 
-- Seed: `customers/nextchapter/knowledge/seed/brain.json` (Offerings, Engagements, Meetings, Orgs)
+- Seed: `customers/nextchapter/knowledge/seed/{00..08}-*.md` + `brain.json` (Organization, Offerings, People, Partners, Policies, Decisions, KnowledgeAssets)
+- Schema: `packages/org-brain/schema/{entities,edges}.yaml` (L0, dokumentarisch — Validierung faktisch über `core/orchestrator/dataproducts.py`)
+- Graph: Postgres `kg_nodes`/`kg_edges` (`config/init-platform.sql`), Commit nur über `POST /v1/dataproduct/commit` (`core/orchestrator/dp_service.py`) — nie Direktzugriff aus Agenten
+- Audit: `ai_os_log` mit Hash-Chain (P17) pro DP-Commit
+- Stand (nach erstem Ingest-Lauf): **57 Nodes**, **36 Edges** (`org:Organization` 9, `org:Person` 1, `org:Offering` 5, `org:Engagement` 12, `org:Policy` 4, `org:Decision` 4, `org:KnowledgeAsset` 22) — erfüllt DoD aus [09-COMPANY-BRAIN.md §7](09-COMPANY-BRAIN.md) (≥10 Nodes, ≥5 Edges)
+- `org:Meeting` / `org:Claim`: Commit-Mapping fertig, aber **keine Datenquelle** (kein Calendar-MCP, kein L3-Curator) — bewusst leer
 - Packs: `packages/offerings/{sap-apim-training,studenten-beratung}/` (Seed + LICENSE, Skills/Workflows noch README-Stubs)
 - Delivery-Hinweis: `deploy/profiles/delivery.yml`
 
@@ -87,12 +96,13 @@ Inference-Default: Ollama LAN (`OLLAMA_HOST` / `OLLAMA_DEFAULT_MODEL` in `.env`)
 
 ## Noch geplant (im Repo fehlend oder nur spezifiziert)
 
-- `sdk/`, `tests/`, `platform-agents/`, `agents/`, `packages/org-brain/`
+- `sdk/`, `tests/`, `platform-agents/`, `agents/`
 - `deploy/platform-agents.yml`, `deploy/agents/*`, `deploy/chat-capture.yml`
-- Services: console-api `:8093`, search `:8094`, skill `:8095`, scheduler `:8096`
-- Memory Gateway Persist-Hook, Unified Search, LangGraph, Hash-Audit in Postgres
+- Services: console-api `:8093`, search `:8094` (dediziert, aktuell Teil des Orchestrators), skill `:8095`, scheduler `:8096`
+- Memory Gateway Persist-Hook, LangGraph, Query-Router (§12.1 09-COMPANY-BRAIN.md — Unified Search fragt heute immer L1, kein Layer-Routing)
 - Platform-Gate (`python -m tests.platform_gate`)
 - Gemini/Antigravity Capture + Console „Chat-Erfassung“
+- Console-UI für den Graph (`/platform/kg`, Decision-Inbox) — heute nur API (`/v1/kg/stats`, `/v1/dataproduct/resolve/{id}`)
 
 ---
 

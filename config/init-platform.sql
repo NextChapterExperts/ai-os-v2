@@ -57,6 +57,40 @@ CREATE INDEX IF NOT EXISTS idx_skills_tenant ON skills (tenant_id);
 CREATE INDEX IF NOT EXISTS idx_skills_fts
   ON skills USING gin (to_tsvector('german', coalesce(title, '') || ' ' || coalesce(description, '')));
 
+-- Knowledge Graph (Company Brain, Phase 2 — siehe docs/09-COMPANY-BRAIN.md)
+-- Relationales KG: Knoten + Kanten, kein Neo4j/AGE (P-Prinzip: kein Fach-Agent
+-- mit eigenem Graph-Store). Ein Knoten = ein org:*/platform:*-Typ + external_id
+-- pro Tenant; Upsert nur ueber den DP-Service (POST /v1/dataproduct/commit).
+CREATE TABLE IF NOT EXISTS kg_nodes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id VARCHAR NOT NULL,
+  node_type VARCHAR NOT NULL,
+  external_id VARCHAR NOT NULL,
+  payload JSONB NOT NULL DEFAULT '{}',
+  k_path VARCHAR,
+  dp_id UUID,
+  produced_by VARCHAR NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (tenant_id, node_type, external_id)
+);
+CREATE INDEX IF NOT EXISTS idx_kgnodes_tenant_type ON kg_nodes (tenant_id, node_type);
+
+CREATE TABLE IF NOT EXISTS kg_edges (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id VARCHAR NOT NULL,
+  edge_type VARCHAR NOT NULL,
+  from_node_id UUID NOT NULL REFERENCES kg_nodes (id) ON DELETE CASCADE,
+  to_node_id UUID NOT NULL REFERENCES kg_nodes (id) ON DELETE CASCADE,
+  payload JSONB NOT NULL DEFAULT '{}',
+  produced_by VARCHAR NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (tenant_id, edge_type, from_node_id, to_node_id)
+);
+CREATE INDEX IF NOT EXISTS idx_kgedges_tenant_type ON kg_edges (tenant_id, edge_type);
+CREATE INDEX IF NOT EXISTS idx_kgedges_from ON kg_edges (from_node_id);
+CREATE INDEX IF NOT EXISTS idx_kgedges_to ON kg_edges (to_node_id);
+
 CREATE TABLE IF NOT EXISTS run_receipts (
   run_id UUID PRIMARY KEY,
   tenant_id VARCHAR NOT NULL,

@@ -1,0 +1,65 @@
+# org-brain L0-Schema — Entity-Typen (docs/09-COMPANY-BRAIN.md §3.1)
+#
+# Deklarativ/dokumentarisch: die tatsaechliche Validierung passiert ueber die
+# Pydantic-Klassen in core/orchestrator/dataproducts.py. Diese Datei ist die
+# vom Menschen lesbare Quelle, gegen die ein spaeterer Schema-Lint (Phase 0
+# Build-Reihenfolge, siehe 09-COMPANY-BRAIN.md §9) pruefen kann.
+version: 1
+tenant_scope: nextchapter
+entities:
+  org:Person:
+    key: person_id
+    required: [name]
+    optional: [role, email]
+    dp_class: OrgPerson
+
+  org:Organization:
+    key: org_id
+    required: [name, kind]
+    kind_enum: [customer, partner, university, internal]
+    dp_class: OrgOrganization
+
+  org:Offering:
+    key: offering_id
+    required: [name, kind]
+    kind_enum: [training, consulting, product]
+    optional: [summary]
+    dp_class: OrgOffering
+
+  org:Engagement:
+    key: engagement_id
+    required: [title, status]
+    status_enum: [pipeline, active, closed]
+    optional: [org_ref, offering_ref]
+    dp_class: OrgEngagement
+
+  org:Meeting:
+    key: meeting_id
+    required: [title, held_at]
+    optional: [source_ref, attendee_refs, about_refs]
+    dp_class: OrgMeeting
+
+  org:Decision:
+    key: decision_id
+    required: [title, status, summary]
+    status_enum: [proposed, active, superseded]
+    optional: [decided_at, meeting_ref, about_refs, supersedes_ref]
+    dp_class: OrgDecision
+
+  org:Policy:
+    key: policy_id
+    required: [title, scope]
+    optional: [applies_to_refs]
+    dp_class: OrgPolicy
+
+  org:KnowledgeAsset:
+    key: asset_id
+    required: [title, path, kind]
+    optional: [documents_refs, published]
+    dp_class: OrgKnowledgeAsset
+
+  org:Claim:
+    key: claim_id
+    required: [text, confidence]
+    optional: [valid_from, valid_to, asserts_from_ref, supports_refs]
+    dp_class: OrgClaim

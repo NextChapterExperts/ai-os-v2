@@ -1,0 +1,11 @@
+[Unit]
+Description=AI-OS Ingest-Agent (Company-Brain-Seed -> DP-Commit + Qdrant content)
+After=network.target aios-orchestrator.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/Projekte/1100-AI-OS-V2
+Environment=ORCHESTRATOR_URL=http://127.0.0.1:8091
+Environment=QDRANT_URL=http://127.0.0.1:6333
+Environment=QDRANT_COLLECTION_CONTENT=content
+ExecStart=%h/Projekte/1100-AI-OS-V2/core/ingest_agent/run.sh

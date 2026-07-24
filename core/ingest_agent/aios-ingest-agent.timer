@@ -1,0 +1,10 @@
+[Unit]
+Description=Taeglicher Lauf des AI-OS Ingest-Agent (Company-Brain-Seed)
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target
