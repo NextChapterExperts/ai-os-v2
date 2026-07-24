@@ -1,0 +1,16 @@
+[Unit]
+Description=AI-OS Docker Compose Stack (Infra + Monitoring)
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=%h/Projekte/1100-AI-OS-V2
+ExecStartPre=/bin/sh -c 'until docker info >/dev/null 2>&1; do sleep 1; done'
+ExecStart=/usr/bin/docker compose --env-file .env -f deploy/infra.yml -f deploy/monitoring.yml up -d
+ExecStop=/usr/bin/docker compose --env-file .env -f deploy/infra.yml -f deploy/monitoring.yml down
+TimeoutStartSec=180
+
+[Install]
+WantedBy=default.target

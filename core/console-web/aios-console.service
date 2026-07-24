@@ -1,0 +1,15 @@
+[Unit]
+Description=AI-OS Console (Next.js dev)
+After=network.target aios-orchestrator.service
+Wants=aios-orchestrator.service
+
+[Service]
+Type=simple
+WorkingDirectory=%h/Projekte/1100-AI-OS-V2/core/console-web
+Environment=NVM_DIR=%h/.nvm
+ExecStart=/bin/bash -lc 'export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; npm run dev'
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
