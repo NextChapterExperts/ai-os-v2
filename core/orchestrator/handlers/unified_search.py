@@ -1,8 +1,11 @@
-"""Unified Search — foederiert ueber Company Brain (content) und raw-files.
+"""Unified Search — foederiert ueber Knowledge Graph (G), Company Brain
+(content) und raw-files.
 
-Phase-1-Baustein (siehe ROADMAP.md §6.5). Fragt beide Qdrant-Collections
-parallel ab und kennzeichnet jeden Treffer mit `source_type`, damit
-kuratiertes Wissen nie mit ungeprueften Rohdateien verwechselt wird
+Phase-1-Baustein (siehe ROADMAP.md §6.5), seit dem Query-Router-Ausbau
+(09-COMPANY-BRAIN.md §12.1) kein reiner Vektor-Fan-out mehr: `query_router`
+entscheidet PRO FRAGE deterministisch, ob der Graph, Qdrant oder beides
+befragt wird. Jeder Treffer traegt `source_type`, damit Graph-Wahrheit,
+kuratiertes Wissen und ungeprueft Rohdateien nie verwechselt werden
 (siehe docs/adr/0002-file-ingest-watcher-und-rolle-von-cursor.md).
 """
 
@@ -14,6 +17,9 @@ from typing import Any
 
 from fastembed import TextEmbedding
 from qdrant_client import QdrantClient
+
+from ..kg_search import search_nodes
+from ..query_router import SearchPlan, route_query
 
 log = logging.getLogger("unified_search")
 
@@ -88,6 +94,30 @@ def _search_collection(
     return results
 
 
+def _graph_hits(tenant_id: str, query: str, plan: SearchPlan) -> list[dict[str, Any]]:
+    nodes = search_nodes(tenant_id, query, limit=plan.max_graph_nodes)
+    results = []
+    for n in nodes:
+        relations = [f"{e['edge_type']} \u2192 {e['external_id']}" for e in n["edges_out"]]
+        relations += [f"{e['edge_type']} \u2190 {e['external_id']}" for e in n["edges_in"]]
+        results.append(
+            {
+                "id": n["id"],
+                # Deterministischer Treffer statt Kosinus-Aehnlichkeit: bewusst
+                # vor Vektor-Treffern einsortiert (Geltungsfrage schlaegt "aehnlich").
+                "score": 1.0,
+                "source_type": "graph",
+                "title": f"{n['node_type']}: {n['title']}",
+                "snippet": n["snippet"],
+                "project_slug": None,
+                "source_path": n["k_path"],
+                "collection": "kg",
+                "relations": relations[:8],
+            }
+        )
+    return results
+
+
 async def run(
     context_bundle: dict[str, Any],
     tenant_id: str,
@@ -104,17 +134,26 @@ async def run(
             "sourceCount": 0,
             "curatedCount": 0,
             "rawFileCount": 0,
+            "graphCount": 0,
+            "plan": None,
             "tenant_id": tenant_id,
         }
 
-    embedder = _get_embedder()
-    vector = list(embedder.embed([query]))[0].tolist()
-    client = _get_client()
+    plan = route_query(query)
 
-    curated = _search_collection(client, vector, CONTENT_COLLECTION, "curated", limit)
-    raw_files = _search_collection(client, vector, RAW_FILES_COLLECTION, "raw-file", limit)
+    graph_hits = _graph_hits(tenant_id, query, plan) if plan.use_g else []
 
-    combined = sorted(curated + raw_files, key=lambda r: r["score"], reverse=True)
+    curated: list[dict[str, Any]] = []
+    raw_files: list[dict[str, Any]] = []
+    if plan.use_l1:
+        embedder = _get_embedder()
+        vector = list(embedder.embed([query]))[0].tolist()
+        client = _get_client()
+        l1_limit = min(limit, plan.max_l1) or limit
+        curated = _search_collection(client, vector, CONTENT_COLLECTION, "curated", l1_limit)
+        raw_files = _search_collection(client, vector, RAW_FILES_COLLECTION, "raw-file", l1_limit)
+
+    combined = sorted(graph_hits + curated + raw_files, key=lambda r: r["score"], reverse=True)
 
     return {
         "kind": "search",
@@ -123,5 +162,7 @@ async def run(
         "sourceCount": len(combined),
         "curatedCount": len(curated),
         "rawFileCount": len(raw_files),
+        "graphCount": len(graph_hits),
+        "plan": plan.model_dump(),
         "tenant_id": tenant_id,
     }

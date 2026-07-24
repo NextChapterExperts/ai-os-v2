@@ -5,12 +5,13 @@ import { FormEvent, useCallback, useState, useTransition } from "react";
 type UnifiedHit = {
   id: string;
   score: number;
-  source_type: "curated" | "raw-file";
+  source_type: "graph" | "curated" | "raw-file";
   title: string;
   snippet: string;
   project_slug?: string | null;
   source_path?: string | null;
   collection?: string;
+  relations?: string[];
 };
 
 type SearchResponse = {
@@ -20,10 +21,12 @@ type SearchResponse = {
   sourceCount?: number;
   curatedCount?: number;
   rawFileCount?: number;
+  graphCount?: number;
   error?: string | object;
 };
 
 const SOURCE_LABEL: Record<UnifiedHit["source_type"], string> = {
+  graph: "Graph (gesichert)",
   curated: "Freigegeben",
   "raw-file": "Rohdatei",
 };
@@ -73,6 +76,7 @@ export function UnifiedSearch() {
   }
 
   const sources = data?.sources ?? [];
+  const graphCount = data?.graphCount ?? sources.filter((s) => s.source_type === "graph").length;
   const curatedCount = data?.curatedCount ?? sources.filter((s) => s.source_type === "curated").length;
   const rawFileCount = data?.rawFileCount ?? sources.filter((s) => s.source_type === "raw-file").length;
 
@@ -97,8 +101,8 @@ export function UnifiedSearch() {
 
       {data ? (
         <p className="muted mono mt-3 mb-0 text-xs">
-          {sources.length} Treffer · {curatedCount} freigegeben (Company Brain) ·{" "}
-          {rawFileCount} Rohdateien (Projekte/active)
+          {sources.length} Treffer · {graphCount} aus dem Graph (gesichert) ·{" "}
+          {curatedCount} freigegeben (Company Brain) · {rawFileCount} Rohdateien (Projekte/active)
         </p>
       ) : null}
 
@@ -112,7 +116,13 @@ export function UnifiedSearch() {
                 <div className="flex flex-wrap items-baseline gap-2">
                   <span
                     className="badge"
-                    data-variant={hit.source_type === "curated" ? "curated" : "raw"}
+                    data-variant={
+                      hit.source_type === "graph"
+                        ? "graph"
+                        : hit.source_type === "curated"
+                          ? "curated"
+                          : "raw"
+                    }
                   >
                     {SOURCE_LABEL[hit.source_type]}
                   </span>
@@ -125,6 +135,11 @@ export function UnifiedSearch() {
                 <p className="muted mt-2 mb-0 text-sm leading-relaxed">{hit.snippet}</p>
                 {hit.source_path ? (
                   <p className="mono muted mt-1 mb-0 text-xs">{hit.source_path}</p>
+                ) : null}
+                {hit.relations && hit.relations.length > 0 ? (
+                  <p className="mono muted mt-1 mb-0 text-xs">
+                    {hit.relations.join(" · ")}
+                  </p>
                 ) : null}
               </div>
             </div>

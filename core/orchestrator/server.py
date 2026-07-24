@@ -13,6 +13,7 @@ from .dataproducts import DP_CLASS_BY_NODE_TYPE
 from .dispatch import dispatch
 from .dp_service import DPCommitError, commit_dataproduct, kg_stats, resolve_node_by_id
 from .intent_router import route_intent
+from .kg_search import list_nodes, search_nodes
 
 app = FastAPI(title="AI-OS Orchestrator", version="2.0.0-skeleton")
 
@@ -103,3 +104,20 @@ async def resolve_dataproduct(node_id: str, tenant_id: str = "nextchapter") -> d
 @app.get("/v1/kg/stats")
 async def get_kg_stats(tenant_id: str = "nextchapter") -> dict[str, Any]:
     return kg_stats(tenant_id)
+
+
+@app.get("/v1/kg/search")
+async def get_kg_search(
+    q: str, tenant_id: str = "nextchapter", node_type: str | None = None, limit: int = 10
+) -> dict[str, Any]:
+    node_types = [node_type] if node_type else None
+    results = search_nodes(tenant_id, q, node_types=node_types, limit=limit)
+    return {"query": q, "tenant_id": tenant_id, "results": results, "count": len(results)}
+
+
+@app.get("/v1/kg/nodes")
+async def get_kg_nodes(
+    node_type: str, tenant_id: str = "nextchapter", limit: int = 200
+) -> dict[str, Any]:
+    results = list_nodes(tenant_id, node_type, limit=limit)
+    return {"node_type": node_type, "tenant_id": tenant_id, "results": results, "count": len(results)}

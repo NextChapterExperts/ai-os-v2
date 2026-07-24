@@ -275,6 +275,11 @@ body {
   color: var(--ink);
 }
 
+.badge[data-variant="graph"] {
+  background: color-mix(in oklab, var(--signal) 14%, transparent);
+  color: var(--signal);
+}
+
 .badge[data-variant="raw"] {
   background: color-mix(in oklab, var(--danger) 10%, transparent);
   color: var(--danger);

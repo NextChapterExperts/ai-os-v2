@@ -8,8 +8,8 @@
 
 ## Kurzfazit
 
-Auf der **NCE DEV-VM** läuft ein **Phase-0/1-Skeleton** plus ein **Phase-2-Vorgriff** auf den Company Brain: Infra (Compose), Console, Orchestrator, MCP-Gateway-Stubs, Cursor→SQLite-Capture, Unified Search (`content` + `raw-files`), Knowledge Graph (`kg_nodes`/`kg_edges`) mit DP-Commit für `org:*`.  
-**Noch nicht:** Memory Gateway (Persist-Hook), LangGraph, Platform-Agenten-Laufzeit, SDK, Platform-Gate, echte MCP-Adapter, Appliance-Image-Build.
+Auf der **NCE DEV-VM** läuft ein **Phase-0/1-Skeleton** plus ein **Phase-2-Vorgriff** auf den Company Brain: Infra (Compose), Console, Orchestrator, MCP-Gateway-Stubs, Cursor→SQLite-Capture, Unified Search (`content` + `raw-files` + jetzt **Graph**), Knowledge Graph (`kg_nodes`/`kg_edges`) mit DP-Commit für `org:*`, Query-Router (§12.1) und Console-UI `/platform/kg`.  
+**Noch nicht:** Memory Gateway (Persist-Hook), Letta-Anbindung (Query-Router kennt `use_letta`, aber kein Verbraucher), Skill-Store (`use_sk` dito), LangGraph, Platform-Agenten-Laufzeit, SDK, Platform-Gate, echte MCP-Adapter, Appliance-Image-Build.
 
 ---
 
@@ -18,7 +18,7 @@ Auf der **NCE DEV-VM** läuft ein **Phase-0/1-Skeleton** plus ein **Phase-2-Vorg
 | Phase | Thema | Status |
 |-------|--------|--------|
 | **0** | Infra + LangFuse + DB-Schema + DEV-VM-Bootstrap + Repo | **weitgehend erledigt** |
-| **1** | Core OS + Memory Gateway + Unified Search | **teilweise** (Orch/Console/MCP + Unified Search `content`+`raw-files`; Memory-Gateway-Persist-Hook fehlt) |
+| **1** | Core OS + Memory Gateway + Unified Search | **teilweise** (Orch/Console/MCP + Unified Search `content`+`raw-files`+Graph, Query-Router §12.1; Memory-Gateway-Persist-Hook fehlt) |
 | **1b** | Chat Capture | **teilweise** (Cursor→SQLite; Gemini/Antigravity/UI fehlen) |
 | **2** | Platform-Agenten + Platform-Gate | **teilweise** (Company-Brain-DP-Commit + KG für `org:*` steht; Platform-Agenten-Laufzeit/Gate selbst offen) |
 | **3** | Agent-SDK | **offen** |
@@ -28,8 +28,9 @@ Auf der **NCE DEV-VM** läuft ein **Phase-0/1-Skeleton** plus ein **Phase-2-Vorg
 
 Zusätzlich (nicht als eigene Roadmap-Phase, aber gebaut): **Offering vs Engagement** — Seed + Packs + Intent `daily_open_loops`.
 Zusätzlich: **File-Ingest-Watcher** (Rohdatei-Suche über `Projekte/active/`, Bridge bis Fach-Agenten stehen — [ADR 0002](adr/0002-file-ingest-watcher-und-rolle-von-cursor.md)).
-Zusätzlich: **Unified Search** (`unified_search`-Intent, foederiert `content` + `raw-files`, Console-Seite `/search`).
+Zusätzlich: **Unified Search** (`unified_search`-Intent, foederiert Graph + `content` + `raw-files` via Query-Router, Console-Seite `/search`).
 Zusätzlich: **Ingest-Agent + Knowledge Graph** — `core/ingest_agent/` committet Company-Brain-Seed als `org:*`-DataProducts über `POST /v1/dataproduct/commit` in `kg_nodes`/`kg_edges` (Postgres) + Audit-Hash-Chain (`ai_os_log`); published `OrgKnowledgeAsset`s zusätzlich in Qdrant `content`. Details: [09-COMPANY-BRAIN.md](09-COMPANY-BRAIN.md), [03-DATENPRODUKTE.md](03-DATENPRODUKTE.md).
+Zusätzlich: **Graph-Suche + Query-Router + Console-UI** — `core/orchestrator/kg_search.py` (Freitext-Suche + 1-Hop-Traverse über `kg_nodes`/`kg_edges`, `GET /v1/kg/search`, `GET /v1/kg/nodes`), `core/orchestrator/query_router.py` (deterministische `SearchPlan` nach §12.1, entscheidet pro Frage `use_g`/`use_l1`/`use_letta`/`use_sk`), Console-Seite `/platform/kg` (Stats, Graph-Suche, Node-Detail mit Kanten, klickbare Navigation).
 
 ---
 
@@ -40,7 +41,7 @@ Zusätzlich: **Ingest-Agent + Knowledge Graph** — `core/ingest_agent/` committ
 | Komponente | Port / Pfad | Start | Status |
 |------------|-------------|-------|--------|
 | **Console** `core/console-web` (`core/console` → Symlink) | `:8092` | `cd core/console-web && npm run dev` | Lagebild + Dispatch, `/platform` Health, `/workflows` Platzhalter |
-| **Orchestrator** | `:8091` | `./core/orchestrator/run.sh` | FastAPI: `/health`, `POST /v1/dispatch` (inkl. `unified_search`), Brain-Listen, `POST /v1/dataproduct/commit`, `GET /v1/kg/stats`, `GET /v1/dataproduct/resolve/{id}` |
+| **Orchestrator** | `:8091` | `./core/orchestrator/run.sh` | FastAPI: `/health`, `POST /v1/dispatch` (inkl. `unified_search` mit Query-Router), Brain-Listen, `POST /v1/dataproduct/commit`, `GET /v1/kg/stats`, `GET /v1/kg/search`, `GET /v1/kg/nodes`, `GET /v1/dataproduct/resolve/{id}` |
 | **MCP-Gateway** | `:8097` | `./core/mcp_gateway/run.sh` | Allowlist + Mail/Calendar-**Stubs** (nicht in Compose) |
 | **Cursor Capture** | systemd user / `npm start` | `core/capture/` | Pollt Cursor-Transkripte → `/opt/ai-os/memory/memory.db` |
 | **File-Ingest-Watcher** | systemd user | `core/file_ingest_watcher/` | Scannt `Projekte/active/**`, embedded lokal → Qdrant-Collection `raw-files` (Bridge, siehe [ADR 0002](adr/0002-file-ingest-watcher-und-rolle-von-cursor.md)) |
@@ -55,9 +56,9 @@ Zusätzlich: **Ingest-Agent + Knowledge Graph** — `core/ingest_agent/` committ
 | `daily_open_loops` | Engagements + Seed-Meetings + Mail-Stub-Actions → kurze Tageslage |
 | `memory_ask` | SQLite-FTS + Ollama (LAN) |
 | `mail_triage` | Stub über MCP-Client |
-| `unified_search` | Qdrant `content` + `raw-files` foederiert, `source_type`-markiert |
+| `unified_search` | Query-Router (§12.1) entscheidet pro Frage: Graph (`kg_search`), Qdrant `content` + `raw-files`, oder beides — `source_type`-markiert (`graph`/`curated`/`raw-file`) |
 
-Lagebild-Feld in der Console → `POST /api/dispatch` → Orchestrator. Suche: Console-Seite `/search`.
+Lagebild-Feld in der Console → `POST /api/dispatch` → Orchestrator. Suche: Console-Seite `/search` (foederiert) und `/platform/kg` (Graph-Browser mit Node-Detail).
 
 ### Company Brain / Knowledge Graph (heute)
 
@@ -65,7 +66,7 @@ Lagebild-Feld in der Console → `POST /api/dispatch` → Orchestrator. Suche: C
 - Schema: `packages/org-brain/schema/{entities,edges}.yaml` (L0, dokumentarisch — Validierung faktisch über `core/orchestrator/dataproducts.py`)
 - Graph: Postgres `kg_nodes`/`kg_edges` (`config/init-platform.sql`), Commit nur über `POST /v1/dataproduct/commit` (`core/orchestrator/dp_service.py`) — nie Direktzugriff aus Agenten
 - Audit: `ai_os_log` mit Hash-Chain (P17) pro DP-Commit
-- Stand (nach erstem Ingest-Lauf): **57 Nodes**, **36 Edges** (`org:Organization` 9, `org:Person` 1, `org:Offering` 5, `org:Engagement` 12, `org:Policy` 4, `org:Decision` 4, `org:KnowledgeAsset` 22) — erfüllt DoD aus [09-COMPANY-BRAIN.md §7](09-COMPANY-BRAIN.md) (≥10 Nodes, ≥5 Edges)
+- Stand: **58 Nodes**, **37 Edges** (`org:Organization` 9, `org:Person` 1, `org:Offering` 5, `org:Engagement` 12, `org:Policy` 4, `org:Decision` 4, `org:KnowledgeAsset` 23) — erfüllt DoD aus [09-COMPANY-BRAIN.md §7](09-COMPANY-BRAIN.md) (≥10 Nodes, ≥5 Edges); 5 Abnahmefragen aus §8 getestet, siehe dort
 - `org:Meeting` / `org:Claim`: Commit-Mapping fertig, aber **keine Datenquelle** (kein Calendar-MCP, kein L3-Curator) — bewusst leer
 - Packs: `packages/offerings/{sap-apim-training,studenten-beratung}/` (Seed + LICENSE, Skills/Workflows noch README-Stubs)
 - Delivery-Hinweis: `deploy/profiles/delivery.yml`
@@ -99,10 +100,12 @@ Inference-Default: Ollama LAN (`OLLAMA_HOST` / `OLLAMA_DEFAULT_MODEL` in `.env`)
 - `sdk/`, `tests/`, `platform-agents/`, `agents/`
 - `deploy/platform-agents.yml`, `deploy/agents/*`, `deploy/chat-capture.yml`
 - Services: console-api `:8093`, search `:8094` (dediziert, aktuell Teil des Orchestrators), skill `:8095`, scheduler `:8096`
-- Memory Gateway Persist-Hook, LangGraph, Query-Router (§12.1 09-COMPANY-BRAIN.md — Unified Search fragt heute immer L1, kein Layer-Routing)
+- Memory Gateway Persist-Hook, LangGraph
+- Letta-Anbindung (L2/L3) — `query_router.py` kennt `use_letta`, aber es gibt noch keinen Verbraucher; Letta-Fragen liefern heute bewusst 0 Treffer statt falscher L1-Ersatzantwort
+- Skill-Store (SK) — `query_router.py` kennt `use_sk`, aber `core/skills/` existiert noch nicht
 - Platform-Gate (`python -m tests.platform_gate`)
 - Gemini/Antigravity Capture + Console „Chat-Erfassung“
-- Console-UI für den Graph (`/platform/kg`, Decision-Inbox) — heute nur API (`/v1/kg/stats`, `/v1/dataproduct/resolve/{id}`)
+- Console `/platform/kg`: Decision-Inbox (Human-Gate für Claims) fehlt noch — Graph-Browse/Suche/Detail ist da
 
 ---
 

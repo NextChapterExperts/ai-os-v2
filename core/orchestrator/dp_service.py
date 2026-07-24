@@ -239,19 +239,40 @@ def resolve_node_by_id(tenant_id: str, node_id: str) -> dict[str, Any] | None:
         if node is None:
             return None
         edges_out = conn.execute(
-            "SELECT edge_type, to_node_id FROM kg_edges WHERE from_node_id = %s",
+            """
+            SELECT e.edge_type, n.id AS node_id, n.node_type, n.external_id, n.payload
+            FROM kg_edges e JOIN kg_nodes n ON n.id = e.to_node_id
+            WHERE e.from_node_id = %s
+            """,
             (node["id"],),
         ).fetchall()
         edges_in = conn.execute(
-            "SELECT edge_type, from_node_id FROM kg_edges WHERE to_node_id = %s",
+            """
+            SELECT e.edge_type, n.id AS node_id, n.node_type, n.external_id, n.payload
+            FROM kg_edges e JOIN kg_nodes n ON n.id = e.from_node_id
+            WHERE e.to_node_id = %s
+            """,
             (node["id"],),
         ).fetchall()
+
+    def _label(row: dict[str, Any]) -> dict[str, Any]:
+        payload = row["payload"] or {}
+        title = payload.get("title") or payload.get("name") or row["external_id"]
+        return {
+            "edge_type": row["edge_type"],
+            "to": str(row["node_id"]),
+            "from": str(row["node_id"]),
+            "node_type": row["node_type"],
+            "external_id": row["external_id"],
+            "title": title,
+        }
+
     return {
         "id": str(node["id"]),
         "node_type": node["node_type"],
         "external_id": node["external_id"],
         "payload": node["payload"],
         "k_path": node["k_path"],
-        "edges_out": [{"edge_type": e["edge_type"], "to": str(e["to_node_id"])} for e in edges_out],
-        "edges_in": [{"edge_type": e["edge_type"], "from": str(e["from_node_id"])} for e in edges_in],
+        "edges_out": [_label(e) for e in edges_out],
+        "edges_in": [_label(e) for e in edges_in],
     }

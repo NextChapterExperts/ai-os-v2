@@ -6,12 +6,28 @@ import { usePathname } from "next/navigation";
 const NAV = [
   { href: "/", label: "Lagebild" },
   { href: "/search", label: "Suche" },
+  { href: "/platform/kg", label: "Graph" },
   { href: "/workflows", label: "Workflows" },
   { href: "/platform", label: "Plattform" },
 ] as const;
 
+function matchLength(pathname: string, href: string): number {
+  if (href === "/") return pathname === "/" ? 1 : 0;
+  if (pathname === href || pathname.startsWith(`${href}/`)) return href.length;
+  return 0;
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  // Bei ueberlappenden Praefixen (z.B. /platform vs. /platform/kg) gewinnt
+  // die spezifischste Route, damit nicht beide Nav-Items gleichzeitig aktiv sind.
+  const bestMatch = NAV.reduce(
+    (best, item) => {
+      const len = matchLength(pathname, item.href);
+      return len > best.len ? { href: item.href, len } : best;
+    },
+    { href: "", len: 0 },
+  );
 
   return (
     <div className="shell-bg">
@@ -21,10 +37,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </Link>
         <nav className="flex flex-wrap items-center gap-5 text-sm sm:gap-7 sm:text-base">
           {NAV.map((item) => {
-            const active =
-              item.href === "/"
-                ? pathname === "/"
-                : pathname === item.href || pathname.startsWith(`${item.href}/`);
+            const active = bestMatch.len > 0 && item.href === bestMatch.href;
             return (
               <Link
                 key={item.href}
