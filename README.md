@@ -79,6 +79,8 @@ Ein Agent, der keinen typisierten Datenprodukt-Output liefert, keine MCP-Adapter
 | [docs/10-MEMORY-EINFACH.md](docs/10-MEMORY-EINFACH.md) | **Memory einfach** — alle Speicher + Art (Datei/Graph/Vektor/…) |
 | [docs/11-PLATFORM-VM.md](docs/11-PLATFORM-VM.md) | **Platform-VM** — erstes Produkt, Memory Gateway, Chat Capture |
 | [docs/12-LEITPRINZIPIEN.md](docs/12-LEITPRINZIPIEN.md) | **P1–P19 im Detail** — Regeln, Verbote, Abnahme |
+| [docs/13-IST-STAND.md](docs/13-IST-STAND.md) | **Ist-Stand** — was heute läuft vs. Roadmap-Ziel |
+| [docs/14-KONTEXT.md](docs/14-KONTEXT.md) | **Kontext Lagebild→LLM** — Retrieval, Prompt, Context Bundle |
 | [docs/ref/](docs/ref/) | Referenz-Dokumente aus v1 |
 
 ---

@@ -268,5 +268,6 @@ Mit Company Brain bekommst du **die geltende Entscheidung**.
 | [03-DATENPRODUKTE.md](03-DATENPRODUKTE.md) | Welche Formulare (DPs) es gibt |
 | [11-PLATFORM-VM.md](11-PLATFORM-VM.md) | VM, Memory Gateway, Chat Capture (Gemini …) |
 | [ROADMAP.md §12.4](../ROADMAP.md#124-company-brain--wissensmanagement) | Verbindliche Bauanleitung |
+| [14-KONTEXT.md](14-KONTEXT.md) | Was bei Lagebild-Fragen ans LLM geht (Retrieval, Prompt, Bundle) |
 | [02-AGENT-SDK.md](02-AGENT-SDK.md) | Wie ein Agent speicherkonform arbeitet |
 | [ADR 0002](adr/0002-file-ingest-watcher-und-rolle-von-cursor.md) | File-Ingest-Watcher, `raw-files`, Cursor vs. Fach-Agenten |

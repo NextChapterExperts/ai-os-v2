@@ -5,7 +5,7 @@
 **Basis:** AI-OS v1 (../1000-AI-OS) — eingefroren Juli 2026  
 **Stand:** Juli 2026 (aktualisiert 2026-07-25 — Lagebild federiert + LLM-Kontext-Transparenz; Memory-Stack komplett: L1/L2/L3-Curator + Working/Tactical + Letta + Unified Search; Phase 1 Gateway + 1b Capture)  
 **Modus:** **Eine Implementierung** — keine Alternativen in dieser Roadmap. Jede Entscheidung ist final.  
-**Detail-Spec Company Brain:** [docs/09-COMPANY-BRAIN.md](docs/09-COMPANY-BRAIN.md) · **Memory einfach:** [docs/10-MEMORY-EINFACH.md](docs/10-MEMORY-EINFACH.md)  
+**Detail-Spec Company Brain:** [docs/09-COMPANY-BRAIN.md](docs/09-COMPANY-BRAIN.md) · **Memory einfach:** [docs/10-MEMORY-EINFACH.md](docs/10-MEMORY-EINFACH.md) · **Kontext Lagebild→LLM:** [docs/14-KONTEXT.md](docs/14-KONTEXT.md)  
 **Erstes Lizenzprodukt (VM):** [docs/11-PLATFORM-VM.md](docs/11-PLATFORM-VM.md)  
 **Leitprinzipien detailliert:** [docs/12-LEITPRINZIPIEN.md](docs/12-LEITPRINZIPIEN.md)
 
@@ -1098,7 +1098,8 @@ Frage im Lagebild
 | **LLM-Prompt-Kontext** | Was tatsächlich ans Modell geht: System-Prompt + Frage + Retrieval-Chunks | `/context/{runId}` → System/User-Prompt + Retrieval |
 
 Persistenz: `AIOS_RUN_CONTEXT_DIR` (Default `/opt/ai-os/memory/state/run-context/{runId}.json`).  
-Routing-Metadaten enthalten `modelTier: local` — später `cloud` / `agent` für Public-Modelle.
+Routing-Metadaten enthalten `modelTier: local` — später `cloud` / `agent` für Public-Modelle.  
+**Ausführlich (menschlich):** [docs/14-KONTEXT.md](docs/14-KONTEXT.md)
 
 ### 6.7 LangFuse-Tracing (ab Phase 1 — Pflicht)
 

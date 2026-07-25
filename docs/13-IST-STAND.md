@@ -2,7 +2,7 @@
 
 **Stand:** 2026-07-25 (L1-Curator + Working/Tactical) · **Repo:** [NextChapterExperts/ai-os-v2](https://github.com/NextChapterExperts/ai-os-v2)  
 **Zweck:** Was heute **wirklich läuft** vs. was in Roadmap/Architektur als **Ziel** spezifiziert ist.  
-**Ziel-Spec bleibt:** [ROADMAP.md](../ROADMAP.md) · [01-ARCHITEKTUR.md](01-ARCHITEKTUR.md) — dieses Dokument überschreibt die Vision nicht, sondern den Fortschritt.
+**Ziel-Spec bleibt:** [ROADMAP.md](../ROADMAP.md) · [01-ARCHITEKTUR.md](01-ARCHITEKTUR.md) · [14-KONTEXT.md](14-KONTEXT.md) — dieses Dokument überschreibt die Vision nicht, sondern den Fortschritt.
 
 ---
 
