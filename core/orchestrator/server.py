@@ -7,7 +7,7 @@ import uuid
 from typing import Any
 
 import httpx
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field, ValidationError
 
 from .audit import write_agent_run
@@ -138,8 +138,8 @@ class MeetingPatchRequest(BaseModel):
 async def meetings_list(
     tenant_id: str = "nextchapter",
     q: str | None = None,
-    unassigned: bool = False,
-    has_open_todo: bool = False,
+    unassigned: bool = Query(default=False),
+    has_open_todo: bool = Query(default=False),
     limit: int = 100,
 ) -> dict[str, Any]:
     from .meetings_store import list_engagement_options, list_meetings
