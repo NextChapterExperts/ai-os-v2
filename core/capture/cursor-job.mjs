@@ -21,6 +21,7 @@ const CURSOR_PROJECTS =
   process.env.CURSOR_PROJECTS_ROOT ??
   path.join(os.homedir(), ".cursor", "projects");
 const INTERVAL_MS = Number(process.env.CAPTURE_INTERVAL_MS ?? 10000);
+const ORCHESTRATOR_URL = process.env.ORCHESTRATOR_URL ?? "http://127.0.0.1:8091";
 const ONCE = process.argv.includes("--once");
 const REINDEX = process.argv.includes("--reindex");
 
@@ -66,6 +67,12 @@ function openDb() {
     CREATE TRIGGER IF NOT EXISTS chunks_ad AFTER DELETE ON chunks BEGIN
       INSERT INTO chunks_fts(chunks_fts, rowid, title, body, source, chat_id)
       VALUES ('delete', old.rowid, old.title, old.body, old.source, old.chat_id);
+    END;
+    CREATE TRIGGER IF NOT EXISTS chunks_au AFTER UPDATE ON chunks BEGIN
+      INSERT INTO chunks_fts(chunks_fts, rowid, title, body, source, chat_id)
+      VALUES ('delete', old.rowid, old.title, old.body, old.source, old.chat_id);
+      INSERT INTO chunks_fts(rowid, title, body, source, chat_id)
+      VALUES (new.rowid, new.title, new.body, new.source, new.chat_id);
     END;
     CREATE TABLE IF NOT EXISTS ingest_files (
       path TEXT PRIMARY KEY,
@@ -255,6 +262,29 @@ function ingestFile(db, filePath) {
   return inserted;
 }
 
+async function syncLettaIfNeeded(upserts) {
+  if (upserts <= 0) return;
+  try {
+    const res = await fetch(`${ORCHESTRATOR_URL}/v1/memory/sync-letta`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tenant_id: "nextchapter", source: "cursor" }),
+      signal: AbortSignal.timeout(120_000),
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      console.warn(`[capture] letta-sync HTTP ${res.status}: ${text.slice(0, 120)}`);
+      return;
+    }
+    const data = await res.json();
+    if (data.synced > 0) {
+      console.log(`[capture] letta-sync synced=${data.synced} skipped=${data.skipped}`);
+    }
+  } catch (err) {
+    console.warn("[capture] letta-sync:", err.message || err);
+  }
+}
+
 function runOnce(db) {
   const files = walkJsonl(CURSOR_PROJECTS);
   let total = 0;
@@ -281,14 +311,15 @@ function runOnce(db) {
 function main() {
   const db = openDb();
   console.log(`[capture] watching ${CURSOR_PROJECTS} → ${MEMORY_DB}`);
-  runOnce(db);
+  void syncLettaIfNeeded(runOnce(db).upserts ?? 0);
   if (ONCE || REINDEX) {
     db.close();
     return;
   }
   setInterval(() => {
     try {
-      runOnce(db);
+      const stats = runOnce(db);
+      void syncLettaIfNeeded(stats?.upserts ?? 0);
     } catch (err) {
       console.error("[capture] loop error:", err.message || err);
     }

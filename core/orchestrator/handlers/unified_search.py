@@ -1,12 +1,5 @@
 """Unified Search — foederiert ueber Knowledge Graph (G), Company Brain
-(content) und raw-files.
-
-Phase-1-Baustein (siehe ROADMAP.md §6.5), seit dem Query-Router-Ausbau
-(09-COMPANY-BRAIN.md §12.1) kein reiner Vektor-Fan-out mehr: `query_router`
-entscheidet PRO FRAGE deterministisch, ob der Graph, Qdrant oder beides
-befragt wird. Jeder Treffer traegt `source_type`, damit Graph-Wahrheit,
-kuratiertes Wissen und ungeprueft Rohdateien nie verwechselt werden
-(siehe docs/adr/0002-file-ingest-watcher-und-rolle-von-cursor.md).
+(content), raw-files und episodisches Gedaechtnis (Letta + SQLite).
 """
 
 from __future__ import annotations
@@ -18,18 +11,13 @@ from typing import Any
 from fastembed import TextEmbedding
 from qdrant_client import QdrantClient
 
-from ..kg_search import search_nodes
-from core.memory_gateway.letta_client import is_available as letta_available, search_archival
+from core.memory_gateway.episodic_search import search_episodic
 
-from ..memory_store import DEFAULT_PROJECT, chunks_in_window, resolve_window, search_chunks
+from ..kg_search import search_nodes
 from ..query_router import SearchPlan, route_query
 
 log = logging.getLogger("unified_search")
 
-# Bewusst NICHT von QDRANT_HOST/QDRANT_PORT aus .env ableiten: die sind
-# docker-intern ("qdrant") und vom Host-Prozess (Orchestrator laeuft via
-# systemd direkt auf der VM) nicht aufloesbar. Qdrant published seinen Port
-# zusaetzlich auf 127.0.0.1:6333 (deploy/infra.yml) - das nutzen wir hier.
 QDRANT_URL = os.environ.get("QDRANT_URL", "http://127.0.0.1:6333")
 EMBED_MODEL = os.environ.get(
     "SEARCH_EMBED_MODEL", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
@@ -106,8 +94,6 @@ def _graph_hits(tenant_id: str, query: str, plan: SearchPlan) -> list[dict[str, 
         results.append(
             {
                 "id": n["id"],
-                # Deterministischer Treffer statt Kosinus-Aehnlichkeit: bewusst
-                # vor Vektor-Treffern einsortiert (Geltungsfrage schlaegt "aehnlich").
                 "score": 1.0,
                 "source_type": "graph",
                 "title": f"{n['node_type']}: {n['title']}",
@@ -119,62 +105,6 @@ def _graph_hits(tenant_id: str, query: str, plan: SearchPlan) -> list[dict[str, 
             }
         )
     return results
-
-
-def _sqlite_episodic_hits(query: str) -> list[dict[str, Any]]:
-    """SQLite-Fallback, wenn Letta nicht erreichbar ist."""
-    start, end, mode = resolve_window(query)
-    if mode in ("yesterday", "week"):
-        chunks = chunks_in_window(DEFAULT_PROJECT, start, end, limit=10)
-    else:
-        chunks = search_chunks(query, project_id=DEFAULT_PROJECT, limit=10)
-    results = []
-    for c in chunks:
-        body = str(c.get("body") or "")
-        results.append(
-            {
-                "id": c["id"],
-                "score": 0.9,
-                "source_type": "episodic",
-                "title": c.get("title") or (body[:80] or "Cursor-Chat"),
-                "snippet": body[:280],
-                "project_slug": c.get("project_id"),
-                "source_path": None,
-                "collection": "memory.db",
-            }
-        )
-    return results
-
-
-def _letta_episodic_hits(tenant_id: str, query: str) -> list[dict[str, Any]]:
-    start, end, _mode = resolve_window(query)
-    episodes = search_archival(tenant_id, query, count=10, start=start, end=end)
-    results = []
-    for ep in episodes:
-        text = str(ep.get("text") or "")
-        theme = text.split("THEMA:", 1)[1].split("|", 1)[0].strip() if "THEMA:" in text else text[:80]
-        results.append(
-            {
-                "id": ep.get("id") or text[:32],
-                "score": 0.92,
-                "source_type": "episodic",
-                "title": theme or "Episodisches Gedächtnis",
-                "snippet": text[:280],
-                "project_slug": None,
-                "source_path": None,
-                "collection": "letta-archival",
-            }
-        )
-    return results
-
-
-def _episodic_hits(tenant_id: str, query: str) -> list[dict[str, Any]]:
-    """Letta L2 Archival primaer; SQLite-Fallback bei Ausfall."""
-    if letta_available():
-        hits = _letta_episodic_hits(tenant_id, query)
-        if hits:
-            return hits
-    return _sqlite_episodic_hits(query)
 
 
 async def run(
@@ -202,7 +132,11 @@ async def run(
     plan = route_query(query)
 
     graph_hits = _graph_hits(tenant_id, query, plan) if plan.use_g else []
-    episodic_hits = _episodic_hits(tenant_id, query) if plan.use_letta else []
+
+    episodic_limit = 10 if plan.use_letta else 5
+    if plan.use_g and not plan.use_l1 and not plan.use_letta:
+        episodic_limit = 0
+    episodic_hits = search_episodic(tenant_id, query, limit=episodic_limit) if episodic_limit else []
 
     curated: list[dict[str, Any]] = []
     raw_files: list[dict[str, Any]] = []

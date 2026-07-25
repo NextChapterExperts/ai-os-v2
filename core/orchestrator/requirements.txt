@@ -7,3 +7,4 @@ fastembed>=0.8.0
 psycopg[binary]>=3.2.0
 pyyaml>=6.0
 python-frontmatter>=1.1.0
+pytest>=8.0

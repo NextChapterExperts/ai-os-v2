@@ -10,6 +10,8 @@ from typing import Any
 
 from .letta_client import insert_episode, is_available as letta_available
 
+from .sqlite_schema import ensure_schema
+
 MEMORY_DB = os.environ.get("AIOS_MEMORY_DB", "/opt/ai-os/memory/memory.db")
 DEFAULT_PROJECT = os.environ.get("AIOS_MEMORY_PROJECT", "home-peter-Projekte")
 
@@ -20,22 +22,7 @@ def _chunk_id(chat_id: str, role: str, body: str) -> str:
 
 
 def _ensure_schema(con: sqlite3.Connection) -> None:
-    con.execute(
-        """
-        CREATE TABLE IF NOT EXISTS chunks (
-            id TEXT PRIMARY KEY,
-            source TEXT NOT NULL,
-            project_id TEXT NOT NULL DEFAULT 'unknown',
-            chat_id TEXT NOT NULL,
-            role TEXT NOT NULL,
-            title TEXT NOT NULL DEFAULT '',
-            body TEXT NOT NULL,
-            source_path TEXT NOT NULL,
-            created_at TEXT NOT NULL,
-            ingested_at TEXT NOT NULL
-        )
-        """
-    )
+    ensure_schema(con)
 
 
 def persist_chat_turn(

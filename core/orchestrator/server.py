@@ -233,3 +233,49 @@ async def post_chat_completions(req: ChatCompletionRequest) -> dict[str, Any]:
         ) from exc
     except Exception as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
+class SearchRequest(BaseModel):
+    query: str
+    tenant_id: str = "nextchapter"
+    limit: int = 8
+
+
+@app.post("/v1/search")
+async def post_search(req: SearchRequest) -> dict[str, Any]:
+    """Dedizierter Unified-Search-Endpoint (Phase 1, ROADMAP §6.5)."""
+    from .handlers import unified_search
+
+    return await unified_search.run({}, req.tenant_id, {"query": req.query, "limit": req.limit})
+
+
+class MemorySyncRequest(BaseModel):
+    tenant_id: str = "nextchapter"
+    since: str | None = None
+    source: str | None = None
+    limit: int | None = None
+    dry_run: bool = False
+    force: bool = False
+
+
+@app.post("/v1/memory/sync-letta")
+async def post_memory_sync_letta(req: MemorySyncRequest) -> dict[str, Any]:
+    """SQLite chunks → Letta L2 (Backfill / Live-Sync)."""
+    from core.memory_gateway.letta_sync import sync_sqlite_to_letta
+
+    return sync_sqlite_to_letta(
+        req.tenant_id,
+        since=req.since,
+        source=req.source,
+        limit=req.limit,
+        dry_run=req.dry_run,
+        force=req.force,
+    )
+
+
+@app.post("/v1/memory/rebuild-fts")
+async def post_memory_rebuild_fts() -> dict[str, Any]:
+    """FTS5-Index aus chunks neu aufbauen."""
+    from core.memory_gateway.sqlite_schema import rebuild_fts
+
+    return rebuild_fts()

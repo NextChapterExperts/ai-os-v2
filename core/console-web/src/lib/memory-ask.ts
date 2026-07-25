@@ -316,7 +316,7 @@ Details nur wenn der Nutzer danach fragt.`;
       produced_by: "console-memory-ask",
       max_tokens: detail ? 900 : 280,
       temperature: 0.2,
-      persist: true,
+      persist: false,
     }),
     signal: AbortSignal.timeout(120_000),
   });

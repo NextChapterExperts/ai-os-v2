@@ -21,6 +21,7 @@ from typing import Any
 
 from core.memory_gateway.audit import write_llm_audit
 from core.memory_gateway.letta_client import format_archival_episode, insert_archival, is_available as letta_available
+from core.memory_gateway.sqlite_schema import ensure_schema
 
 MEMORY_DB = os.environ.get("AIOS_MEMORY_DB", "/opt/ai-os/memory/memory.db")
 INBOX_ROOT = Path(os.environ.get("AIOS_INGEST_INBOX", "/opt/ai-os/ingest/inbox"))
@@ -111,22 +112,7 @@ def _upsert_chunks(
     written: list[str] = []
     con = sqlite3.connect(MEMORY_DB)
     try:
-        con.execute(
-            """
-            CREATE TABLE IF NOT EXISTS chunks (
-                id TEXT PRIMARY KEY,
-                source TEXT NOT NULL,
-                project_id TEXT NOT NULL DEFAULT 'unknown',
-                chat_id TEXT NOT NULL,
-                role TEXT NOT NULL,
-                title TEXT NOT NULL DEFAULT '',
-                body TEXT NOT NULL,
-                source_path TEXT NOT NULL,
-                created_at TEXT NOT NULL,
-                ingested_at TEXT NOT NULL
-            )
-            """
-        )
+        ensure_schema(con)
         upsert = """
             INSERT INTO chunks (id, source, project_id, chat_id, role, title, body, source_path, created_at, ingested_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)

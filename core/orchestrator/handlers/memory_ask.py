@@ -1,4 +1,4 @@
-"""Memory ask — SQLite capture + Memory Gateway (eine Tür, P11/P19)."""
+"""Memory ask — Letta L2 + SQLite (merged) + Memory Gateway."""
 
 from __future__ import annotations
 
@@ -6,9 +6,9 @@ from typing import Any
 
 from core.memory_gateway.client import chat_completion
 from core.memory_gateway.config import OLLAMA_MODEL
-from core.memory_gateway.letta_client import is_available as letta_available, search_archival
+from core.memory_gateway.episodic_search import context_chunks
 
-from ..memory_store import DEFAULT_PROJECT, chunks_in_window, resolve_window
+from ..memory_store import DEFAULT_PROJECT, resolve_window
 
 
 async def _summarize(question: str, chunks: list[dict[str, Any]], tenant_id: str) -> tuple[str, str]:
@@ -18,7 +18,7 @@ async def _summarize(question: str, chunks: list[dict[str, Any]], tenant_id: str
     ctx_parts = []
     used = 0
     for c in chunks:
-        block = f"[user] {str(c.get('body', ''))[:220]}"
+        block = f"[{c.get('role', 'user')}] {str(c.get('body', ''))[:220]}"
         if used + len(block) > 4500:
             break
         ctx_parts.append(block)
@@ -42,24 +42,9 @@ async def _summarize(question: str, chunks: list[dict[str, Any]], tenant_id: str
         produced_by="memory_ask",
         max_tokens=280,
         temperature=0.2,
+        persist=False,
     )
     return result["content"] or "Keine Antwort.", result.get("model") or OLLAMA_MODEL
-
-
-def _letta_context_chunks(tenant_id: str, question: str, start: str, end: str) -> list[dict[str, Any]]:
-    episodes = search_archival(tenant_id, question, count=12, start=start, end=end)
-    return [
-        {
-            "id": ep.get("id") or f"letta-{idx}",
-            "role": "user",
-            "title": str(ep.get("text") or "")[:80],
-            "body": str(ep.get("text") or ""),
-            "chat_id": "letta-archival",
-            "source": "letta",
-            "ingested_at": ep.get("created_at") or "",
-        }
-        for idx, ep in enumerate(episodes)
-    ]
 
 
 async def run(
@@ -69,14 +54,10 @@ async def run(
 ) -> dict[str, Any]:
     question = str(params.get("query") or params.get("intent_text") or "Was haben wir heute gemacht?")
     project_id = str(params.get("project_id") or DEFAULT_PROJECT)
-    start, end, mode = resolve_window(question)
-    memory_backend = "sqlite"
-    chunks = chunks_in_window(project_id, start, end)
-    if letta_available():
-        letta_chunks = _letta_context_chunks(tenant_id, question, start, end)
-        if letta_chunks:
-            chunks = letta_chunks
-            memory_backend = "letta"
+    _start, _end, mode = resolve_window(question)
+    chunks, memory_backend = context_chunks(
+        tenant_id, question, project_id=project_id, limit=20
+    )
     answer, model = await _summarize(question, chunks, tenant_id)
     sources = [
         {

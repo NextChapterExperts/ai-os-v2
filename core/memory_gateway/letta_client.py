@@ -250,14 +250,21 @@ def _keyword_match(text: str, query: str) -> bool:
     return any(t in lower_text for t in tokens)
 
 
-def list_archival(tenant_id: str, *, limit: int = 100, agent_id: str | None = None) -> list[dict[str, Any]]:
+def list_archival(
+    tenant_id: str,
+    *,
+    limit: int = 100,
+    max_items: int = 2000,
+    agent_id: str | None = None,
+) -> list[dict[str, Any]]:
     if not LETTA_ENABLED:
         return []
     aid = agent_id or get_or_create_agent(tenant_id)
     if not aid:
         return []
+    fetch_limit = min(max(max_items, limit), 500)
     try:
-        rows = _request("GET", f"/v1/agents/{aid}/archival?limit={limit}") or []
+        rows = _request("GET", f"/v1/agents/{aid}/archival?limit={fetch_limit}") or []
         out: list[dict[str, Any]] = []
         for row in rows:
             text = str(row.get("text") or "")
@@ -270,7 +277,7 @@ def list_archival(tenant_id: str, *, limit: int = 100, agent_id: str | None = No
                     "agent_id": aid,
                 }
             )
-        return out
+        return out[:max_items]
     except Exception:
         log.debug("Letta list_archival fehlgeschlagen", exc_info=True)
         return []
@@ -291,7 +298,7 @@ def search_archival(
     wir listen paginiert und filtern clientseitig. Bei wachsendem Archiv kann
     später auf Letta-Semantic-Search umgestellt werden.
     """
-    rows = list_archival(tenant_id, limit=max(count * 10, 100), agent_id=agent_id)
+    rows = list_archival(tenant_id, limit=count, max_items=max(count * 20, 500), agent_id=agent_id)
     if not rows:
         return []
 

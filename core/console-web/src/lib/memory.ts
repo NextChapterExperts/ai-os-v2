@@ -107,6 +107,12 @@ export function getMemoryDb(): Database.Database {
       INSERT INTO chunks_fts(chunks_fts, rowid, title, body, source, chat_id)
       VALUES ('delete', old.rowid, old.title, old.body, old.source, old.chat_id);
     END;
+    CREATE TRIGGER IF NOT EXISTS chunks_au AFTER UPDATE ON chunks BEGIN
+      INSERT INTO chunks_fts(chunks_fts, rowid, title, body, source, chat_id)
+      VALUES ('delete', old.rowid, old.title, old.body, old.source, old.chat_id);
+      INSERT INTO chunks_fts(rowid, title, body, source, chat_id)
+      VALUES (new.rowid, new.title, new.body, new.source, new.chat_id);
+    END;
     CREATE TABLE IF NOT EXISTS ingest_files (
       path TEXT PRIMARY KEY,
       mtime_ms INTEGER NOT NULL,

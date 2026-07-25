@@ -1,7 +1,6 @@
 """Zugriff auf die Cursor-Capture-SQLite (memory.db) — gemeinsam genutzt von
 `handlers/memory_ask.py` (Lagebild-Ask) und `handlers/unified_search.py`
-(episodischer Fallback, solange Letta L2/L3 nicht angebunden ist, siehe
-query_router.py `SearchPlan.use_letta`).
+(episodischer Fallback bzw. Merge mit Letta L2).
 
 Der Projekt-Slug haengt vom Cursor-Workspace-Pfad ab
 (core/capture/cursor-job.mjs `projectIdFromPath`) und aendert sich, wenn sich
@@ -13,10 +12,13 @@ statt wegen eines veralteten Slugs 0 Treffer zu liefern.
 from __future__ import annotations
 
 import os
+import re
 import sqlite3
 from datetime import datetime, timedelta, timezone
 from typing import Any
 from zoneinfo import ZoneInfo
+
+from core.memory_gateway.sqlite_schema import ensure_schema
 
 MEMORY_DB = os.environ.get("AIOS_MEMORY_DB", "/opt/ai-os/memory/memory.db")
 # War lange auf den alten Workspace-Scope "...-1100-AI-OS-V2" fixiert; seit der
@@ -98,8 +100,7 @@ def search_chunks(
     limit: int = 10,
     since_days: int = 30,
 ) -> list[dict[str, Any]]:
-    """Freitext (LIKE) ueber Chunk-Titel/-Body der letzten `since_days` Tage —
-    einfacher episodischer Fallback, solange Letta nicht angebunden ist."""
+    """Freitext (LIKE) ueber Chunk-Titel/-Body der letzten `since_days` Tage."""
     q = (query or "").strip()
     if not os.path.exists(MEMORY_DB) or not q:
         return []
@@ -129,5 +130,53 @@ def search_chunks(
         if not rows and project_id:
             rows = _query(with_project=False)
         return rows
+    finally:
+        con.close()
+
+
+def _escape_fts(query: str) -> str:
+    tokens = [t for t in re.split(r"\W+", query.strip()) if len(t) >= 2]
+    if not tokens:
+        return ""
+    return " AND ".join(f'"{t.replace(chr(34), "")}"' for t in tokens[:12])
+
+
+def search_chunks_fts(
+    query: str,
+    project_id: str | None = None,
+    limit: int = 10,
+) -> list[dict[str, Any]]:
+    """FTS5-Suche über chunks_fts (schneller und genauer als LIKE)."""
+    fts_q = _escape_fts(query)
+    if not fts_q or not os.path.exists(MEMORY_DB):
+        return []
+
+    con = ensure_schema()
+    con.row_factory = sqlite3.Row
+    try:
+        cols = {r[1] for r in con.execute("PRAGMA table_info(chunks)")}
+        has_project_col = "project_id" in cols
+
+        def _query(with_project: bool) -> list[dict[str, Any]]:
+            sql = (
+                "SELECT c.id, c.role, c.title, c.body, c.chat_id, c.source, "
+                "c.ingested_at, c.project_id, c.source_path "
+                "FROM chunks_fts f JOIN chunks c ON c.rowid = f.rowid "
+                "WHERE chunks_fts MATCH ?"
+            )
+            params: list[Any] = [fts_q]
+            if with_project and has_project_col and project_id:
+                sql += " AND c.project_id = ?"
+                params.append(project_id)
+            sql += " ORDER BY rank LIMIT ?"
+            params.append(limit)
+            return [dict(r) for r in con.execute(sql, params).fetchall()]
+
+        rows = _query(with_project=True)
+        if not rows and project_id:
+            rows = _query(with_project=False)
+        return rows
+    except sqlite3.OperationalError:
+        return search_chunks(query, project_id=project_id, limit=limit)
     finally:
         con.close()
