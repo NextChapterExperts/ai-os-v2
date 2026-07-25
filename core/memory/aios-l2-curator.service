@@ -1,0 +1,12 @@
+[Unit]
+Description=AI-OS L2-Curator (täglich)
+After=network.target aios-orchestrator.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/Projekte/1100-AI-OS-V2
+Environment=PYTHONPATH=%h/Projekte/1100-AI-OS-V2
+ExecStart=%h/Projekte/1100-AI-OS-V2/.venv/bin/python %h/Projekte/1100-AI-OS-V2/scripts/run-l2-curator.py
+
+[Install]
+WantedBy=default.target

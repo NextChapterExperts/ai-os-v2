@@ -31,7 +31,7 @@ Zusätzlich: **File-Ingest-Watcher** (Rohdatei-Suche über `Projekte/active/`, B
 Zusätzlich: **Unified Search** (`unified_search`-Intent, foederiert Graph + `content` + `raw-files` via Query-Router, Console-Seite `/search`).
 Zusätzlich: **Ingest-Agent + Knowledge Graph** — `core/ingest_agent/` committet Company-Brain-Seed als `org:*`-DataProducts über `POST /v1/dataproduct/commit` in `kg_nodes`/`kg_edges` (Postgres) + Audit-Hash-Chain (`ai_os_log`); published `OrgKnowledgeAsset`s zusätzlich in Qdrant `content`. Details: [09-COMPANY-BRAIN.md](09-COMPANY-BRAIN.md), [03-DATENPRODUKTE.md](03-DATENPRODUKTE.md).
 Zusätzlich: **Graph-Suche + Query-Router + Console-UI** — `core/orchestrator/kg_search.py`, `query_router.py`, Console `/platform/kg`.
-Zusätzlich: **L3-Curator** — `core/memory/l3_curator.py` extrahiert Fakten aus Letta L2 (7d), committet `org:Claim` (confidence≥0.7, Dedup), Profil → Letta Core; Endpoints `POST /v1/memory/curate/l3`, `GET …/pending` (Human-Gate). Script: `scripts/run-l3-curator.py`.
+Zusätzlich: **L2-Curator** — `core/memory/l2_curator.py` verdichtet SQLite-Chunks (24h) zu Tagesdigest in Letta L2; **L3-Curator** extrahiert Fakten → `org:Claim`. APIs: `POST /v1/memory/curate/l2|l3`.
 
 ---
 
@@ -104,7 +104,7 @@ Inference-Default: Ollama LAN (`OLLAMA_HOST` / `OLLAMA_DEFAULT_MODEL` in `.env`)
 - `deploy/platform-agents.yml`, `deploy/agents/*`, `deploy/chat-capture.yml`
 - Services: console-api `:8093`, search `:8094` (dediziert, aktuell Teil des Orchestrators), skill `:8095`, scheduler `:8096`
 - Memory Gateway Persist-Hook ✅ — LangGraph, `POST /v1/compute/mode`, Auto-Router/CAG offen
-- L2-Curator (tägliche Verdichtung) offen — L3 ✅
+- L2-Curator ✅ (täglich 02:00, `scripts/run-l2-curator.py`) — L3 ✅
 - Skill-Store (SK) — `query_router.py` kennt `use_sk`, aber `core/skills/` existiert noch nicht
 - Platform-Gate (`python -m tests.platform_gate`)
 - Gemini/Antigravity Capture ✅ (Poller + `/v1/chat-import` + Console `/platform/capture`); ChatGPT-Export + Drive-Poller offen

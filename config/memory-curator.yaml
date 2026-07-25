@@ -1,3 +1,10 @@
+# Memory-Curators — L2/L3 Destillation (Phase 2 Memory-Agent)
+
+# L2-Curator — Tagesdigest SQLite → Letta Archival
+l2_min_user_chunks: 3
+l2_max_context_chars: 12000
+l2_day_offset: -1          # -1 = gestern (Berlin), passend zu 02:00-Lauf
+
 # L3-Curator — Claim-Pipeline (docs/09-COMPANY-BRAIN.md §12.2)
 claim_min_confidence: 0.7
 profile_min_confidence: 0.75

@@ -287,6 +287,26 @@ class L3CurateRequest(BaseModel):
     force: bool = False
 
 
+class L2CurateRequest(BaseModel):
+    tenant_id: str = "nextchapter"
+    day_offset: int | None = None
+    dry_run: bool = False
+    force: bool = False
+
+
+@app.post("/v1/memory/curate/l2")
+async def post_l2_curate(req: L2CurateRequest) -> dict[str, Any]:
+    """L2-Curator — L1-Chunks (24h) zu Tagesdigest in Letta Archival."""
+    from core.memory.l2_curator import run_l2_curate
+
+    return await run_l2_curate(
+        req.tenant_id,
+        day_offset=req.day_offset,
+        dry_run=req.dry_run,
+        force=req.force,
+    )
+
+
 @app.post("/v1/memory/curate/l3")
 async def post_l3_curate(req: L3CurateRequest) -> dict[str, Any]:
     """L3-Curator — Fakten aus L2 Archival → org:Claim + Letta Core."""
