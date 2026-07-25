@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 
 type Todo = { text: string; done: boolean };
 
@@ -78,38 +78,71 @@ function formatDate(iso: string): string {
   }).format(d);
 }
 
+type FilterState = {
+  q: string;
+  unassigned: boolean;
+  openTodo: boolean;
+};
+
 export function MeetingsPanel() {
   const [data, setData] = useState<MeetingsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const [q, setQ] = useState("");
-  const [filterUnassigned, setFilterUnassigned] = useState(false);
-  const [filterOpenTodo, setFilterOpenTodo] = useState(false);
+  const [queryInput, setQueryInput] = useState("");
+  const [filters, setFilters] = useState<FilterState>({
+    q: "",
+    unassigned: false,
+    openTodo: false,
+  });
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
+  const fetchSeq = useRef(0);
 
-  const load = useCallback(() => {
+  const fetchMeetings = useCallback((next: FilterState) => {
+    const seq = ++fetchSeq.current;
     startTransition(async () => {
       try {
         setError(null);
         const params = new URLSearchParams();
-        if (q.trim()) params.set("q", q.trim());
-        if (filterUnassigned) params.set("unassigned", "true");
-        if (filterOpenTodo) params.set("has_open_todo", "true");
+        if (next.q.trim()) params.set("q", next.q.trim());
+        if (next.unassigned) params.set("unassigned", "true");
+        if (next.openTodo) params.set("has_open_todo", "true");
         const res = await fetch(`/api/meetings?${params}`, { cache: "no-store" });
         const json = (await res.json()) as MeetingsResponse;
+        if (seq !== fetchSeq.current) return;
         if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
         setData(json);
       } catch (err) {
+        if (seq !== fetchSeq.current) return;
         setError(err instanceof Error ? err.message : "Laden fehlgeschlagen");
       }
     });
-  }, [q, filterUnassigned, filterOpenTodo]);
+  }, []);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    fetchMeetings(filters);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- initial load only
+
+  const applySearch = () => {
+    const next = { ...filters, q: queryInput.trim() };
+    setFilters(next);
+    fetchMeetings(next);
+  };
+
+  const toggleUnassigned = () => {
+    const next = { ...filters, unassigned: !filters.unassigned };
+    setFilters(next);
+    fetchMeetings(next);
+  };
+
+  const toggleOpenTodo = () => {
+    const next = { ...filters, openTodo: !filters.openTodo };
+    setFilters(next);
+    fetchMeetings(next);
+  };
+
+  const refresh = () => fetchMeetings(filters);
 
   const engagementOptions = data?.engagement_options ?? [];
 
@@ -182,7 +215,7 @@ export function MeetingsPanel() {
         setShowForm(false);
         setEditingId(null);
         setForm(EMPTY_FORM);
-        load();
+        refresh();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Speichern fehlgeschlagen");
       }
@@ -202,7 +235,7 @@ export function MeetingsPanel() {
           setShowForm(false);
           setEditingId(null);
         }
-        load();
+        refresh();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Löschen fehlgeschlagen");
       }
@@ -215,7 +248,10 @@ export function MeetingsPanel() {
         <div>
           <p className="muted mb-1 text-xs uppercase tracking-[0.16em]">Inbox</p>
           <p className="muted m-0 text-sm">
-            {data?.count ?? 0} Meetings · Projekt-Zuordnung optional
+            {data?.count ?? 0} Meetings
+            {filters.unassigned ? " · ohne Projekt" : ""}
+            {filters.openTodo ? " · offene To-dos" : ""}
+            {filters.q ? ` · Suche „${filters.q}"` : ""}
           </p>
         </div>
         <button type="button" className="btn-primary" onClick={openCreate}>
@@ -227,25 +263,34 @@ export function MeetingsPanel() {
         <input
           className="meetings-search"
           placeholder="Suche Titel, Teilnehmer, Summary, Tags…"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
+          value={queryInput}
+          onChange={(e) => setQueryInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              applySearch();
+            }
+          }}
         />
-        <button type="button" className="btn-ghost" onClick={load} disabled={pending}>
+        <button type="button" className="btn-ghost" onClick={applySearch} disabled={pending}>
+          Suchen
+        </button>
+        <button type="button" className="btn-ghost" onClick={refresh} disabled={pending}>
           Aktualisieren
         </button>
         <button
           type="button"
           className="btn-ghost"
-          data-active={filterUnassigned ? "true" : "false"}
-          onClick={() => setFilterUnassigned((v) => !v)}
+          data-active={filters.unassigned ? "true" : "false"}
+          onClick={toggleUnassigned}
         >
           Ohne Projekt
         </button>
         <button
           type="button"
           className="btn-ghost"
-          data-active={filterOpenTodo ? "true" : "false"}
-          onClick={() => setFilterOpenTodo((v) => !v)}
+          data-active={filters.openTodo ? "true" : "false"}
+          onClick={toggleOpenTodo}
         >
           Offene To-dos
         </button>
@@ -395,7 +440,11 @@ export function MeetingsPanel() {
       </div>
 
       {data && data.meetings.length === 0 && !pending ? (
-        <p className="muted mt-4">Noch keine Meetings — oben erfassen.</p>
+        <p className="muted mt-4">
+          {filters.unassigned || filters.openTodo || filters.q
+            ? "Keine Treffer für diesen Filter."
+            : "Noch keine Meetings — oben erfassen."}
+        </p>
       ) : null}
     </div>
   );
