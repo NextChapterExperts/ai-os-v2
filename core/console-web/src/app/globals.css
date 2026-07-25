@@ -454,3 +454,92 @@ body {
 .context-pre-json {
   max-height: 20rem;
 }
+
+.meetings-search {
+  flex: 1 1 16rem;
+  min-width: 12rem;
+  border: 1px solid var(--line);
+  background: color-mix(in oklab, white 70%, transparent);
+  padding: 0.65rem 0.85rem;
+  font: inherit;
+}
+
+.meetings-form {
+  border: 1px solid var(--line);
+  padding: 1.25rem;
+  background: color-mix(in oklab, white 45%, transparent);
+}
+
+.meetings-field {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.meetings-field > span,
+.meetings-field > legend {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.meetings-field input,
+.meetings-field textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: color-mix(in oklab, white 80%, transparent);
+  padding: 0.65rem 0.85rem;
+  font: inherit;
+  resize: vertical;
+}
+
+.meetings-field fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.meetings-checkgrid {
+  display: grid;
+  gap: 0.5rem;
+  max-height: 14rem;
+  overflow: auto;
+  padding: 0.5rem 0;
+}
+
+.meetings-check {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 0.5rem;
+  align-items: baseline;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.meetings-check .mono {
+  grid-column: 2;
+}
+
+.meetings-row {
+  grid-template-columns: 1fr auto !important;
+  align-items: start !important;
+}
+
+.meetings-row-title {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  color: var(--ink);
+}
+
+.meetings-row-title:hover {
+  color: var(--signal);
+}
+
+.btn-ghost[data-active="true"] {
+  border-color: var(--signal);
+  color: var(--signal);
+}

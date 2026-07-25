@@ -109,6 +109,112 @@ async def list_engagements(status: str | None = None) -> dict[str, Any]:
     return {"engagements": _list(status=status)}
 
 
+class MeetingTodo(BaseModel):
+    text: str
+    done: bool = False
+
+
+class MeetingWriteRequest(BaseModel):
+    title: str
+    held_at: str
+    participants: str = ""
+    summary: str = ""
+    engagement_ids: list[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
+    todos: list[MeetingTodo] = Field(default_factory=list)
+
+
+class MeetingPatchRequest(BaseModel):
+    title: str | None = None
+    held_at: str | None = None
+    participants: str | None = None
+    summary: str | None = None
+    engagement_ids: list[str] | None = None
+    tags: list[str] | None = None
+    todos: list[MeetingTodo] | None = None
+
+
+@app.get("/v1/meetings")
+async def meetings_list(
+    tenant_id: str = "nextchapter",
+    q: str | None = None,
+    unassigned: bool = False,
+    has_open_todo: bool = False,
+    limit: int = 100,
+) -> dict[str, Any]:
+    from .meetings_store import list_engagement_options, list_meetings
+
+    items = list_meetings(
+        tenant_id,
+        q=q,
+        unassigned=unassigned,
+        has_open_todo=has_open_todo,
+        limit=limit,
+    )
+    return {
+        "tenant_id": tenant_id,
+        "meetings": items,
+        "count": len(items),
+        "engagement_options": list_engagement_options(),
+    }
+
+
+@app.get("/v1/meetings/{meeting_id}")
+async def meetings_get(meeting_id: str, tenant_id: str = "nextchapter") -> dict[str, Any]:
+    from .meetings_store import get_meeting, list_engagement_options
+
+    item = get_meeting(meeting_id, tenant_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+    return {"meeting": item, "engagement_options": list_engagement_options()}
+
+
+@app.post("/v1/meetings")
+async def meetings_create(req: MeetingWriteRequest, tenant_id: str = "nextchapter") -> dict[str, Any]:
+    from .meetings_store import create_meeting
+
+    try:
+        item = create_meeting(
+            tenant_id,
+            {
+                **req.model_dump(),
+                "todos": [t.model_dump() for t in req.todos],
+            },
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"meeting": item}
+
+
+@app.patch("/v1/meetings/{meeting_id}")
+async def meetings_update(
+    meeting_id: str,
+    req: MeetingPatchRequest,
+    tenant_id: str = "nextchapter",
+) -> dict[str, Any]:
+    from .meetings_store import update_meeting
+
+    payload = req.model_dump(exclude_unset=True)
+    if "todos" in payload and payload["todos"] is not None:
+        payload["todos"] = [t if isinstance(t, dict) else t.model_dump() for t in payload["todos"]]
+    try:
+        item = update_meeting(meeting_id, tenant_id, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    if item is None:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+    return {"meeting": item}
+
+
+@app.delete("/v1/meetings/{meeting_id}")
+async def meetings_delete(meeting_id: str, tenant_id: str = "nextchapter") -> dict[str, Any]:
+    from .meetings_store import delete_meeting
+
+    if not delete_meeting(meeting_id, tenant_id):
+        raise HTTPException(status_code=404, detail="Meeting not found")
+    return {"status": "deleted", "id": meeting_id}
+
+
 class DataProductCommitRequest(BaseModel):
     node_type: str
     tenant_id: str = "nextchapter"
