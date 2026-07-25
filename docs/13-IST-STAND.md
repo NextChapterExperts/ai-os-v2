@@ -1,6 +1,6 @@
 # AI-OS v2 — Ist-Stand
 
-**Stand:** 2026-07-25 · **Repo:** [NextChapterExperts/ai-os-v2](https://github.com/NextChapterExperts/ai-os-v2)  
+**Stand:** 2026-07-25 (L1-Curator + Working/Tactical) · **Repo:** [NextChapterExperts/ai-os-v2](https://github.com/NextChapterExperts/ai-os-v2)  
 **Zweck:** Was heute **wirklich läuft** vs. was in Roadmap/Architektur als **Ziel** spezifiziert ist.  
 **Ziel-Spec bleibt:** [ROADMAP.md](../ROADMAP.md) · [01-ARCHITEKTUR.md](01-ARCHITEKTUR.md) — dieses Dokument überschreibt die Vision nicht, sondern den Fortschritt.
 
@@ -9,7 +9,7 @@
 ## Kurzfazit
 
 Auf der **NCE DEV-VM** läuft ein **Phase-0/1-Skeleton** plus ein **Phase-2-Vorgriff** auf den Company Brain: Infra (Compose), Console, Orchestrator, MCP-Gateway-Stubs, Cursor→SQLite-Capture, Unified Search (`content` + `raw-files` + jetzt **Graph**), Knowledge Graph (`kg_nodes`/`kg_edges`) mit DP-Commit für `org:*`, Query-Router (§12.1) und Console-UI `/platform/kg`.  
-**Noch nicht:** Skill-Store, LangGraph, Platform-Agenten-Laufzeit, SDK, Platform-Gate, echte MCP-Adapter, Appliance-Image-Build. **Memory L1+L2+L3-Curator** ✅ (Claims → KG, Profil → Letta Core).
+**Noch nicht:** Skill-Store, LangGraph, Platform-Agenten-Laufzeit, SDK, Platform-Gate, echte MCP-Adapter, Appliance-Image-Build. **Memory L1+L2+L3-Curator + Working/Tactical** ✅ (Claims → KG, Profil → Letta Core, Qdrant L1 Dedup, Run-Destillation P9).
 
 ---
 
@@ -31,7 +31,7 @@ Zusätzlich: **File-Ingest-Watcher** (Rohdatei-Suche über `Projekte/active/`, B
 Zusätzlich: **Unified Search** (`unified_search`-Intent, foederiert Graph + `content` + `raw-files` via Query-Router, Console-Seite `/search`).
 Zusätzlich: **Ingest-Agent + Knowledge Graph** — `core/ingest_agent/` committet Company-Brain-Seed als `org:*`-DataProducts über `POST /v1/dataproduct/commit` in `kg_nodes`/`kg_edges` (Postgres) + Audit-Hash-Chain (`ai_os_log`); published `OrgKnowledgeAsset`s zusätzlich in Qdrant `content`. Details: [09-COMPANY-BRAIN.md](09-COMPANY-BRAIN.md), [03-DATENPRODUKTE.md](03-DATENPRODUKTE.md).
 Zusätzlich: **Graph-Suche + Query-Router + Console-UI** — `core/orchestrator/kg_search.py`, `query_router.py`, Console `/platform/kg`.
-Zusätzlich: **L2-Curator** — `core/memory/l2_curator.py` verdichtet SQLite-Chunks (24h) zu Tagesdigest in Letta L2; **L3-Curator** extrahiert Fakten → `org:Claim`. APIs: `POST /v1/memory/curate/l2|l3`.
+Zusätzlich: **L2-Curator** — `core/memory/l2_curator.py` verdichtet SQLite-Chunks (24h) zu Tagesdigest in Letta L2; **L3-Curator** extrahiert Fakten → `org:Claim`. **L1-Curator** — Qdrant `content` Stats/Dedup/Rolling 90d. **Working/Tactical-Memory** — flüchtiger Run-State, Destillation am Dispatch-Ende (P9). APIs: `POST /v1/memory/curate/l1|l2|l3`, `GET /v1/memory/l1/stats`.
 
 ---
 

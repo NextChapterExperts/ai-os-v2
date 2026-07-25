@@ -3,7 +3,7 @@
 **Für:** LLMs, Entwickler, die das System von Grund auf bauen  
 **Zweck:** Vollständige technische Spezifikation — ausreichend detailliert um ohne zusätzlichen Kontext zu starten  
 **Basis:** AI-OS v1 (../1000-AI-OS) — eingefroren Juli 2026  
-**Stand:** Juli 2026 (aktualisiert 2026-07-25 — Memory-Stack L1+L2+L3: Letta-Anbindung, L2/L3-Curator, Unified Search; Phase 1 Gateway + 1b Capture)  
+**Stand:** Juli 2026 (aktualisiert 2026-07-25 — Memory-Stack komplett: L1-Curator + L2/L3-Curator + Working/Tactical + Letta + Unified Search; Phase 1 Gateway + 1b Capture)  
 **Modus:** **Eine Implementierung** — keine Alternativen in dieser Roadmap. Jede Entscheidung ist final.  
 **Detail-Spec Company Brain:** [docs/09-COMPANY-BRAIN.md](docs/09-COMPANY-BRAIN.md) · **Memory einfach:** [docs/10-MEMORY-EINFACH.md](docs/10-MEMORY-EINFACH.md)  
 **Erstes Lizenzprodukt (VM):** [docs/11-PLATFORM-VM.md](docs/11-PLATFORM-VM.md)  
@@ -1057,12 +1057,13 @@ modes:
 | Episodische Suche merged (`episodic_search.py`) + `POST /v1/search` | ✅ |
 | **L2-Curator** Tagesdigest → Letta (`core/memory/l2_curator.py`, tägl. 02:00) | ✅ |
 | **L3-Curator** Fakten → `org:Claim` + Letta Core (`core/memory/l3_curator.py`) | ✅ |
+| **L1-Curator** Qdrant Dedup + Rolling 90d (`core/memory/l1_curator.py`, So 03:00) | ✅ |
+| **Working/Tactical-Memory** + Run-Destillation P9 (`run_distill.py`, Dispatch-Hook) | ✅ |
 | L3 Human-Gate UI (Pending-Claims in Console) | ⏳ |
 | `POST /v1/compute/mode` (Tenant-Modus wechseln) | ⏳ |
 | Auto-Router / CAG / PROD-Outbound-Block | ⏳ Phase 1+ |
-| L1-Curator (Qdrant rolling) · Working/Tactical-Memory | ⏳ Phase 2 |
 
-**Nächster Roadmap-Punkt:** Phase 2 — Platform-Agenten + Platform-Gate (§7).
+**Nächster Roadmap-Punkt:** Phase 2 — Platform-Agenten-Laufzeit + Platform-Gate (§7); Memory-Agent L1/L2/L3 + Working/Tactical ✅.
 
 ### 6.7 LangFuse-Tracing (ab Phase 1 — Pflicht)
 
@@ -1148,7 +1149,7 @@ Gemini / Antigravity / ChatGPT-Export
 | Letta Live-Sync (Cursor → L2) + Backfill | ✅ |
 | `POST /v1/memory/sync-letta` · `rebuild-fts` | ✅ |
 
-**Nächster Roadmap-Punkt:** Phase 2 — Platform-Agenten-Laufzeit + Platform-Gate (§7); Memory-Curators L2/L3 ✅, L1-Curator + Working-Memory offen.
+**Nächster Roadmap-Punkt:** Phase 2 — Platform-Agenten-Laufzeit + Platform-Gate (§7); Memory-Curators L1/L2/L3 ✅, Working/Tactical ✅.
 
 ---
 
@@ -1298,8 +1299,12 @@ class L3Curator:
 | `POST /v1/memory/curate/l2` · `POST /v1/memory/curate/l3` | ✅ |
 | `GET /v1/memory/curate/l3/pending` (Human-Gate API) | ✅ |
 | systemd `aios-l2-curator.timer` (02:00) · `aios-l3-curator.timer` (So 04:00) | ✅ |
-| `core/memory/l1_curator.py` (Qdrant rolling) | ⏳ |
-| `working_memory.py` / `tactical_memory.py` | ⏳ |
+| `core/memory/l1_curator.py` (Qdrant rolling) | ✅ |
+| `working_memory.py` / `tactical_memory.py` | ✅ |
+| `run_distill.py` — Run-Ende → Letta L2 oder Audit (P9) | ✅ |
+| `POST /v1/memory/curate/l1` · `GET /v1/memory/l1/stats` | ✅ |
+| `GET /v1/memory/working/{run_id}` · `GET /v1/memory/tactical/{wf}` | ✅ |
+| systemd `aios-l1-curator.timer` (So 03:00) | ✅ |
 | Console Decision-Inbox / Claim-Gate UI | ⏳ |
 
 ### 7.4 Guardrails-Agent

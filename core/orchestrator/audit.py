@@ -15,7 +15,13 @@ AUDIT_PATH = Path(
 )
 
 
-def write_agent_run(intent: str, result: dict[str, Any], tenant_id: str) -> None:
+def write_agent_run(
+    intent: str,
+    result: dict[str, Any],
+    tenant_id: str,
+    *,
+    extra: dict[str, Any] | None = None,
+) -> None:
     AUDIT_PATH.parent.mkdir(parents=True, exist_ok=True)
     entry = {
         "ts": datetime.now(timezone.utc).isoformat(),
@@ -25,5 +31,7 @@ def write_agent_run(intent: str, result: dict[str, Any], tenant_id: str) -> None
         "answer_preview": str(result.get("answer", ""))[:240],
         "sourceCount": result.get("sourceCount", 0),
     }
+    if extra:
+        entry.update(extra)
     with AUDIT_PATH.open("a", encoding="utf-8") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")

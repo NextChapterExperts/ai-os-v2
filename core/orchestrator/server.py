@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import uuid
 from typing import Any
 
 import httpx
@@ -42,10 +43,33 @@ async def health() -> dict[str, str]:
 
 @app.post("/v1/dispatch", response_model=DispatchResponse)
 async def dispatch_intent(req: DispatchRequest) -> DispatchResponse:
-    intent = route_intent(req.intent, req.params)
-    context_bundle = resolve_context(intent, req.tenant_id, req.params)
-    result = await dispatch(intent, context_bundle, req.tenant_id, req.params)
-    write_agent_run(intent, result, req.tenant_id)
+    from core.memory.run_distill import distill_after_run
+    from core.memory.tactical_memory import ensure_workflow, record_from_params
+    from core.memory.working_memory import append_from_dispatch, ensure_run
+
+    run_id = str(req.params.get("run_id") or req.params.get("session_id") or uuid.uuid4())
+    workflow_run_id = req.params.get("workflow_run_id")
+    params = {**req.params, "run_id": run_id}
+
+    intent = route_intent(req.intent, params)
+    ensure_run(run_id, req.tenant_id, intent=intent)
+    if workflow_run_id:
+        ensure_workflow(str(workflow_run_id), req.tenant_id, name=intent)
+
+    context_bundle = resolve_context(intent, req.tenant_id, params)
+    result = await dispatch(intent, context_bundle, req.tenant_id, params)
+    append_from_dispatch(run_id, intent, result)
+    if workflow_run_id:
+        record_from_params(str(workflow_run_id), params, result)
+
+    distill = distill_after_run(
+        req.tenant_id,
+        run_id,
+        str(workflow_run_id) if workflow_run_id else None,
+        intent,
+        result,
+    )
+    write_agent_run(intent, result, req.tenant_id, extra={"run_id": run_id, "distill": distill})
     return DispatchResponse(
         status="ok",
         intent=intent,
@@ -322,3 +346,60 @@ async def get_l3_pending_claims() -> dict[str, Any]:
 
     claims = get_pending_claims()
     return {"count": len(claims), "claims": claims}
+
+
+class L1CurateRequest(BaseModel):
+    dry_run: bool = False
+    modes: list[str] = Field(default_factory=lambda: ["stats", "exact_dedup", "semantic_dedup", "rolling"])
+
+
+@app.get("/v1/memory/l1/stats")
+async def get_l1_stats() -> dict[str, Any]:
+    """L1 Qdrant `content` — Statistik."""
+    from core.memory.l1_curator import scan_stats
+
+    return scan_stats()
+
+
+@app.post("/v1/memory/curate/l1")
+async def post_l1_curate(req: L1CurateRequest) -> dict[str, Any]:
+    """L1-Curator — Qdrant Dedup + Rolling Retention."""
+    from core.memory.l1_curator import run_l1_curate
+
+    return run_l1_curate(modes=req.modes, dry_run=req.dry_run)
+
+
+@app.get("/v1/memory/working/{run_id}")
+async def get_working_memory(run_id: str) -> dict[str, Any]:
+    from core.memory.working_memory import get_snapshot
+
+    snap = get_snapshot(run_id)
+    if snap is None:
+        raise HTTPException(status_code=404, detail="Working-Memory nicht gefunden")
+    return snap
+
+
+@app.get("/v1/memory/tactical/{workflow_run_id}")
+async def get_tactical_memory(workflow_run_id: str) -> dict[str, Any]:
+    from core.memory.tactical_memory import get_snapshot
+
+    snap = get_snapshot(workflow_run_id)
+    if snap is None:
+        raise HTTPException(status_code=404, detail="Tactical-Memory nicht gefunden")
+    return snap
+
+
+class WorkingNoteRequest(BaseModel):
+    text: str
+    kind: str = "scratch"
+
+
+@app.post("/v1/memory/working/{run_id}/note")
+async def post_working_note(run_id: str, req: WorkingNoteRequest) -> dict[str, Any]:
+    from core.memory.working_memory import append_note, ensure_run
+
+    ensure_run(run_id, "nextchapter")
+    data = append_note(run_id, req.text, kind=req.kind)
+    if data is None:
+        raise HTTPException(status_code=404, detail="Working-Memory nicht gefunden")
+    return data

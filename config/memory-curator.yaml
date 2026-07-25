@@ -1,4 +1,8 @@
-# Memory-Curators — L2/L3 Destillation (Phase 2 Memory-Agent)
+# Memory-Curators — L1/L2/L3 Destillation (Phase 2 Memory-Agent)
+
+# L1-Curator — Qdrant `content`: Dedup + Rolling Retention
+l1_retention_days: 90
+l1_semantic_dedup_threshold: 0.98
 
 # L2-Curator — Tagesdigest SQLite → Letta Archival
 l2_min_user_chunks: 3

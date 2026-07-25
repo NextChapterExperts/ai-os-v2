@@ -1,0 +1,11 @@
+[Unit]
+Description=AI-OS L1-Curator (Qdrant Dedup + Rolling)
+
+[Service]
+Type=oneshot
+Environment=PYTHONPATH=%h/Projekte/1100-AI-OS-V2
+ExecStart=%h/Projekte/1100-AI-OS-V2/.venv/bin/python %h/Projekte/1100-AI-OS-V2/scripts/run-l1-curator.py
+WorkingDirectory=%h/Projekte/1100-AI-OS-V2
+
+[Install]
+WantedBy=default.target

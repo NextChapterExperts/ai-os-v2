@@ -1,8 +1,11 @@
-"""Context Bundle stub — 6 slices (P1)."""
+"""Context Bundle — 6 slices (P1) + Working/Tactical."""
 
 from __future__ import annotations
 
 from typing import Any
+
+from core.memory.tactical_memory import get_snapshot as get_tactical_snapshot
+from core.memory.working_memory import get_snapshot as get_working_snapshot
 
 from .brain_store import active_engagements, list_offerings
 
@@ -14,6 +17,10 @@ def resolve_context(
 ) -> dict[str, Any]:
     offerings = list_offerings()
     engagements = active_engagements()
+    run_id = params.get("run_id") or params.get("session_id")
+    workflow_run_id = params.get("workflow_run_id")
+    working = get_working_snapshot(str(run_id)) if run_id else None
+    tactical = get_tactical_snapshot(str(workflow_run_id)) if workflow_run_id else None
     return {
         "system": {
             "tenant": tenant_id,
@@ -39,14 +46,18 @@ def resolve_context(
             "intent": intent,
             "params": params,
             "input_refs": params.get("input_dp_refs", []),
+            "run_id": run_id,
+            "workflow_run_id": workflow_run_id,
+            "working": working or {"notes": [], "note": "Kein aktiver Run"},
+            "tactical": tactical or {"steps": [], "note": "Kein aktiver Workflow"},
         },
         "retrieval": {
-            "note": "Unified Search Phase 1 — stub; Memory via capture DB",
+            "note": "Unified Search — Graph + L1 Qdrant + episodisch (Letta/SQLite)",
             "chunks": [],
         },
         "episodic": {
             "recent_runs": [],
-            "note": "Letta episodic later",
+            "note": "L2 Letta Archival via memory_ask / unified_search / Run-Destillation",
         },
         "guardrail": {
             "policies": ["sovereign_default", "sources_on_demand"],
