@@ -3,7 +3,7 @@
 **Für:** LLMs, Entwickler, die das System von Grund auf bauen  
 **Zweck:** Vollständige technische Spezifikation — ausreichend detailliert um ohne zusätzlichen Kontext zu starten  
 **Basis:** AI-OS v1 (../1000-AI-OS) — eingefroren Juli 2026  
-**Stand:** Juli 2026 (aktualisiert 2026-07-25 — Memory Gateway Persist-Hook Phase 1; Isolationsmodell NCE First-Party)  
+**Stand:** Juli 2026 (aktualisiert 2026-07-25 — Memory-Stack L1+L2+L3: Letta-Anbindung, L2/L3-Curator, Unified Search; Phase 1 Gateway + 1b Capture)  
 **Modus:** **Eine Implementierung** — keine Alternativen in dieser Roadmap. Jede Entscheidung ist final.  
 **Detail-Spec Company Brain:** [docs/09-COMPANY-BRAIN.md](docs/09-COMPANY-BRAIN.md) · **Memory einfach:** [docs/10-MEMORY-EINFACH.md](docs/10-MEMORY-EINFACH.md)  
 **Erstes Lizenzprodukt (VM):** [docs/11-PLATFORM-VM.md](docs/11-PLATFORM-VM.md)  
@@ -1053,8 +1053,14 @@ modes:
 | LangFuse-Trace (optional bei gesetzten Keys) | ✅ Hook, Keys oft leer auf DEV |
 | `memory_ask` + Console `memory-ask.ts` über Gateway | ✅ |
 | LiteLLM-Primary + Ollama-Fallback | ✅ |
+| Letta L2 (`letta_client.py`) + SQLite-Backfill/Sync | ✅ |
+| Episodische Suche merged (`episodic_search.py`) + `POST /v1/search` | ✅ |
+| **L2-Curator** Tagesdigest → Letta (`core/memory/l2_curator.py`, tägl. 02:00) | ✅ |
+| **L3-Curator** Fakten → `org:Claim` + Letta Core (`core/memory/l3_curator.py`) | ✅ |
+| L3 Human-Gate UI (Pending-Claims in Console) | ⏳ |
 | `POST /v1/compute/mode` (Tenant-Modus wechseln) | ⏳ |
 | Auto-Router / CAG / PROD-Outbound-Block | ⏳ Phase 1+ |
+| L1-Curator (Qdrant rolling) · Working/Tactical-Memory | ⏳ Phase 2 |
 
 **Nächster Roadmap-Punkt:** Phase 2 — Platform-Agenten + Platform-Gate (§7).
 
@@ -1080,10 +1086,14 @@ curl -X POST http://localhost:8091/v1/dispatch \
   -H 'Content-Type: application/json' \
   -d '{"intent": "ping", "tenant_id": "platform-test"}'
 
-# Unified Search
-curl -X POST http://localhost:8094/v1/search \
+# Unified Search (Orchestrator)
+curl -X POST http://localhost:8091/v1/search \
   -H 'Content-Type: application/json' \
-  -d '{"query": "ping", "tenant_id": "platform-test"}'
+  -d '{"query": "Memory Gateway", "tenant_id": "nextchapter"}'
+
+# L2/L3 Curator (manuell)
+python3 scripts/run-l2-curator.py --dry-run
+python3 scripts/run-l3-curator.py --dry-run
 
 # Memory Gateway — Default lokal
 curl http://localhost:8091/v1/models        # → ai-os-sovereign (default)
@@ -1116,8 +1126,9 @@ curl http://localhost:8092                # → HTML
 Gemini / Antigravity / ChatGPT-Export
         → chat-capture (diese VM)
         → POST /v1/chat-import
-        → L1 Qdrant + L2 Letta + A   (Volumes dieser VM = dieses Company Brain)
-        → (später) L3-Curator → org:Claim nur bei Gate
+        → SQLite L1 (FTS) + L2 Letta Archival + Audit
+        → L2-Curator (tägl.) → Tagesdigest in Letta
+        → L3-Curator (wöch.) → org:Claim via DP-Commit (Human-Gate bei supports_refs)
 ```
 
 **Nicht:** Capture von NCE-DEV in eine Kunden-PROD-DB schreiben.
@@ -1134,8 +1145,10 @@ Gemini / Antigravity / ChatGPT-Export
 | `deploy/chat-capture.yml` (Docker optional) | ✅ Scaffold |
 | ChatGPT-Export-Parser | ⏳ |
 | Drive-Poller Gemini (v1 C2) | ⏳ |
+| Letta Live-Sync (Cursor → L2) + Backfill | ✅ |
+| `POST /v1/memory/sync-letta` · `rebuild-fts` | ✅ |
 
-**Nächster Roadmap-Punkt:** Phase 2 — Platform-Agenten + Platform-Gate (§7).
+**Nächster Roadmap-Punkt:** Phase 2 — Platform-Agenten-Laufzeit + Platform-Gate (§7); Memory-Curators L2/L3 ✅, L1-Curator + Working-Memory offen.
 
 ---
 
@@ -1274,6 +1287,20 @@ class L3Curator:
         for fact in facts:
             await kg.upsert_fact(fact, tenant_id)
 ```
+
+**Implementierungsstand (2026-07-25):**
+
+| Baustein | Status |
+|----------|--------|
+| `core/memory/l2_curator.py` — SQLite 24h → Tagesdigest → Letta L2 | ✅ |
+| `core/memory/l3_curator.py` — L2 → `org:Claim` + Letta Core | ✅ |
+| `config/memory-curator.yaml` | ✅ |
+| `POST /v1/memory/curate/l2` · `POST /v1/memory/curate/l3` | ✅ |
+| `GET /v1/memory/curate/l3/pending` (Human-Gate API) | ✅ |
+| systemd `aios-l2-curator.timer` (02:00) · `aios-l3-curator.timer` (So 04:00) | ✅ |
+| `core/memory/l1_curator.py` (Qdrant rolling) | ⏳ |
+| `working_memory.py` / `tactical_memory.py` | ⏳ |
+| Console Decision-Inbox / Claim-Gate UI | ⏳ |
 
 ### 7.4 Guardrails-Agent
 
