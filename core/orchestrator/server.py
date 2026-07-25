@@ -272,6 +272,53 @@ async def meetings_delete_attachment(
     return {"status": "deleted", "id": attachment_id}
 
 
+class ParticipantsProcessRequest(BaseModel):
+    raw: str
+    enrich: bool = True
+
+
+class ParticipantsCommitRequest(BaseModel):
+    items: list[dict[str, Any]] = Field(default_factory=list)
+    meeting_id: str | None = None
+    update_meeting: bool = True
+
+
+@app.post("/v1/meetings/participants/process")
+async def meetings_participants_process(
+    req: ParticipantsProcessRequest,
+    tenant_id: str = "nextchapter",
+) -> dict[str, Any]:
+    from .participant_contacts import process_participant_raw
+
+    return await process_participant_raw(tenant_id, req.raw, enrich=req.enrich)
+
+
+@app.post("/v1/meetings/participants/commit")
+async def meetings_participants_commit(
+    req: ParticipantsCommitRequest,
+    tenant_id: str = "nextchapter",
+) -> dict[str, Any]:
+    from .meetings_store import update_meeting
+    from .participant_contacts import commit_participants, participants_display_from_items
+
+    if not req.items:
+        raise HTTPException(status_code=400, detail="items required")
+
+    result = commit_participants(tenant_id, req.items, produced_by="meetings-panel")
+    meeting = None
+    if req.meeting_id and req.update_meeting:
+        display = result.get("participants_display") or participants_display_from_items(req.items)
+        meeting = update_meeting(
+            req.meeting_id,
+            tenant_id,
+            {
+                "participants": display,
+                "participant_refs": result.get("participant_refs") or [],
+            },
+        )
+    return {**result, "meeting": meeting}
+
+
 class DataProductCommitRequest(BaseModel):
     node_type: str
     tenant_id: str = "nextchapter"

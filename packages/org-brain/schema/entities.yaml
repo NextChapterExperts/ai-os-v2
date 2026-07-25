@@ -10,13 +10,14 @@ entities:
   org:Person:
     key: person_id
     required: [name]
-    optional: [role, email]
+    optional: [role, email, linkedin_url, company_website, org_ref]
     dp_class: OrgPerson
 
   org:Organization:
     key: org_id
     required: [name, kind]
     kind_enum: [customer, partner, university, internal]
+    optional: [website]
     dp_class: OrgOrganization
 
   org:Offering:

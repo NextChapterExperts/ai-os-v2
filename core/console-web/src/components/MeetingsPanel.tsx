@@ -17,6 +17,7 @@ type Meeting = {
   title: string;
   held_at: string;
   participants: string;
+  participant_refs?: string[];
   summary: string;
   engagement_ids: string[];
   tags: string[];
@@ -115,6 +116,21 @@ type FilterState = {
   openTodo: boolean;
 };
 
+type ParsedParticipant = {
+  email: string;
+  name: string;
+  domain: string;
+  person_id: string;
+  org_id?: string | null;
+  org_name?: string | null;
+  company_website?: string | null;
+  linkedin_url?: string | null;
+  role?: string | null;
+  status: string;
+  existing_node_id?: string | null;
+  notes?: string;
+};
+
 export function MeetingsPanel() {
   const [data, setData] = useState<MeetingsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -130,6 +146,10 @@ export function MeetingsPanel() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [formAttachments, setFormAttachments] = useState<Attachment[]>([]);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [participantPaste, setParticipantPaste] = useState("");
+  const [participantPreview, setParticipantPreview] = useState<ParsedParticipant[]>([]);
+  const [participantSummary, setParticipantSummary] = useState("");
+  const [participantBusy, setParticipantBusy] = useState(false);
   const fetchSeq = useRef(0);
 
   const fetchMeetings = useCallback((next: FilterState) => {
@@ -189,6 +209,9 @@ export function MeetingsPanel() {
     setEditingId(null);
     setFormAttachments([]);
     setPendingFiles([]);
+    setParticipantPaste("");
+    setParticipantPreview([]);
+    setParticipantSummary("");
     setForm({
       ...EMPTY_FORM,
       held_at: toLocalDatetimeValue(new Date().toISOString()),
@@ -200,6 +223,9 @@ export function MeetingsPanel() {
     setEditingId(m.id);
     setFormAttachments(m.attachments ?? []);
     setPendingFiles([]);
+    setParticipantPaste("");
+    setParticipantPreview([]);
+    setParticipantSummary("");
     setForm({
       title: m.title,
       held_at: toLocalDatetimeValue(m.held_at),
@@ -263,6 +289,89 @@ export function MeetingsPanel() {
         ? f.engagement_ids.filter((x) => x !== id)
         : [...f.engagement_ids, id],
     }));
+  }
+
+  async function onProcessParticipants() {
+    const raw = participantPaste.trim() || form.participants.trim();
+    if (!raw) {
+      setError("Bitte Google-Teilnehmerliste einfügen.");
+      return;
+    }
+    setParticipantBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/meetings/participants/process", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ raw, enrich: true }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.detail ?? json.error ?? `HTTP ${res.status}`);
+      const items = (json.participants ?? []) as ParsedParticipant[];
+      setParticipantPreview(items);
+      setParticipantSummary(String(json.summary ?? ""));
+      if (items.length > 0) {
+        setForm((f) => ({
+          ...f,
+          participants: items.map((p) => p.name || p.email).join(", "),
+        }));
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Teilnehmer extrahieren fehlgeschlagen");
+    } finally {
+      setParticipantBusy(false);
+    }
+  }
+
+  async function onCommitParticipants() {
+    setParticipantBusy(true);
+    setError(null);
+    try {
+      let items = participantPreview;
+      if (items.length === 0) {
+        const raw = participantPaste.trim() || form.participants.trim();
+        if (!raw) throw new Error("Bitte zuerst Google-Teilnehmerliste einfügen.");
+        const procRes = await fetch("/api/meetings/participants/process", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ raw, enrich: true }),
+        });
+        const procJson = await procRes.json();
+        if (!procRes.ok) {
+          throw new Error(procJson.detail ?? procJson.error ?? `HTTP ${procRes.status}`);
+        }
+        items = (procJson.participants ?? []) as ParsedParticipant[];
+        setParticipantPreview(items);
+        setParticipantSummary(String(procJson.summary ?? ""));
+      }
+      if (items.length === 0) throw new Error("Keine E-Mail-Adressen erkannt.");
+
+      const res = await fetch("/api/meetings/participants/commit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items,
+          meeting_id: editingId,
+          update_meeting: Boolean(editingId),
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.detail ?? json.error ?? `HTTP ${res.status}`);
+      const display =
+        (json.participants_display as string | undefined) ??
+        items.map((p) => p.name || p.email).join(", ");
+      setForm((f) => ({ ...f, participants: display }));
+      if (json.errors?.length) {
+        setError(`Teilweise gespeichert: ${(json.errors as string[]).join("; ")}`);
+      }
+      if (editingId && json.meeting) {
+        refresh();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Kontakte speichern fehlgeschlagen");
+    } finally {
+      setParticipantBusy(false);
+    }
   }
 
   function onSubmit(e: FormEvent) {
@@ -408,14 +517,83 @@ export function MeetingsPanel() {
               onChange={(e) => setForm((f) => ({ ...f, held_at: e.target.value }))}
             />
           </label>
-          <label className="meetings-field">
+          <div className="meetings-field">
             <span>Teilnehmer</span>
-            <input
-              value={form.participants}
-              onChange={(e) => setForm((f) => ({ ...f, participants: e.target.value }))}
-              placeholder="Michael, Juri, …"
+            <textarea
+              rows={4}
+              className="meetings-participant-paste"
+              value={participantPaste}
+              onChange={(e) => setParticipantPaste(e.target.value)}
+              placeholder={"Google-Kalender-Teilnehmer hier einfügen, z. B.:\nMax Mustermann <max@firma.de>\nanna.schmidt@partner.com"}
             />
-          </label>
+            <p className="muted m-0 text-xs">
+              E-Mails werden extrahiert; optional LinkedIn & Firmenwebseite werden gesucht und als Kontakte im Graph gespeichert.
+            </p>
+            <div className="meetings-participant-actions">
+              <button
+                type="button"
+                className="btn btn-ghost"
+                disabled={participantBusy || pending}
+                onClick={() => void onProcessParticipants()}
+              >
+                {participantBusy ? "Verarbeite…" : "Extrahieren & anreichern"}
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                disabled={participantBusy || pending}
+                onClick={() => void onCommitParticipants()}
+              >
+                Als Kontakte speichern
+              </button>
+            </div>
+            {participantSummary ? (
+              <pre className="meetings-participant-summary">{participantSummary}</pre>
+            ) : null}
+            {participantPreview.length > 0 ? (
+              <table className="meetings-participant-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>E-Mail</th>
+                    <th>Organisation</th>
+                    <th>LinkedIn / Web</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {participantPreview.map((p) => (
+                    <tr key={p.email}>
+                      <td>{p.name}</td>
+                      <td className="mono text-xs">{p.email}</td>
+                      <td>{p.org_name ?? "—"}</td>
+                      <td className="text-xs">
+                        {p.linkedin_url ? (
+                          <a href={p.linkedin_url} target="_blank" rel="noreferrer">
+                            LinkedIn
+                          </a>
+                        ) : null}
+                        {p.linkedin_url && p.company_website ? " · " : null}
+                        {p.company_website ? (
+                          <a href={p.company_website} target="_blank" rel="noreferrer">
+                            Web
+                          </a>
+                        ) : null}
+                        {!p.linkedin_url && !p.company_website ? "—" : null}
+                      </td>
+                      <td>{p.status === "existing" ? "bekannt" : "neu"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <input
+                value={form.participants}
+                onChange={(e) => setForm((f) => ({ ...f, participants: e.target.value }))}
+                placeholder="oder manuell: Michael, Juri, …"
+              />
+            )}
+          </div>
           <label className="meetings-field">
             <span>Kurzfassung</span>
             <textarea

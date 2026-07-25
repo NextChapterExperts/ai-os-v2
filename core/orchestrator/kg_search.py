@@ -172,3 +172,31 @@ def list_nodes(tenant_id: str, node_type: str, limit: int = 200) -> list[dict[st
         }
         for r in rows
     ]
+
+
+def lookup_person_by_email(tenant_id: str, email: str) -> dict[str, Any] | None:
+    """Exakter Treffer auf org:Person per E-Mail (payload->>'email')."""
+    normalized = email.strip().lower()
+    if not normalized:
+        return None
+    with get_connection() as conn:
+        row = conn.execute(
+            """
+            SELECT id, node_type, external_id, payload, k_path
+            FROM kg_nodes
+            WHERE tenant_id = %s
+              AND node_type = 'org:Person'
+              AND lower(payload->>'email') = %s
+            LIMIT 1
+            """,
+            (tenant_id, normalized),
+        ).fetchone()
+    if row is None:
+        return None
+    return {
+        "id": str(row["id"]),
+        "node_type": row["node_type"],
+        "external_id": row["external_id"],
+        "payload": row["payload"],
+        "k_path": row["k_path"],
+    }

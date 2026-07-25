@@ -40,6 +40,7 @@ class OrgOrganization(DataProduct):
     org_id: str
     name: str
     kind: Literal["customer", "partner", "university", "internal"]
+    website: str | None = None
 
 
 class OrgPerson(DataProduct):
@@ -49,6 +50,9 @@ class OrgPerson(DataProduct):
     name: str
     role: str | None = None
     email: str | None = None
+    linkedin_url: str | None = None
+    company_website: str | None = None
+    org_ref: str | None = None
 
 
 class OrgEngagement(DataProduct):

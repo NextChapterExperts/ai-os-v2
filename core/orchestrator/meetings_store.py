@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS meetings (
     title TEXT NOT NULL,
     held_at TEXT NOT NULL,
     participants TEXT NOT NULL DEFAULT '',
+    participant_refs TEXT NOT NULL DEFAULT '[]',
     summary TEXT NOT NULL DEFAULT '',
     engagement_ids TEXT NOT NULL DEFAULT '[]',
     tags TEXT NOT NULL DEFAULT '[]',
@@ -61,7 +62,15 @@ def _connect() -> sqlite3.Connection:
     con = sqlite3.connect(str(DB_PATH))
     con.row_factory = sqlite3.Row
     con.executescript(_SCHEMA)
+    _migrate_participant_refs(con)
     return con
+
+
+def _migrate_participant_refs(con: sqlite3.Connection) -> None:
+    cols = {row[1] for row in con.execute("PRAGMA table_info(meetings)").fetchall()}
+    if "participant_refs" not in cols:
+        con.execute("ALTER TABLE meetings ADD COLUMN participant_refs TEXT NOT NULL DEFAULT '[]'")
+        con.commit()
 
 
 def _parse_json_list(raw: str | None) -> list[Any]:
@@ -122,6 +131,7 @@ def _row_to_dict(row: sqlite3.Row, *, tenant_id: str | None = None) -> dict[str,
         "title": row["title"],
         "held_at": row["held_at"],
         "participants": row["participants"],
+        "participant_refs": _parse_json_list(row["participant_refs"]),
         "summary": row["summary"],
         "engagement_ids": _parse_json_list(row["engagement_ids"]),
         "tags": _parse_json_list(row["tags"]),
@@ -228,6 +238,7 @@ def create_meeting(tenant_id: str, data: dict[str, Any]) -> dict[str, Any]:
         "title": str(data.get("title") or "").strip(),
         "held_at": str(data.get("held_at") or now),
         "participants": str(data.get("participants") or "").strip(),
+        "participant_refs": json.dumps(data.get("participant_refs") or [], ensure_ascii=False),
         "summary": str(data.get("summary") or "").strip(),
         "engagement_ids": json.dumps(data.get("engagement_ids") or [], ensure_ascii=False),
         "tags": json.dumps(data.get("tags") or [], ensure_ascii=False),
@@ -243,10 +254,10 @@ def create_meeting(tenant_id: str, data: dict[str, Any]) -> dict[str, Any]:
         con.execute(
             """
             INSERT INTO meetings (
-                id, tenant_id, title, held_at, participants, summary,
+                id, tenant_id, title, held_at, participants, participant_refs, summary,
                 engagement_ids, tags, todos, created_at, updated_at
             ) VALUES (
-                :id, :tenant_id, :title, :held_at, :participants, :summary,
+                :id, :tenant_id, :title, :held_at, :participants, :participant_refs, :summary,
                 :engagement_ids, :tags, :todos, :created_at, :updated_at
             )
             """,
@@ -267,6 +278,9 @@ def update_meeting(meeting_id: str, tenant_id: str, data: dict[str, Any]) -> dic
         "title": str(data.get("title", existing["title"])).strip(),
         "held_at": str(data.get("held_at", existing["held_at"])),
         "participants": str(data.get("participants", existing["participants"])).strip(),
+        "participant_refs": json.dumps(
+            data.get("participant_refs", existing.get("participant_refs", [])), ensure_ascii=False
+        ),
         "summary": str(data.get("summary", existing["summary"])).strip(),
         "engagement_ids": json.dumps(
             data.get("engagement_ids", existing["engagement_ids"]), ensure_ascii=False
@@ -288,6 +302,7 @@ def update_meeting(meeting_id: str, tenant_id: str, data: dict[str, Any]) -> dic
                 title = :title,
                 held_at = :held_at,
                 participants = :participants,
+                participant_refs = :participant_refs,
                 summary = :summary,
                 engagement_ids = :engagement_ids,
                 tags = :tags,

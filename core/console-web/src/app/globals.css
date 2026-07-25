@@ -569,3 +569,48 @@ body {
   padding: 0.2rem 0.5rem !important;
   font-size: 0.75rem !important;
 }
+
+.meetings-participant-paste {
+  width: 100%;
+  font: inherit;
+  font-size: 0.9rem;
+  resize: vertical;
+}
+
+.meetings-participant-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.meetings-participant-summary {
+  margin: 0.75rem 0 0;
+  padding: 0.65rem 0.75rem;
+  font: inherit;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  background: var(--surface-2, rgba(255, 255, 255, 0.04));
+  border-radius: 6px;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+}
+
+.meetings-participant-table {
+  width: 100%;
+  margin-top: 0.75rem;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.meetings-participant-table th,
+.meetings-participant-table td {
+  text-align: left;
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  vertical-align: top;
+}
+
+.meetings-participant-table th {
+  font-weight: 600;
+  color: var(--muted, #888);
+}
