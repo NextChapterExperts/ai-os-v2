@@ -3,7 +3,7 @@
 **Für:** LLMs, Entwickler, die das System von Grund auf bauen  
 **Zweck:** Vollständige technische Spezifikation — ausreichend detailliert um ohne zusätzlichen Kontext zu starten  
 **Basis:** AI-OS v1 (../1000-AI-OS) — eingefroren Juli 2026  
-**Stand:** Juli 2026 (aktualisiert 2026-07-24 — Isolationsmodell: eine VM = ein Company Brain; NCE First-Party)  
+**Stand:** Juli 2026 (aktualisiert 2026-07-25 — Memory Gateway Persist-Hook Phase 1; Isolationsmodell NCE First-Party)  
 **Modus:** **Eine Implementierung** — keine Alternativen in dieser Roadmap. Jede Entscheidung ist final.  
 **Detail-Spec Company Brain:** [docs/09-COMPANY-BRAIN.md](docs/09-COMPANY-BRAIN.md) · **Memory einfach:** [docs/10-MEMORY-EINFACH.md](docs/10-MEMORY-EINFACH.md)  
 **Erstes Lizenzprodukt (VM):** [docs/11-PLATFORM-VM.md](docs/11-PLATFORM-VM.md)  
@@ -1041,6 +1041,22 @@ modes:
 **Auto-Router mit Modell-Scoring (Vorbild ArcaQ/Synesis):** Statt fixem Modell pro Modus bewertet der Gateway pro Task-Klasse (Complexity, Context-Länge, benötigte Fähigkeiten) und wählt das günstigste Modell, das den Score-Schwellwert erreicht. Lokal gewinnt bei Gleichstand (P12).
 
 **CAG — Cache-Augmented Generation (Vorbild Olla Nest):** Wiederkehrende System-Prompts + stabile Kontext-Slices werden als KV-Cache-Präfix gehalten. Spart Tokens und Latenz bei häufig genutzten Platform-Prompts. Aktiv für `sovereign` (Ollama `keep_alive` + Prompt-Präfix-Cache).
+
+**Implementierungsstand (2026-07-25):**
+
+| Baustein | Status |
+|----------|--------|
+| `core/memory_gateway/` (client, persist, audit, langfuse_hook) | ✅ |
+| `config/compute.yaml` (sovereign/balanced/premium) | ✅ |
+| Orchestrator `GET /v1/models` + `POST /v1/chat/completions` | ✅ |
+| Persist-Hook → `memory.db` + `ai_os_log` Hash-Chain | ✅ |
+| LangFuse-Trace (optional bei gesetzten Keys) | ✅ Hook, Keys oft leer auf DEV |
+| `memory_ask` + Console `memory-ask.ts` über Gateway | ✅ |
+| LiteLLM-Primary + Ollama-Fallback | ✅ |
+| `POST /v1/compute/mode` (Tenant-Modus wechseln) | ⏳ |
+| Auto-Router / CAG / PROD-Outbound-Block | ⏳ Phase 1+ |
+
+**Nächster Roadmap-Punkt:** Phase 1b — Gemini/Antigravity Chat Capture (§6b).
 
 ### 6.7 LangFuse-Tracing (ab Phase 1 — Pflicht)
 

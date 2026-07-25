@@ -12,7 +12,7 @@ services:
     env_file: ["../.env"]
     environment:
       AIOS_MEMORY_DB: /opt/ai-os/memory/memory.db
-      AIOS_MEMORY_PROJECT: home-peter-Projekte-1100-AI-OS-V2
+      AIOS_MEMORY_PROJECT: home-peter-Projekte
       AIOS_BRAIN_SEED: /app/customers/nextchapter/knowledge/seed/brain.json
       OLLAMA_HOST: ${OLLAMA_HOST:-192.168.178.64}
       OLLAMA_PORT: ${OLLAMA_PORT:-11434}

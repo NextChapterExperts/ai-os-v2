@@ -8,9 +8,12 @@ export const MEMORY_ROOT =
 export const MEMORY_DB_PATH =
   process.env.AIOS_MEMORY_DB ?? path.join(MEMORY_ROOT, "memory.db");
 
-/** Cursor-Projektordner unter ~/.cursor/projects/<id> */
+/** Cursor-Projektordner unter ~/.cursor/projects/<id> — haengt vom
+ * Workspace-Root ab (core/capture/cursor-job.mjs `projectIdFromPath`) und
+ * aendert sich mit ihm; war lange auf den alten Scope "...-1100-AI-OS-V2"
+ * fixiert, seit der Workspace-Root Projekte/ ist heisst er "home-peter-Projekte". */
 export const DEFAULT_MEMORY_PROJECT =
-  process.env.AIOS_MEMORY_PROJECT ?? "home-peter-Projekte-1100-AI-OS-V2";
+  process.env.AIOS_MEMORY_PROJECT ?? "home-peter-Projekte";
 
 export type MemoryChunk = {
   id: string;

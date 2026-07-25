@@ -274,14 +274,8 @@ function buildContext(
   return parts.join("\n---\n");
 }
 
-function ollamaConfig() {
-  const host = process.env.OLLAMA_HOST ?? "192.168.178.64";
-  const port = process.env.OLLAMA_PORT ?? "11434";
-  const model = process.env.OLLAMA_DEFAULT_MODEL ?? "qwen3.6-64k:latest";
-  return {
-    url: `http://${host}:${port}/api/chat`,
-    model,
-  };
+function orchestratorUrl() {
+  return process.env.ORCHESTRATOR_URL ?? "http://127.0.0.1:8091";
 }
 
 export async function summarizeMemory(
@@ -297,7 +291,6 @@ export async function summarizeMemory(
     };
   }
 
-  const { url, model } = ollamaConfig();
   const context = buildContext(chunks, detail);
 
   const system = detail
@@ -308,13 +301,10 @@ KURZ und HOCHFLUG: maximal 5 Bulletpoints, jeweils eine Zeile, nur die großen T
 Keine Dateipfade, keine technischen Kleinschritte, kein langes Fazit (max. 1 Satz).
 Details nur wenn der Nutzer danach fragt.`;
 
-  const res = await fetch(url, {
+  const res = await fetch(`${orchestratorUrl()}/v1/chat/completions`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model,
-      stream: false,
-      think: false,
       messages: [
         { role: "system", content: system },
         {
@@ -322,28 +312,23 @@ Details nur wenn der Nutzer danach fragt.`;
           content: `Frage: ${question}\n\nGedächtnis-Kontext:\n${context}`,
         },
       ],
-      options: {
-        temperature: 0.2,
-        num_predict: detail ? 900 : 280,
-      },
+      tenant_id: "nextchapter",
+      produced_by: "console-memory-ask",
+      max_tokens: detail ? 900 : 280,
+      temperature: 0.2,
+      persist: true,
     }),
     signal: AbortSignal.timeout(120_000),
   });
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(`Ollama ${res.status}: ${text.slice(0, 200)}`);
+    throw new Error(`Memory Gateway ${res.status}: ${text.slice(0, 200)}`);
   }
 
-  const data = (await res.json()) as {
-    message?: { content?: string; thinking?: string };
-  };
-  const answer =
-    data.message?.content?.trim() ||
-    data.message?.thinking?.trim() ||
-    "Keine Antwort vom Modell.";
-
-  return { answer, model };
+  const data = (await res.json()) as { content?: string; model?: string };
+  const answer = data.content?.trim() || "Keine Antwort vom Modell.";
+  return { answer, model: data.model ?? "memory-gateway" };
 }
 
 export async function askMemory(

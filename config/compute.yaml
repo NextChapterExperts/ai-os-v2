@@ -1,0 +1,17 @@
+# Compute-Modi (P12/P19) — Default: sovereign (Ollama lokal/LAN)
+# Aliase verweisen auf LiteLLM model_name in config/litellm-config.yaml
+modes:
+  sovereign:
+    default_model: ai-os-sovereign
+    label: "Lokal (LAN)"
+    description: "Ollama auf LAN — kein Cloud-Key nötig"
+  balanced:
+    default_model: ai-os-balanced
+    label: "Ausgewogen"
+    description: "OpenRouter (floor) — OPENROUTER_API_KEY erforderlich"
+  premium:
+    default_model: ai-os-premium
+    label: "Premium"
+    description: "OpenRouter Premium — OPENROUTER_API_KEY erforderlich"
+
+default_mode: sovereign

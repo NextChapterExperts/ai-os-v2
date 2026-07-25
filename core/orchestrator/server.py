@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import httpx
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field, ValidationError
 
@@ -14,6 +15,8 @@ from .dispatch import dispatch
 from .dp_service import DPCommitError, commit_dataproduct, kg_stats, resolve_node_by_id
 from .intent_router import route_intent
 from .kg_search import list_nodes, search_nodes
+
+from core.memory_gateway.client import chat_completion, list_models
 
 app = FastAPI(title="AI-OS Orchestrator", version="2.0.0-skeleton")
 
@@ -121,3 +124,49 @@ async def get_kg_nodes(
 ) -> dict[str, Any]:
     results = list_nodes(tenant_id, node_type, limit=limit)
     return {"node_type": node_type, "tenant_id": tenant_id, "results": results, "count": len(results)}
+
+
+class ChatCompletionRequest(BaseModel):
+    messages: list[dict[str, Any]]
+    tenant_id: str = "nextchapter"
+    model: str | None = None
+    compute_mode: str | None = None
+    produced_by: str = "memory-gateway"
+    session_id: str | None = None
+    project_id: str | None = None
+    temperature: float = 0.2
+    max_tokens: int = 512
+    persist: bool = True
+
+
+@app.get("/v1/models")
+async def get_models() -> dict[str, Any]:
+    """Memory Gateway — Modellliste + Compute-Modi (Phase 1, P11/P19)."""
+    return await list_models()
+
+
+@app.post("/v1/chat/completions")
+async def post_chat_completions(req: ChatCompletionRequest) -> dict[str, Any]:
+    """Memory Gateway — Inference + Persist-Hook (nie optional in PROD)."""
+    if not req.messages:
+        raise HTTPException(status_code=400, detail="messages required")
+    try:
+        return await chat_completion(
+            req.messages,
+            tenant_id=req.tenant_id,
+            model=req.model,
+            compute_mode=req.compute_mode,
+            produced_by=req.produced_by,
+            session_id=req.session_id,
+            project_id=req.project_id,
+            temperature=req.temperature,
+            max_tokens=req.max_tokens,
+            persist=req.persist,
+        )
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=exc.response.text[:500],
+        ) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc

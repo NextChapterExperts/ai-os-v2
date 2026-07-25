@@ -1,77 +1,18 @@
-"""Memory ask — SQLite capture + Ollama (same path as Console fallback)."""
+"""Memory ask — SQLite capture + Memory Gateway (eine Tür, P11/P19)."""
 
 from __future__ import annotations
 
-import os
-import sqlite3
-from datetime import datetime, timedelta, timezone
 from typing import Any
-from zoneinfo import ZoneInfo
 
-import httpx
+from core.memory_gateway.client import chat_completion
+from core.memory_gateway.config import OLLAMA_MODEL
 
-
-MEMORY_DB = os.environ.get("AIOS_MEMORY_DB", "/opt/ai-os/memory/memory.db")
-DEFAULT_PROJECT = os.environ.get(
-    "AIOS_MEMORY_PROJECT",
-    "home-peter-Projekte-1100-AI-OS-V2",
-)
-OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "192.168.178.64")
-OLLAMA_PORT = os.environ.get("OLLAMA_PORT", "11434")
-OLLAMA_MODEL = os.environ.get("OLLAMA_DEFAULT_MODEL", "qwen3.6-64k:latest")
+from ..memory_store import DEFAULT_PROJECT, chunks_in_window, resolve_window
 
 
-def _berlin_day_bounds() -> tuple[str, str, str]:
-    tz = ZoneInfo("Europe/Berlin")
-    now = datetime.now(tz)
-    start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    end = start + timedelta(days=1)
-    return (
-        start.astimezone(timezone.utc).isoformat(),
-        end.astimezone(timezone.utc).isoformat(),
-        start.date().isoformat(),
-    )
-
-
-def _chunks_today(project_id: str, limit: int = 40) -> list[dict[str, Any]]:
-    if not os.path.exists(MEMORY_DB):
-        return []
-    start, end, _ = _berlin_day_bounds()
-    con = sqlite3.connect(MEMORY_DB)
-    con.row_factory = sqlite3.Row
-    try:
-        cols = {r[1] for r in con.execute("PRAGMA table_info(chunks)")}
-        if "project_id" in cols:
-            rows = con.execute(
-                """
-                SELECT id, role, title, body, chat_id, source, ingested_at, project_id
-                FROM chunks
-                WHERE project_id = ? AND ingested_at >= ? AND ingested_at < ?
-                  AND role = 'user'
-                ORDER BY ingested_at ASC
-                LIMIT ?
-                """,
-                (project_id, start, end, limit),
-            ).fetchall()
-        else:
-            rows = con.execute(
-                """
-                SELECT id, role, title, body, chat_id, source, ingested_at
-                FROM chunks
-                WHERE ingested_at >= ? AND ingested_at < ? AND role = 'user'
-                ORDER BY ingested_at ASC
-                LIMIT ?
-                """,
-                (start, end, limit),
-            ).fetchall()
-        return [dict(r) for r in rows]
-    finally:
-        con.close()
-
-
-async def _summarize(question: str, chunks: list[dict[str, Any]]) -> str:
+async def _summarize(question: str, chunks: list[dict[str, Any]], tenant_id: str) -> tuple[str, str]:
     if not chunks:
-        return "Im Gedächtnis dieses Projekts liegen dazu noch keine Einträge."
+        return "Im Gedächtnis dieses Projekts liegen dazu noch keine Einträge.", "none"
 
     ctx_parts = []
     used = 0
@@ -88,28 +29,20 @@ async def _summarize(question: str, chunks: list[dict[str, Any]]) -> str:
         "KURZ: max. 5 Bulletpoints, eine Zeile je Punkt, nur große Themen. "
         "Keine Dateipfade. Max. 1 Satz Fazit."
     )
-    url = f"http://{OLLAMA_HOST}:{OLLAMA_PORT}/api/chat"
-    async with httpx.AsyncClient(timeout=120.0) as client:
-        res = await client.post(
-            url,
-            json={
-                "model": OLLAMA_MODEL,
-                "stream": False,
-                "think": False,
-                "messages": [
-                    {"role": "system", "content": system},
-                    {
-                        "role": "user",
-                        "content": f"Frage: {question}\n\nGedächtnis-Kontext:\n{context}",
-                    },
-                ],
-                "options": {"temperature": 0.2, "num_predict": 280},
+    result = await chat_completion(
+        [
+            {"role": "system", "content": system},
+            {
+                "role": "user",
+                "content": f"Frage: {question}\n\nGedächtnis-Kontext:\n{context}",
             },
-        )
-        res.raise_for_status()
-        data = res.json()
-        msg = data.get("message") or {}
-        return (msg.get("content") or msg.get("thinking") or "Keine Antwort.").strip()
+        ],
+        tenant_id=tenant_id,
+        produced_by="memory_ask",
+        max_tokens=280,
+        temperature=0.2,
+    )
+    return result["content"] or "Keine Antwort.", result.get("model") or OLLAMA_MODEL
 
 
 async def run(
@@ -119,8 +52,9 @@ async def run(
 ) -> dict[str, Any]:
     question = str(params.get("query") or params.get("intent_text") or "Was haben wir heute gemacht?")
     project_id = str(params.get("project_id") or DEFAULT_PROJECT)
-    chunks = _chunks_today(project_id)
-    answer = await _summarize(question, chunks)
+    start, end, mode = resolve_window(question)
+    chunks = chunks_in_window(project_id, start, end)
+    answer, model = await _summarize(question, chunks, tenant_id)
     sources = [
         {
             "id": c["id"],
@@ -136,10 +70,10 @@ async def run(
     return {
         "kind": "ask",
         "answer": answer,
-        "mode": "today",
+        "mode": mode,
         "detail": False,
         "projectId": project_id,
-        "model": OLLAMA_MODEL,
+        "model": model,
         "sources": sources,
         "sourceCount": len(chunks),
         "tenant_id": tenant_id,

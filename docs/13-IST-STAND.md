@@ -1,6 +1,6 @@
 # AI-OS v2 — Ist-Stand
 
-**Stand:** 2026-07-24 · **Repo:** [NextChapterExperts/ai-os-v2](https://github.com/NextChapterExperts/ai-os-v2)  
+**Stand:** 2026-07-25 · **Repo:** [NextChapterExperts/ai-os-v2](https://github.com/NextChapterExperts/ai-os-v2)  
 **Zweck:** Was heute **wirklich läuft** vs. was in Roadmap/Architektur als **Ziel** spezifiziert ist.  
 **Ziel-Spec bleibt:** [ROADMAP.md](../ROADMAP.md) · [01-ARCHITEKTUR.md](01-ARCHITEKTUR.md) — dieses Dokument überschreibt die Vision nicht, sondern den Fortschritt.
 
@@ -9,7 +9,7 @@
 ## Kurzfazit
 
 Auf der **NCE DEV-VM** läuft ein **Phase-0/1-Skeleton** plus ein **Phase-2-Vorgriff** auf den Company Brain: Infra (Compose), Console, Orchestrator, MCP-Gateway-Stubs, Cursor→SQLite-Capture, Unified Search (`content` + `raw-files` + jetzt **Graph**), Knowledge Graph (`kg_nodes`/`kg_edges`) mit DP-Commit für `org:*`, Query-Router (§12.1) und Console-UI `/platform/kg`.  
-**Noch nicht:** Memory Gateway (Persist-Hook), Letta-Anbindung (Query-Router kennt `use_letta`, aber kein Verbraucher), Skill-Store (`use_sk` dito), LangGraph, Platform-Agenten-Laufzeit, SDK, Platform-Gate, echte MCP-Adapter, Appliance-Image-Build.
+**Noch nicht:** Letta-Anbindung (Query-Router kennt `use_letta`, episodischer SQLite-Fallback aktiv), Skill-Store (`use_sk` dito), LangGraph, Platform-Agenten-Laufzeit, SDK, Platform-Gate, echte MCP-Adapter, Appliance-Image-Build, LangFuse-Keys auf DEV oft leer.
 
 ---
 
@@ -18,7 +18,7 @@ Auf der **NCE DEV-VM** läuft ein **Phase-0/1-Skeleton** plus ein **Phase-2-Vorg
 | Phase | Thema | Status |
 |-------|--------|--------|
 | **0** | Infra + LangFuse + DB-Schema + DEV-VM-Bootstrap + Repo | **weitgehend erledigt** |
-| **1** | Core OS + Memory Gateway + Unified Search | **teilweise** (Orch/Console/MCP + Unified Search `content`+`raw-files`+Graph, Query-Router §12.1; Memory-Gateway-Persist-Hook fehlt) |
+| **1** | Core OS + Memory Gateway + Unified Search | **teilweise** (Memory Gateway Persist-Hook ✅ `core/memory_gateway/` + `GET /v1/models` + `POST /v1/chat/completions`; Orch/Console/MCP + Unified Search + Graph + Query-Router; LangGraph + `POST /v1/compute/mode` fehlen) |
 | **1b** | Chat Capture | **teilweise** (Cursor→SQLite; Gemini/Antigravity/UI fehlen) |
 | **2** | Platform-Agenten + Platform-Gate | **teilweise** (Company-Brain-DP-Commit + KG für `org:*` steht; Platform-Agenten-Laufzeit/Gate selbst offen) |
 | **3** | Agent-SDK | **offen** |
@@ -30,7 +30,8 @@ Zusätzlich (nicht als eigene Roadmap-Phase, aber gebaut): **Offering vs Engagem
 Zusätzlich: **File-Ingest-Watcher** (Rohdatei-Suche über `Projekte/active/`, Bridge bis Fach-Agenten stehen — [ADR 0002](adr/0002-file-ingest-watcher-und-rolle-von-cursor.md)).
 Zusätzlich: **Unified Search** (`unified_search`-Intent, foederiert Graph + `content` + `raw-files` via Query-Router, Console-Seite `/search`).
 Zusätzlich: **Ingest-Agent + Knowledge Graph** — `core/ingest_agent/` committet Company-Brain-Seed als `org:*`-DataProducts über `POST /v1/dataproduct/commit` in `kg_nodes`/`kg_edges` (Postgres) + Audit-Hash-Chain (`ai_os_log`); published `OrgKnowledgeAsset`s zusätzlich in Qdrant `content`. Details: [09-COMPANY-BRAIN.md](09-COMPANY-BRAIN.md), [03-DATENPRODUKTE.md](03-DATENPRODUKTE.md).
-Zusätzlich: **Graph-Suche + Query-Router + Console-UI** — `core/orchestrator/kg_search.py` (Freitext-Suche + 1-Hop-Traverse über `kg_nodes`/`kg_edges`, `GET /v1/kg/search`, `GET /v1/kg/nodes`), `core/orchestrator/query_router.py` (deterministische `SearchPlan` nach §12.1, entscheidet pro Frage `use_g`/`use_l1`/`use_letta`/`use_sk`), Console-Seite `/platform/kg` (Stats, Graph-Suche, Node-Detail mit Kanten, klickbare Navigation).
+Zusätzlich: **Graph-Suche + Query-Router + Console-UI** — `core/orchestrator/kg_search.py`, `query_router.py`, Console `/platform/kg`.
+Zusätzlich: **Memory Gateway (Phase 1)** — `core/memory_gateway/` routet LLM-Calls über LiteLLM (:4000) mit Ollama-Fallback; nach jedem Call Persist in `memory.db` + Audit `ai_os_log` + optional LangFuse. Endpoints: `GET /v1/models`, `POST /v1/chat/completions`. Console + `memory_ask` nutzen nur noch diese Tür.
 
 ---
 
@@ -41,7 +42,7 @@ Zusätzlich: **Graph-Suche + Query-Router + Console-UI** — `core/orchestrator/
 | Komponente | Port / Pfad | Start | Status |
 |------------|-------------|-------|--------|
 | **Console** `core/console-web` (`core/console` → Symlink) | `:8092` | `cd core/console-web && npm run dev` | Lagebild + Dispatch, `/platform` Health, `/workflows` Platzhalter |
-| **Orchestrator** | `:8091` | `./core/orchestrator/run.sh` | FastAPI: `/health`, `POST /v1/dispatch` (inkl. `unified_search` mit Query-Router), Brain-Listen, `POST /v1/dataproduct/commit`, `GET /v1/kg/stats`, `GET /v1/kg/search`, `GET /v1/kg/nodes`, `GET /v1/dataproduct/resolve/{id}` |
+| **Orchestrator** | `:8091` | `./core/orchestrator/run.sh` | FastAPI: `/health`, `POST /v1/dispatch`, **`GET /v1/models`**, **`POST /v1/chat/completions`** (Memory Gateway), Brain-Listen, DP-Commit, KG-API |
 | **MCP-Gateway** | `:8097` | `./core/mcp_gateway/run.sh` | Allowlist + Mail/Calendar-**Stubs** (nicht in Compose) |
 | **Cursor Capture** | systemd user / `npm start` | `core/capture/` | Pollt Cursor-Transkripte → `/opt/ai-os/memory/memory.db` |
 | **File-Ingest-Watcher** | systemd user | `core/file_ingest_watcher/` | Scannt `Projekte/active/**`, embedded lokal → Qdrant-Collection `raw-files` (Bridge, siehe [ADR 0002](adr/0002-file-ingest-watcher-und-rolle-von-cursor.md)) |
@@ -54,7 +55,7 @@ Zusätzlich: **Graph-Suche + Query-Router + Console-UI** — `core/orchestrator/
 |--------|-----------|
 | `ping` | Health |
 | `daily_open_loops` | Engagements + Seed-Meetings + Mail-Stub-Actions → kurze Tageslage |
-| `memory_ask` | SQLite-FTS + Ollama (LAN) |
+| `memory_ask` | Zeitfenster aus Frage erkannt ("gestern"/"letzte Woche"/Default "heute", `memory_store.resolve_window`) + Ollama-Summary (LAN); Projekt-Filter faellt auf projektuebergreifend zurueck, wenn der Slug keine Treffer hat |
 | `mail_triage` | Stub über MCP-Client |
 | `unified_search` | Query-Router (§12.1) entscheidet pro Frage: Graph (`kg_search`), Qdrant `content` + `raw-files`, oder beides — `source_type`-markiert (`graph`/`curated`/`raw-file`) |
 
@@ -78,7 +79,7 @@ Lagebild-Feld in der Console → `POST /api/dispatch` → Orchestrator. Suche: C
 | `/opt/ai-os/memory/memory.db` | Capture + Console-Suche + `memory_ask` |
 | `/opt/ai-os/memory/state/` | Capture-State, Orchestrator-Audit-JSONL |
 | `/opt/ai-os/ingest/inbox` | vorbereitet, noch leer |
-| `AIOS_MEMORY_PROJECT=…` | Projektfilter für Memory |
+| `AIOS_MEMORY_PROJECT=…` | Projektfilter für Memory — Slug haengt vom Cursor-Workspace-Root ab (`core/capture/cursor-job.mjs`) und aendert sich mit ihm; aktuell `home-peter-Projekte` |
 
 Inference-Default: Ollama LAN (`OLLAMA_HOST` / `OLLAMA_DEFAULT_MODEL` in `.env`) — **kein** API-Secret nötig für sovereign.
 
@@ -100,8 +101,8 @@ Inference-Default: Ollama LAN (`OLLAMA_HOST` / `OLLAMA_DEFAULT_MODEL` in `.env`)
 - `sdk/`, `tests/`, `platform-agents/`, `agents/`
 - `deploy/platform-agents.yml`, `deploy/agents/*`, `deploy/chat-capture.yml`
 - Services: console-api `:8093`, search `:8094` (dediziert, aktuell Teil des Orchestrators), skill `:8095`, scheduler `:8096`
-- Memory Gateway Persist-Hook, LangGraph
-- Letta-Anbindung (L2/L3) — `query_router.py` kennt `use_letta`, aber es gibt noch keinen Verbraucher; Letta-Fragen liefern heute bewusst 0 Treffer statt falscher L1-Ersatzantwort
+- Memory Gateway Persist-Hook ✅ — LangGraph, `POST /v1/compute/mode`, Auto-Router/CAG offen
+- Letta-Anbindung (L2/L3) — `query_router.py` kennt `use_letta`, aber es gibt noch kein echtes Letta; als Uebergangs-Fallback (Bug vom 2026-07-25: "gestern"-Fragen lieferten 0 Treffer in Lagebild UND Suche) liest `memory_store.py` jetzt bei `use_letta` die Cursor-Capture-SQLite (`memory.db`) zeitfenster-/keyword-basiert aus (`source_type: "episodic"`) — kein echtes Episodengedaechtnis, aber besser als 0 Treffer
 - Skill-Store (SK) — `query_router.py` kennt `use_sk`, aber `core/skills/` existiert noch nicht
 - Platform-Gate (`python -m tests.platform_gate`)
 - Gemini/Antigravity Capture + Console „Chat-Erfassung“

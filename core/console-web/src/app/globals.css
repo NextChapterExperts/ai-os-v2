@@ -280,6 +280,11 @@ body {
   color: var(--signal);
 }
 
+.badge[data-variant="episodic"] {
+  background: color-mix(in oklab, var(--warn) 12%, transparent);
+  color: var(--warn);
+}
+
 .badge[data-variant="raw"] {
   background: color-mix(in oklab, var(--danger) 10%, transparent);
   color: var(--danger);

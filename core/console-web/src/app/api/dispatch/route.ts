@@ -60,6 +60,7 @@ export async function POST(req: Request) {
       curatedCount: result.curatedCount,
       rawFileCount: result.rawFileCount,
       graphCount: result.graphCount,
+      episodicCount: result.episodicCount,
       intent: data.intent,
       context_bundle: data.context_bundle,
       stats: memoryStats(),

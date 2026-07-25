@@ -6,7 +6,7 @@ import { FormEvent, useCallback, useState, useTransition } from "react";
 type UnifiedHit = {
   id: string;
   score: number;
-  source_type: "graph" | "curated" | "raw-file";
+  source_type: "graph" | "curated" | "raw-file" | "episodic";
   title: string;
   snippet: string;
   project_slug?: string | null;
@@ -23,6 +23,7 @@ type SearchResponse = {
   curatedCount?: number;
   rawFileCount?: number;
   graphCount?: number;
+  episodicCount?: number;
   error?: string | object;
 };
 
@@ -30,6 +31,7 @@ const SOURCE_LABEL: Record<UnifiedHit["source_type"], string> = {
   graph: "Graph (gesichert)",
   curated: "Freigegeben",
   "raw-file": "Rohdatei",
+  episodic: "Cursor-Chat (episodisch)",
 };
 
 export function UnifiedSearch() {
@@ -80,6 +82,8 @@ export function UnifiedSearch() {
   const graphCount = data?.graphCount ?? sources.filter((s) => s.source_type === "graph").length;
   const curatedCount = data?.curatedCount ?? sources.filter((s) => s.source_type === "curated").length;
   const rawFileCount = data?.rawFileCount ?? sources.filter((s) => s.source_type === "raw-file").length;
+  const episodicCount =
+    data?.episodicCount ?? sources.filter((s) => s.source_type === "episodic").length;
 
   return (
     <section className="rise">
@@ -103,7 +107,8 @@ export function UnifiedSearch() {
       {data ? (
         <p className="muted mono mt-3 mb-0 text-xs">
           {sources.length} Treffer · {graphCount} aus dem Graph (gesichert) ·{" "}
-          {curatedCount} freigegeben (Company Brain) · {rawFileCount} Rohdateien (Projekte/active)
+          {curatedCount} freigegeben (Company Brain) · {rawFileCount} Rohdateien (Projekte/active) ·{" "}
+          {episodicCount} aus Cursor-Chats (episodisch)
         </p>
       ) : null}
 
@@ -122,7 +127,9 @@ export function UnifiedSearch() {
                         ? "graph"
                         : hit.source_type === "curated"
                           ? "curated"
-                          : "raw"
+                          : hit.source_type === "episodic"
+                            ? "episodic"
+                            : "raw"
                     }
                   >
                     {SOURCE_LABEL[hit.source_type]}

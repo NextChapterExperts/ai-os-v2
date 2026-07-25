@@ -19,6 +19,7 @@ from fastembed import TextEmbedding
 from qdrant_client import QdrantClient
 
 from ..kg_search import search_nodes
+from ..memory_store import DEFAULT_PROJECT, chunks_in_window, resolve_window, search_chunks
 from ..query_router import SearchPlan, route_query
 
 log = logging.getLogger("unified_search")
@@ -118,6 +119,38 @@ def _graph_hits(tenant_id: str, query: str, plan: SearchPlan) -> list[dict[str, 
     return results
 
 
+def _episodic_hits(query: str) -> list[dict[str, Any]]:
+    """Fallback fuer episodische Fragen ("gestern", "besprochen" ...), solange
+    Letta L2/L3 nicht angebunden ist (query_router.py `use_letta` hat noch
+    keinen echten Verbraucher). Nutzt die Cursor-Capture-SQLite als heutigen
+    Ersatz fuer "was haben wir besprochen" — kein Letta-Ersatz, aber besser
+    als 0 Treffer bei einer Frage, deren Antwort tatsaechlich vorliegt.
+    """
+    start, end, mode = resolve_window(query)
+    if mode in ("yesterday", "week"):
+        chunks = chunks_in_window(DEFAULT_PROJECT, start, end, limit=10)
+    else:
+        chunks = search_chunks(query, project_id=DEFAULT_PROJECT, limit=10)
+    results = []
+    for c in chunks:
+        body = str(c.get("body") or "")
+        results.append(
+            {
+                "id": c["id"],
+                # Kein Kosinus-Score vorhanden - knapp unter Graph, damit
+                # Geltungsfragen (Graph) weiterhin Vorrang haben.
+                "score": 0.9,
+                "source_type": "episodic",
+                "title": c.get("title") or (body[:80] or "Cursor-Chat"),
+                "snippet": body[:280],
+                "project_slug": c.get("project_id"),
+                "source_path": None,
+                "collection": "memory.db",
+            }
+        )
+    return results
+
+
 async def run(
     context_bundle: dict[str, Any],
     tenant_id: str,
@@ -135,6 +168,7 @@ async def run(
             "curatedCount": 0,
             "rawFileCount": 0,
             "graphCount": 0,
+            "episodicCount": 0,
             "plan": None,
             "tenant_id": tenant_id,
         }
@@ -142,6 +176,7 @@ async def run(
     plan = route_query(query)
 
     graph_hits = _graph_hits(tenant_id, query, plan) if plan.use_g else []
+    episodic_hits = _episodic_hits(query) if plan.use_letta else []
 
     curated: list[dict[str, Any]] = []
     raw_files: list[dict[str, Any]] = []
@@ -153,7 +188,9 @@ async def run(
         curated = _search_collection(client, vector, CONTENT_COLLECTION, "curated", l1_limit)
         raw_files = _search_collection(client, vector, RAW_FILES_COLLECTION, "raw-file", l1_limit)
 
-    combined = sorted(graph_hits + curated + raw_files, key=lambda r: r["score"], reverse=True)
+    combined = sorted(
+        graph_hits + curated + raw_files + episodic_hits, key=lambda r: r["score"], reverse=True
+    )
 
     return {
         "kind": "search",
@@ -163,6 +200,7 @@ async def run(
         "curatedCount": len(curated),
         "rawFileCount": len(raw_files),
         "graphCount": len(graph_hits),
+        "episodicCount": len(episodic_hits),
         "plan": plan.model_dump(),
         "tenant_id": tenant_id,
     }
