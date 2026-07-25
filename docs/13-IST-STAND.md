@@ -9,7 +9,7 @@
 ## Kurzfazit
 
 Auf der **NCE DEV-VM** läuft ein **Phase-0/1-Skeleton** plus ein **Phase-2-Vorgriff** auf den Company Brain: Infra (Compose), Console, Orchestrator, MCP-Gateway-Stubs, Cursor→SQLite-Capture, Unified Search (`content` + `raw-files` + jetzt **Graph**), Knowledge Graph (`kg_nodes`/`kg_edges`) mit DP-Commit für `org:*`, Query-Router (§12.1) und Console-UI `/platform/kg`.  
-**Noch nicht:** L3 Core-Memory / Fact-Extraction, Skill-Store, LangGraph, Platform-Agenten-Laufzeit, SDK, Platform-Gate, echte MCP-Adapter, Appliance-Image-Build. **Memory L2** vollständig: SQLite FTS + Letta Archival + Backfill + Unified Search + `POST /v1/search`.
+**Noch nicht:** Skill-Store, LangGraph, Platform-Agenten-Laufzeit, SDK, Platform-Gate, echte MCP-Adapter, Appliance-Image-Build. **Memory L1+L2+L3-Curator** ✅ (Claims → KG, Profil → Letta Core).
 
 ---
 
@@ -31,7 +31,7 @@ Zusätzlich: **File-Ingest-Watcher** (Rohdatei-Suche über `Projekte/active/`, B
 Zusätzlich: **Unified Search** (`unified_search`-Intent, foederiert Graph + `content` + `raw-files` via Query-Router, Console-Seite `/search`).
 Zusätzlich: **Ingest-Agent + Knowledge Graph** — `core/ingest_agent/` committet Company-Brain-Seed als `org:*`-DataProducts über `POST /v1/dataproduct/commit` in `kg_nodes`/`kg_edges` (Postgres) + Audit-Hash-Chain (`ai_os_log`); published `OrgKnowledgeAsset`s zusätzlich in Qdrant `content`. Details: [09-COMPANY-BRAIN.md](09-COMPANY-BRAIN.md), [03-DATENPRODUKTE.md](03-DATENPRODUKTE.md).
 Zusätzlich: **Graph-Suche + Query-Router + Console-UI** — `core/orchestrator/kg_search.py`, `query_router.py`, Console `/platform/kg`.
-Zusätzlich: **Memory-Stack komplett (L1+L2)** — SQLite FTS (`sqlite_schema.py`, UPDATE-Trigger), Letta L2 (`letta_client.py`, `letta_sync.py`, Backfill `scripts/backfill-letta-from-sqlite.py`), episodische Suche merged (`episodic_search.py`), Endpoints `POST /v1/search`, `POST /v1/memory/sync-letta`, `POST /v1/memory/rebuild-fts`. Cursor-Capture synct live nach Letta.
+Zusätzlich: **L3-Curator** — `core/memory/l3_curator.py` extrahiert Fakten aus Letta L2 (7d), committet `org:Claim` (confidence≥0.7, Dedup), Profil → Letta Core; Endpoints `POST /v1/memory/curate/l3`, `GET …/pending` (Human-Gate). Script: `scripts/run-l3-curator.py`.
 
 ---
 
@@ -70,7 +70,7 @@ Lagebild-Feld in der Console → `POST /api/dispatch` → Orchestrator. Suche: C
 - Graph: Postgres `kg_nodes`/`kg_edges` (`config/init-platform.sql`), Commit nur über `POST /v1/dataproduct/commit` (`core/orchestrator/dp_service.py`) — nie Direktzugriff aus Agenten
 - Audit: `ai_os_log` mit Hash-Chain (P17) pro DP-Commit
 - Stand: **58 Nodes**, **37 Edges** (`org:Organization` 9, `org:Person` 1, `org:Offering` 5, `org:Engagement` 12, `org:Policy` 4, `org:Decision` 4, `org:KnowledgeAsset` 23) — erfüllt DoD aus [09-COMPANY-BRAIN.md §7](09-COMPANY-BRAIN.md) (≥10 Nodes, ≥5 Edges); 5 Abnahmefragen aus §8 getestet, siehe dort
-- `org:Meeting` / `org:Claim`: Commit-Mapping fertig, aber **keine Datenquelle** (kein Calendar-MCP, kein L3-Curator) — bewusst leer
+- `org:Meeting` / `org:Claim`: Commit-Mapping fertig; **org:Claim** wird vom **L3-Curator** befüllt (`core/memory/l3_curator.py` → DP-Commit). `org:Meeting` noch ohne Calendar-MCP
 - Packs: `packages/offerings/{sap-apim-training,studenten-beratung}/` (Seed + LICENSE, Skills/Workflows noch README-Stubs)
 - Delivery-Hinweis: `deploy/profiles/delivery.yml`
 
@@ -104,7 +104,7 @@ Inference-Default: Ollama LAN (`OLLAMA_HOST` / `OLLAMA_DEFAULT_MODEL` in `.env`)
 - `deploy/platform-agents.yml`, `deploy/agents/*`, `deploy/chat-capture.yml`
 - Services: console-api `:8093`, search `:8094` (dediziert, aktuell Teil des Orchestrators), skill `:8095`, scheduler `:8096`
 - Memory Gateway Persist-Hook ✅ — LangGraph, `POST /v1/compute/mode`, Auto-Router/CAG offen
-- Letta L3 (Core-Memory / Fact-Extraction) offen — L1+L2 ✅
+- L2-Curator (tägliche Verdichtung) offen — L3 ✅
 - Skill-Store (SK) — `query_router.py` kennt `use_sk`, aber `core/skills/` existiert noch nicht
 - Platform-Gate (`python -m tests.platform_gate`)
 - Gemini/Antigravity Capture ✅ (Poller + `/v1/chat-import` + Console `/platform/capture`); ChatGPT-Export + Drive-Poller offen

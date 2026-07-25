@@ -279,3 +279,26 @@ async def post_memory_rebuild_fts() -> dict[str, Any]:
     from core.memory_gateway.sqlite_schema import rebuild_fts
 
     return rebuild_fts()
+
+
+class L3CurateRequest(BaseModel):
+    tenant_id: str = "nextchapter"
+    dry_run: bool = False
+    force: bool = False
+
+
+@app.post("/v1/memory/curate/l3")
+async def post_l3_curate(req: L3CurateRequest) -> dict[str, Any]:
+    """L3-Curator — Fakten aus L2 Archival → org:Claim + Letta Core."""
+    from core.memory.l3_curator import run_l3_curate
+
+    return await run_l3_curate(req.tenant_id, dry_run=req.dry_run, force=req.force)
+
+
+@app.get("/v1/memory/curate/l3/pending")
+async def get_l3_pending_claims() -> dict[str, Any]:
+    """Claims mit supports_refs — warten auf Human-Gate."""
+    from core.memory.l3_curator import get_pending_claims
+
+    claims = get_pending_claims()
+    return {"count": len(claims), "claims": claims}

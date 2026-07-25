@@ -220,6 +220,29 @@ def insert_episode(
     return insert_archival(tenant_id, episode, agent_id=agent_id)
 
 
+def append_core_human(tenant_id: str, addition: str) -> dict[str, Any]:
+    """L3: Text an den human-Block in Letta Core Memory anhängen."""
+    if not LETTA_ENABLED or not addition.strip():
+        return {"success": False, "error": "disabled_or_empty"}
+    aid = get_or_create_agent(tenant_id)
+    if not aid:
+        return {"success": False, "error": "no_agent"}
+    try:
+        current = _request("GET", f"/v1/agents/{aid}/memory")
+        human = (
+            (current.get("memory") or {}).get("human", {}).get("value")
+            or f"Tenant: {tenant_id}."
+        )
+        if addition.strip() in human:
+            return {"success": True, "skipped": True, "agent_id": aid}
+        new_val = f"{human.rstrip()}\n{addition.strip()}".strip()[:3900]
+        _request("PATCH", f"/v1/agents/{aid}/memory", {"human": new_val})
+        return {"success": True, "agent_id": aid, "error": None}
+    except Exception as exc:
+        log.warning("append_core_human fehlgeschlagen: %s", exc)
+        return {"success": False, "error": str(exc), "agent_id": aid}
+
+
 def _parse_episode_ts(text: str) -> datetime | None:
     match = _EPISODE_TS.search(text or "")
     if not match:

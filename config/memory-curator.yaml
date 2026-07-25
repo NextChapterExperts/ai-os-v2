@@ -1,0 +1,7 @@
+# L3-Curator — Claim-Pipeline (docs/09-COMPANY-BRAIN.md §12.2)
+claim_min_confidence: 0.7
+profile_min_confidence: 0.75
+dedup_cosine_threshold: 0.95
+max_claims_per_run: 50
+episode_lookback_days: 7
+max_episodes_per_run: 40
