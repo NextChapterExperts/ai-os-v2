@@ -30,11 +30,15 @@ Zentrale manuelle Erfassung aller Meetings — Launchpad, Kollegen-Gespräche, P
 
 ## Teilnehmer aus Google-Kalender
 
+> **Architektur (Ziel):** Teilnehmer-Parsing, Anreicherung (LinkedIn, Web) und Kontakt-Upsert gehören dem **Fach-Agenten Kommunikationsmanager** (`comms-manager-agent`, Phase 4) — Kommunikation **nur via MCP**, Input/Output = DataProducts. Siehe [ROADMAP.md §9.4](../ROADMAP.md#94-kommunikationsmanager-agent-comms-manager-agent).
+>
+> **Ist (Übergang):** Bis Platform-Gate die dokumentierte Bridge `POST /v1/meetings/participants/{process,commit}` im Orchestrator — **kein Dauerzustand**, kein weiterer Direct-HTTP-Workaround.
+
 1. Teilnehmerliste aus Google Kalender/Meet kopieren und ins Textfeld einfügen  
 2. **Extrahieren & anreichern** — E-Mails parsen, bestehende Kontakte im Graph markieren, Firmenwebseite (Domain) und LinkedIn (DuckDuckGo-Suche) vorschlagen  
 3. **Als Kontakte speichern** — `org:Person` + ggf. `org:Organization` im Knowledge Graph upserten; Meeting-Feld `participants` und `participant_refs` aktualisieren  
 
-API: `POST /v1/meetings/participants/process`, `POST /v1/meetings/participants/commit`
+API (Bridge): `POST /v1/meetings/participants/process`, `POST /v1/meetings/participants/commit`
 
 ## Filter
 
@@ -44,6 +48,7 @@ API: `POST /v1/meetings/participants/process`, `POST /v1/meetings/participants/c
 
 ## Später
 
-- Calendar-MCP → automatischer Import als `org:Meeting` (Graph)  
+- **comms-manager-agent** (Phase 4): Paste/Dispatch statt Orchestrator-Bridge — MCP-only, DPs rein/raus  
+- Calendar-MCP + **time-agent** → automatischer Import als `org:Meeting` (Graph)  
 - Optional Sync kurierter Meetings aus Inbox → DP-Commit  
 - Lagebild-Ask: „Was war im letzten Meeting?“ über federierte Suche

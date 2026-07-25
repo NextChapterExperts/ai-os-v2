@@ -167,7 +167,7 @@ Phase 1b  Chat Capture → Speicher DIESER VM (NCE-Brain auf DEV)
 Phase 2   Platform-Agenten vollständig → PLATFORM-GATE
 Phase 3   Agent-SDK (Platform-Agenten migrieren)
 ───────   ⛔ Kein Fach-Agent vor bestandenem Platform-Gate
-Phase 4   Fach-Agenten (Research, Blog, Email …)
+Phase 4   Fach-Agenten (Research, Blog, Email, Kommunikationsmanager, time-agent …)
 Phase 5   Console vollständig
 Phase 6   Multi-Tenant (innerhalb einer VM) + GraphRAG
           ⚠ ersetzt NICHT die physische VM-Grenze zu Kunden
@@ -1729,8 +1729,8 @@ async def test_execute_commits_dp(mock_ctx, mock_mcp, mock_skill_hook):
 
 **Dauer:** 1.5–2 Wochen  
 **Voraussetzung:** ⛔ **Platform-Gate (Kap. 7.0.1) muss PASS sein** — kein Fach-Agent vorher  
-**Ziel:** Research, Blog, Email als SDK-konforme Agenten  
-**Akzeptanzkriterium:** alle Contract-Tests grün + E2E-Test für Blog-Workflow
+**Ziel:** Research, Blog, Email, **Kommunikationsmanager** als SDK-konforme Agenten  
+**Akzeptanzkriterium:** alle Contract-Tests grün + E2E-Test für Blog-Workflow; Kommunikationsmanager: Teilnehmerliste → `org:Person`/`org:Meeting` nur via MCP + DP-Commit
 
 > **Regel:** Fach-Agenten sind SKU-Pakete, die auf der laufenden Platform aufsetzen.
 > Sie implementieren keine eigene Suche, kein eigenes Monitoring, kein eigenes Modell-Routing.
@@ -1903,6 +1903,104 @@ class InvoiceExport(DataProduct):
     # Compliance: PII in Rechnungen wird vor Speicherung gecheckt
     pii_cleared: bool = False
 ```
+
+### 9.4 Kommunikationsmanager-Agent (`comms-manager-agent`)
+
+**SKU / Paket:** `agents/comms-manager/` · Compose: `deploy/agents/comms-manager.yml`  
+**Rolle:** Fachlicher Agent für **Kontakte, Meeting-Teilnehmer und Kalender-Kontext** — nicht Orchestrator-Direct-HTTP.
+
+> **Architekturregel (P5/P8):** Externe Welt und Brain-Lesen **nur** über `self.mcp`.  
+> Brain-Schreiben **nur** als typisierte DataProducts → `POST /v1/dataproduct/commit` (vom Platform-Orchestrator, nicht frei upserten).  
+> **Kein Workaround:** Die heutige Console-Bridge `POST /v1/meetings/participants/{process,commit}` ist **provisorisch** (Phase-2-Übergang) und wird durch Dispatch an diesen Agenten ersetzt, sobald Platform-Gate grün ist.
+
+**Konsumiert (Input-DPs):**
+
+| Input-DP | Quelle | Beispiel |
+|----------|--------|----------|
+| `comms:ParticipantListRaw` | Console Paste, Calendar-MCP, Mail-Header | Google-Kalender-Teilnehmer kopiert |
+| `comms:MeetingContext` | Meeting-Inbox, time-agent | Titel, `held_at`, optionale Summary |
+| optional `org:Meeting` | time-agent (Calendar-MCP) | Bestehendes Graph-Meeting verknüpfen |
+
+**Liefert (Output-DPs → Commit):**
+
+| Output-DP | storage_target | Kanten |
+|-----------|----------------|--------|
+| `OrgPerson` | G | — |
+| `OrgOrganization` | G | aus Mail-Domain (kein Gmail/GMX) |
+| `OrgMeeting` | G | `attended_by` → Person; `about` → Engagement |
+
+**MCP-Tools (Allowlist, keine Direkt-Calls):**
+
+| MCP | Cap | Zweck |
+|-----|-----|-------|
+| `calendar` | `list_attendees`, `get_event` | Teilnehmer aus Termin |
+| `mail` | `parse_headers` | Absender/CC → Person |
+| `web_search` | `search` | LinkedIn-Profil, Firmenwebsite (SearXNG) |
+| `kg` | `search`, `resolve` | Bestehende Person/Org per E-Mail |
+| `memory` | `ask` | optional Kontext „wer ist X?“ |
+
+**Workflow (LangGraph, deterministische Hülle):**
+
+```
+1. Parse (Code, kein LLM)     → E-Mails + Namen aus Raw-Text (Google-Formate)
+2. Resolve (MCP kg)           → bestehende org:Person per E-Mail
+3. Enrich (MCP web_search)    → LinkedIn, Firmenwebseite — Vorschläge mit confidence
+4. Merge (Code)               → Human-in-the-Loop: nicht blind überschreiben
+5. Commit (Platform)          → OrgPerson, OrgOrganization, OrgMeeting DPs
+6. Output                     → comms:ParticipantEnrichmentReport (Summary für Console)
+```
+
+```python
+# agents/comms-manager/agent.py — Skizze (Phase 4, nach Gate)
+class ParticipantListRaw(DataProduct):
+    raw_text: str
+    source: Literal["google_calendar_paste", "calendar_mcp", "mail_headers"]
+    meeting_ref: str | None = None  # SQLite-Inbox-ID oder org:Meeting
+
+class ParticipantEnrichmentReport(DataProduct):
+    participants: list[dict]  # email, name, status, linkedin_url?, company_website?
+    summary: str
+    committed_refs: list[str]  # person_ids
+
+class CommsManagerAgent(AgentBase):
+    agent_id = "comms-manager-agent"
+    input_schema = ParticipantListRaw
+    output_schema = ParticipantEnrichmentReport
+
+    async def run(self, input_dp: ParticipantListRaw) -> ParticipantEnrichmentReport:
+        parsed = parse_participants(input_dp.raw_text)  # deterministisch (P4)
+        for p in parsed:
+            existing = await self.mcp.call("kg", "resolve_by_email", {"email": p.email})
+            if input_dp.source != "google_calendar_paste":
+                ...
+            enrich = await self.mcp.call("web_search", "search",
+                                         {"q": f'site:linkedin.com/in "{p.name}"'})
+        # → OrgPerson / OrgOrganization / OrgMeeting DPs committen lassen (Platform)
+        ...
+```
+
+**Console-Anbindung (Zielbild Phase 4+):**
+
+- Meeting-Formular `/meetings`: Paste → `POST /v1/dispatch` mit Intent `participant_enrich` → comms-manager-agent  
+- **Nicht:** Orchestrator-interne HTTP-Enrichment-Endpunkte als Dauerlösung  
+- Übergang bis Gate: bestehende `/v1/meetings/participants/*` als dokumentierte Bridge ([docs/15-MEETINGS.md](docs/15-MEETINGS.md))
+
+**Abnahme (zusätzlich zu Contract-Tests):**
+
+```
+GATE-COMMS-01  Agent nutzt ausschließlich self.mcp (kein httpx/duckduckgo im Orchestrator-Pfad)
+GATE-COMMS-02  Output = ParticipantEnrichmentReport + OrgPerson-Commits in A auditierbar
+GATE-COMMS-03  E2E: Google-Paste → Dispatch → Graph enthält Person + attended_by-Kante
+GATE-COMMS-04  Bestehende Person per E-Mail wird gemerged, nicht blind überschrieben
+```
+
+**Verwandte Agenten:**
+
+| Agent | Abgrenzung |
+|-------|------------|
+| **time-agent** | Calendar-MCP → `org:Meeting` (Termin-Metadaten, nicht Enrichment) |
+| **email-agent** | Rechnungen, Steuer-Export — nicht Teilnehmer/Kontakte |
+| **comms-manager** | Personen, Organisationen, Meeting-Teilnehmer, LinkedIn/Web-Anreicherung |
 
 ---
 
@@ -2236,7 +2334,7 @@ Blog (`blog:*`) und Email (`email:*`) bleiben eigene SKUs — Company Brain **ve
 | OrgDecision | G+K | Console oder Workflow + Human-Gate |
 | OrgKnowledgeAsset | G+K (+L1 wenn published) | ingest-agent |
 | OrgClaim | G | memory-agent L3-Curator (`confidence≥0.7` Default-Retrieval) |
-| OrgPerson, OrgOrganization | G | Seed / email enrich |
+| OrgPerson, OrgOrganization | G | Seed / **comms-manager-agent** (nicht Orchestrator-Direct) |
 
 #### 12.4.4 Ingest-Quellen → Schichten (Next Chapter)
 
@@ -2244,7 +2342,8 @@ Blog (`blog:*`) und Email (`email:*`) bleiben eigene SKUs — Company Brain **ve
 |--------|------|-----|
 | Content Factory Publish | K+L1 | bestehende `blog:*` |
 | Gmail Invoices | G (+ Sheet) | bestehende `email:*` |
-| Calendar MCP | G | `org:Meeting` |
+| Calendar MCP | G | `org:Meeting` (time-agent) |
+| Google-Teilnehmer / Kontakt-Anreicherung | G | **comms-manager-agent** (MCP web_search + kg) |
 | Meeting-Notizen / Transkript → Inbox | K→Ingest | Meeting + optional Decision (Gate) |
 | `knowledge/` + Portfolio | K | Offering, Policy, KnowledgeAsset |
 | Chat-Import | L2; Claims nur via L3-Curator | `org:Claim` sparsam |
@@ -2272,7 +2371,7 @@ GATE-CB-08  Atomarer Commit G+K: kein active Decision-Node ohne K-Datei
 | 0 | L0 YAML `org-brain` im Repo |
 | 1 | Search-Index-Hook kennt `org:*` · **Query-Router** (§12.4.7) |
 | 2 | DP-Klassen, **atomarer G+K-Commit**, Claim-Pipeline, MCP Caps, Seed, GATE-CB-* |
-| 4 | time-agent→Meeting; blog↔supports/cites |
+| 4 | time-agent→Meeting; **comms-manager**→Person/Org; blog↔supports/cites |
 | 5 | Console KG-Filter `org:*`, Decision-Inbox, Claim-Gate-UI |
 | 6 | GraphRAG DomainSlice/RetrievalSlice priorisiert `org:*` (nur mit Router) |
 

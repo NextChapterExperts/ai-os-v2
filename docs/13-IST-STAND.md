@@ -90,6 +90,7 @@ Inference-Default: Ollama LAN (`OLLAMA_HOST` / `OLLAMA_DEFAULT_MODEL` in `.env`)
 ## Stubs / Teilimplementierung
 
 - MCP Mail/Calendar: deterministische Stubs, keine echten IMAP/CalDAV-Calls
+- Meeting-Teilnehmer (`/v1/meetings/participants/*`): Orchestrator-Bridge — **Übergang** bis **comms-manager-agent** (Phase 4, MCP-only); siehe [ROADMAP §9.4](../ROADMAP.md#94-kommunikationsmanager-agent-comms-manager-agent)
 - Context Bundle: Slice-Struktur vorhanden; Retrieval/Graph/Skills noch Notes
 - Console `/workflows`: UI „geplant“, kein Scheduler/LangGraph
 - Letta in Compose: läuft mit SQLite-Volume; **L2 Archival angebunden** (`letta_client.py`, Agent pro Tenant, Ollama-Embeddings via LAN-IP)
