@@ -19,6 +19,14 @@ Zentrale manuelle Erfassung aller Meetings — Launchpad, Kollegen-Gespräche, P
 | Projekte | nein | 0..n `eng:*` aus Brain + `active/*/README.md` |
 | Tags | nein | z. B. `launchpad`, `kollegen`, `michael` |
 | To-dos | nein | `{ text, done }` |
+| **Anhänge** | nein | Dateien (PDF, Notizen, …) — max. 25 MB pro Datei |
+
+## Anhänge
+
+- Speicher: `{AIOS_MEMORY_ROOT}/state/meetings/attachments/{meeting_id}/`
+- Metadaten: SQLite-Tabelle `meeting_attachments`
+- API: `POST /v1/meetings/{id}/attachments` (multipart), Download/Delete per Attachment-ID
+- Console: Datei-Upload im Meeting-Formular; bei neuem Meeting nach Speichern
 
 ## Filter
 

@@ -17,6 +17,10 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 ACTIVE_ROOT = Path(os.environ.get("AIOS_ACTIVE_ROOT", REPO_ROOT.parent / "active"))
 MEMORY_ROOT = Path(os.environ.get("AIOS_MEMORY_ROOT", "/opt/ai-os/memory"))
 DB_PATH = Path(os.environ.get("AIOS_MEETINGS_DB", MEMORY_ROOT / "state" / "meetings.db"))
+ATTACHMENTS_ROOT = Path(
+    os.environ.get("AIOS_MEETINGS_ATTACHMENTS_DIR", MEMORY_ROOT / "state" / "meetings" / "attachments")
+)
+MAX_ATTACHMENT_BYTES = int(os.environ.get("AIOS_MEETING_ATTACHMENT_MAX_BYTES", str(25 * 1024 * 1024)))
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS meetings (
@@ -33,6 +37,18 @@ CREATE TABLE IF NOT EXISTS meetings (
     updated_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_meetings_tenant_held ON meetings(tenant_id, held_at DESC);
+
+CREATE TABLE IF NOT EXISTS meeting_attachments (
+    id TEXT PRIMARY KEY,
+    meeting_id TEXT NOT NULL,
+    tenant_id TEXT NOT NULL,
+    filename TEXT NOT NULL,
+    stored_name TEXT NOT NULL,
+    mime_type TEXT NOT NULL DEFAULT 'application/octet-stream',
+    size_bytes INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_meeting_attachments_meeting ON meeting_attachments(meeting_id);
 """
 
 
@@ -58,9 +74,48 @@ def _parse_json_list(raw: str | None) -> list[Any]:
         return []
 
 
-def _row_to_dict(row: sqlite3.Row) -> dict[str, Any]:
+def _safe_filename(name: str) -> str:
+    base = Path(name).name
+    cleaned = re.sub(r"[^\w.\- ()]", "_", base).strip()
+    return (cleaned[:200] or "attachment")
+
+
+def _attachment_dir(meeting_id: str) -> Path:
+    safe = meeting_id.replace("/", "_").replace("..", "_")
+    return ATTACHMENTS_ROOT / safe
+
+
+def _list_attachments_for(meeting_id: str, tenant_id: str) -> list[dict[str, Any]]:
+    con = _connect()
+    try:
+        rows = con.execute(
+            """
+            SELECT id, filename, mime_type, size_bytes, created_at
+            FROM meeting_attachments
+            WHERE meeting_id = ? AND tenant_id = ?
+            ORDER BY created_at ASC
+            """,
+            (meeting_id, tenant_id),
+        ).fetchall()
+    finally:
+        con.close()
+    return [
+        {
+            "id": r["id"],
+            "filename": r["filename"],
+            "mime_type": r["mime_type"],
+            "size_bytes": r["size_bytes"],
+            "created_at": r["created_at"],
+        }
+        for r in rows
+    ]
+
+
+def _row_to_dict(row: sqlite3.Row, *, tenant_id: str | None = None) -> dict[str, Any]:
     todos = _parse_json_list(row["todos"])
     open_todos = sum(1 for t in todos if isinstance(t, dict) and not t.get("done"))
+    tid = tenant_id or row["tenant_id"]
+    attachments = _list_attachments_for(row["id"], tid)
     return {
         "id": row["id"],
         "tenant_id": row["tenant_id"],
@@ -72,6 +127,8 @@ def _row_to_dict(row: sqlite3.Row) -> dict[str, Any]:
         "tags": _parse_json_list(row["tags"]),
         "todos": todos,
         "open_todo_count": open_todos,
+        "attachments": attachments,
+        "attachment_count": len(attachments),
         "created_at": row["created_at"],
         "updated_at": row["updated_at"],
     }
@@ -131,9 +188,11 @@ def list_meetings(
         if q:
             like = f"%{q.strip()}%"
             sql += (
-                " AND (title LIKE ? OR participants LIKE ? OR summary LIKE ? OR tags LIKE ?)"
+                " AND (title LIKE ? OR participants LIKE ? OR summary LIKE ? OR tags LIKE ?"
+                " OR id IN (SELECT meeting_id FROM meeting_attachments"
+                " WHERE tenant_id = ? AND filename LIKE ?))"
             )
-            params.extend([like, like, like, like])
+            params.extend([like, like, like, like, tenant_id, like])
         sql += " ORDER BY held_at DESC LIMIT ?"
         params.append(max(1, min(limit, 500)))
         rows = con.execute(sql, params).fetchall()
@@ -251,7 +310,141 @@ def delete_meeting(meeting_id: str, tenant_id: str) -> bool:
             "DELETE FROM meetings WHERE id = ? AND tenant_id = ?",
             (meeting_id, tenant_id),
         )
+        con.execute(
+            "DELETE FROM meeting_attachments WHERE meeting_id = ? AND tenant_id = ?",
+            (meeting_id, tenant_id),
+        )
         con.commit()
-        return cur.rowcount > 0
+        deleted = cur.rowcount > 0
     finally:
         con.close()
+    if deleted:
+        att_dir = _attachment_dir(meeting_id)
+        if att_dir.is_dir():
+            for p in att_dir.iterdir():
+                if p.is_file():
+                    p.unlink(missing_ok=True)
+            att_dir.rmdir()
+    return deleted
+
+
+def add_attachment(
+    meeting_id: str,
+    tenant_id: str,
+    *,
+    filename: str,
+    content: bytes,
+    mime_type: str | None = None,
+) -> dict[str, Any]:
+    if not get_meeting(meeting_id, tenant_id):
+        raise ValueError("meeting not found")
+    if len(content) > MAX_ATTACHMENT_BYTES:
+        raise ValueError(f"file too large (max {MAX_ATTACHMENT_BYTES // (1024 * 1024)} MB)")
+
+    att_id = f"att-{uuid.uuid4().hex[:12]}"
+    safe_name = _safe_filename(filename)
+    stored_name = f"{att_id}_{safe_name}"
+    dest_dir = _attachment_dir(meeting_id)
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest_path = dest_dir / stored_name
+    dest_path.write_bytes(content)
+
+    now = _now()
+    row = {
+        "id": att_id,
+        "meeting_id": meeting_id,
+        "tenant_id": tenant_id,
+        "filename": safe_name,
+        "stored_name": stored_name,
+        "mime_type": (mime_type or "application/octet-stream").split(";")[0].strip(),
+        "size_bytes": len(content),
+        "created_at": now,
+    }
+    con = _connect()
+    try:
+        con.execute(
+            """
+            INSERT INTO meeting_attachments (
+                id, meeting_id, tenant_id, filename, stored_name,
+                mime_type, size_bytes, created_at
+            ) VALUES (
+                :id, :meeting_id, :tenant_id, :filename, :stored_name,
+                :mime_type, :size_bytes, :created_at
+            )
+            """,
+            row,
+        )
+        con.execute(
+            "UPDATE meetings SET updated_at = ? WHERE id = ? AND tenant_id = ?",
+            (now, meeting_id, tenant_id),
+        )
+        con.commit()
+    finally:
+        con.close()
+    return {
+        "id": att_id,
+        "filename": safe_name,
+        "mime_type": row["mime_type"],
+        "size_bytes": len(content),
+        "created_at": now,
+    }
+
+
+def get_attachment_path(
+    meeting_id: str,
+    attachment_id: str,
+    tenant_id: str,
+) -> tuple[Path, dict[str, Any]] | None:
+    con = _connect()
+    try:
+        row = con.execute(
+            """
+            SELECT * FROM meeting_attachments
+            WHERE id = ? AND meeting_id = ? AND tenant_id = ?
+            """,
+            (attachment_id, meeting_id, tenant_id),
+        ).fetchone()
+    finally:
+        con.close()
+    if not row:
+        return None
+    path = _attachment_dir(meeting_id) / row["stored_name"]
+    if not path.is_file():
+        return None
+    meta = {
+        "id": row["id"],
+        "filename": row["filename"],
+        "mime_type": row["mime_type"],
+        "size_bytes": row["size_bytes"],
+    }
+    return path, meta
+
+
+def delete_attachment(meeting_id: str, attachment_id: str, tenant_id: str) -> bool:
+    con = _connect()
+    try:
+        row = con.execute(
+            """
+            SELECT stored_name FROM meeting_attachments
+            WHERE id = ? AND meeting_id = ? AND tenant_id = ?
+            """,
+            (attachment_id, meeting_id, tenant_id),
+        ).fetchone()
+        if not row:
+            return False
+        con.execute(
+            "DELETE FROM meeting_attachments WHERE id = ? AND meeting_id = ? AND tenant_id = ?",
+            (attachment_id, meeting_id, tenant_id),
+        )
+        con.execute(
+            "UPDATE meetings SET updated_at = ? WHERE id = ? AND tenant_id = ?",
+            (_now(), meeting_id, tenant_id),
+        )
+        con.commit()
+        stored_name = row["stored_name"]
+    finally:
+        con.close()
+    path = _attachment_dir(meeting_id) / stored_name
+    if path.is_file():
+        path.unlink()
+    return True

@@ -4,6 +4,14 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState, useTransi
 
 type Todo = { text: string; done: boolean };
 
+type Attachment = {
+  id: string;
+  filename: string;
+  mime_type: string;
+  size_bytes: number;
+  created_at: string;
+};
+
 type Meeting = {
   id: string;
   title: string;
@@ -14,6 +22,8 @@ type Meeting = {
   tags: string[];
   todos: Todo[];
   open_todo_count?: number;
+  attachments?: Attachment[];
+  attachment_count?: number;
 };
 
 type EngagementOption = { id: string; title: string };
@@ -78,6 +88,27 @@ function formatDate(iso: string): string {
   }).format(d);
 }
 
+function formatBytes(n: number): string {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+async function uploadFiles(meetingId: string, files: File[]): Promise<void> {
+  for (const file of files) {
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch(`/api/meetings/${meetingId}/attachments`, {
+      method: "POST",
+      body: fd,
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      throw new Error(json.detail ?? json.error ?? `Upload fehlgeschlagen: ${file.name}`);
+    }
+  }
+}
+
 type FilterState = {
   q: string;
   unassigned: boolean;
@@ -97,6 +128,8 @@ export function MeetingsPanel() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [formAttachments, setFormAttachments] = useState<Attachment[]>([]);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const fetchSeq = useRef(0);
 
   const fetchMeetings = useCallback((next: FilterState) => {
@@ -154,6 +187,8 @@ export function MeetingsPanel() {
 
   function openCreate() {
     setEditingId(null);
+    setFormAttachments([]);
+    setPendingFiles([]);
     setForm({
       ...EMPTY_FORM,
       held_at: toLocalDatetimeValue(new Date().toISOString()),
@@ -163,6 +198,8 @@ export function MeetingsPanel() {
 
   function openEdit(m: Meeting) {
     setEditingId(m.id);
+    setFormAttachments(m.attachments ?? []);
+    setPendingFiles([]);
     setForm({
       title: m.title,
       held_at: toLocalDatetimeValue(m.held_at),
@@ -173,6 +210,50 @@ export function MeetingsPanel() {
       todos: formatTodos(m.todos),
     });
     setShowForm(true);
+  }
+
+  async function onFilesSelected(files: FileList | null) {
+    if (!files?.length) return;
+    const list = Array.from(files);
+    if (!editingId) {
+      setPendingFiles((prev) => [...prev, ...list]);
+      return;
+    }
+    startTransition(async () => {
+      try {
+        setError(null);
+        await uploadFiles(editingId, list);
+        const res = await fetch(`/api/meetings/${editingId}`, { cache: "no-store" });
+        const json = await res.json();
+        if (res.ok && json.meeting?.attachments) {
+          setFormAttachments(json.meeting.attachments);
+        }
+        refresh();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Upload fehlgeschlagen");
+      }
+    });
+  }
+
+  async function removeAttachment(att: Attachment) {
+    if (!editingId) return;
+    if (!confirm(`Anhang „${att.filename}" löschen?`)) return;
+    startTransition(async () => {
+      try {
+        const res = await fetch(
+          `/api/meetings/${editingId}/attachments/${att.id}`,
+          { method: "DELETE" },
+        );
+        if (!res.ok) {
+          const json = await res.json();
+          throw new Error(json.detail ?? json.error ?? `HTTP ${res.status}`);
+        }
+        setFormAttachments((prev) => prev.filter((a) => a.id !== att.id));
+        refresh();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Anhang löschen fehlgeschlagen");
+      }
+    });
   }
 
   function toggleEngagement(id: string) {
@@ -212,9 +293,15 @@ export function MeetingsPanel() {
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.detail ?? json.error ?? `HTTP ${res.status}`);
+        const meetingId = (json.meeting?.id as string | undefined) ?? editingId;
+        if (meetingId && pendingFiles.length > 0) {
+          await uploadFiles(meetingId, pendingFiles);
+        }
         setShowForm(false);
         setEditingId(null);
         setForm(EMPTY_FORM);
+        setFormAttachments([]);
+        setPendingFiles([]);
         refresh();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Speichern fehlgeschlagen");
@@ -371,6 +458,59 @@ export function MeetingsPanel() {
               placeholder="[ ] Angebot bis Freitag&#10;[x] Termin bestätigt"
             />
           </label>
+          <div className="meetings-field">
+            <span>Anhänge</span>
+            <input
+              type="file"
+              multiple
+              className="meetings-file-input"
+              onChange={(e) => {
+                void onFilesSelected(e.target.files);
+                e.target.value = "";
+              }}
+            />
+            <p className="muted m-0 text-xs">
+              {editingId
+                ? "Dateien werden sofort hochgeladen (max. 25 MB pro Datei)."
+                : "Bei neuem Meeting: Dateien werden nach dem Speichern hochgeladen."}
+            </p>
+            {pendingFiles.length > 0 ? (
+              <ul className="meetings-attach-list">
+                {pendingFiles.map((f) => (
+                  <li key={`${f.name}-${f.size}`}>
+                    {f.name} · {formatBytes(f.size)} (wartet auf Speichern)
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            {formAttachments.length > 0 ? (
+              <ul className="meetings-attach-list">
+                {formAttachments.map((att) => (
+                  <li key={att.id} className="meetings-attach-item">
+                    <a
+                      href={`/api/meetings/${editingId}/attachments/${att.id}`}
+                      className="nav-link"
+                      download={att.filename}
+                    >
+                      {att.filename}
+                    </a>
+                    <span className="mono muted text-xs">
+                      {formatBytes(att.size_bytes)}
+                    </span>
+                    {editingId ? (
+                      <button
+                        type="button"
+                        className="btn-ghost meetings-attach-remove"
+                        onClick={() => void removeAttachment(att)}
+                      >
+                        Entfernen
+                      </button>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
           <div className="flex flex-wrap gap-2">
             <button type="submit" className="btn-primary" disabled={pending}>
               {pending ? "Speichere…" : "Speichern"}
@@ -430,7 +570,30 @@ export function MeetingsPanel() {
                     {m.open_todo_count} offen
                   </span>
                 ) : null}
+                {m.attachment_count ? (
+                  <span className="badge" data-variant="raw">
+                    {m.attachment_count} Anhang{m.attachment_count === 1 ? "" : "e"}
+                  </span>
+                ) : null}
               </div>
+              {(m.attachments ?? []).length > 0 ? (
+                <ul className="meetings-attach-list mt-2">
+                  {(m.attachments ?? []).map((att) => (
+                    <li key={att.id}>
+                      <a
+                        href={`/api/meetings/${m.id}/attachments/${att.id}`}
+                        className="nav-link text-sm"
+                        download={att.filename}
+                      >
+                        {att.filename}
+                      </a>
+                      <span className="mono muted text-xs ml-2">
+                        {formatBytes(att.size_bytes)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
             </div>
             <button type="button" className="btn-ghost" onClick={() => openEdit(m)}>
               Bearbeiten

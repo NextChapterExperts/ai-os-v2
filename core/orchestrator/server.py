@@ -7,7 +7,8 @@ import uuid
 from typing import Any
 
 import httpx
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, File, HTTPException, Query, UploadFile
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field, ValidationError
 
 from .audit import write_agent_run
@@ -213,6 +214,62 @@ async def meetings_delete(meeting_id: str, tenant_id: str = "nextchapter") -> di
     if not delete_meeting(meeting_id, tenant_id):
         raise HTTPException(status_code=404, detail="Meeting not found")
     return {"status": "deleted", "id": meeting_id}
+
+
+@app.post("/v1/meetings/{meeting_id}/attachments")
+async def meetings_upload_attachment(
+    meeting_id: str,
+    tenant_id: str = "nextchapter",
+    file: UploadFile = File(...),
+) -> dict[str, Any]:
+    from .meetings_store import add_attachment, get_meeting
+
+    if get_meeting(meeting_id, tenant_id) is None:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+    content = await file.read()
+    try:
+        att = add_attachment(
+            meeting_id,
+            tenant_id,
+            filename=file.filename or "attachment",
+            content=content,
+            mime_type=file.content_type,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"attachment": att, "meeting_id": meeting_id}
+
+
+@app.get("/v1/meetings/{meeting_id}/attachments/{attachment_id}")
+async def meetings_download_attachment(
+    meeting_id: str,
+    attachment_id: str,
+    tenant_id: str = "nextchapter",
+):
+    from .meetings_store import get_attachment_path
+
+    resolved = get_attachment_path(meeting_id, attachment_id, tenant_id)
+    if resolved is None:
+        raise HTTPException(status_code=404, detail="Attachment not found")
+    path, meta = resolved
+    return FileResponse(
+        path,
+        media_type=meta["mime_type"],
+        filename=meta["filename"],
+    )
+
+
+@app.delete("/v1/meetings/{meeting_id}/attachments/{attachment_id}")
+async def meetings_delete_attachment(
+    meeting_id: str,
+    attachment_id: str,
+    tenant_id: str = "nextchapter",
+) -> dict[str, Any]:
+    from .meetings_store import delete_attachment
+
+    if not delete_attachment(meeting_id, attachment_id, tenant_id):
+        raise HTTPException(status_code=404, detail="Attachment not found")
+    return {"status": "deleted", "id": attachment_id}
 
 
 class DataProductCommitRequest(BaseModel):

@@ -543,3 +543,29 @@ body {
   border-color: var(--signal);
   color: var(--signal);
 }
+
+.meetings-file-input {
+  width: 100%;
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+.meetings-attach-list {
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.meetings-attach-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.meetings-attach-remove {
+  padding: 0.2rem 0.5rem !important;
+  font-size: 0.75rem !important;
+}
