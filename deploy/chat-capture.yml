@@ -1,0 +1,43 @@
+# Phase 1b — Chat Capture (Antigravity, Gemini-Inbox)
+# Lokal bevorzugt: systemd user services in core/capture/
+#   aios-antigravity-capture.service
+#   aios-gemini-inbox.service
+#
+# Docker (optional, from repo root):
+#   docker compose -f deploy/chat-capture.yml up -d
+
+services:
+  antigravity-capture:
+    image: node:22-bookworm-slim
+    working_dir: /app/core/capture
+    command: ["node", "antigravity-job.mjs"]
+    volumes:
+      - ..:/app:ro
+      - /opt/ai-os/memory:/opt/ai-os/memory
+      - ${HOME}/.gemini:/root/.gemini:ro
+    environment:
+      AIOS_MEMORY_ROOT: /opt/ai-os/memory
+      ORCHESTRATOR_URL: http://host.docker.internal:8091
+      CAPTURE_INTERVAL_MS: "30000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    profiles: ["chat-capture-docker"]
+
+  gemini-inbox:
+    image: node:22-bookworm-slim
+    working_dir: /app/core/capture
+    command: ["node", "gemini-inbox-job.mjs"]
+    volumes:
+      - ..:/app:ro
+      - /opt/ai-os/memory:/opt/ai-os/memory
+      - /opt/ai-os/ingest/inbox:/opt/ai-os/ingest/inbox
+    environment:
+      AIOS_MEMORY_ROOT: /opt/ai-os/memory
+      AIOS_INGEST_INBOX: /opt/ai-os/ingest/inbox
+      ORCHESTRATOR_URL: http://host.docker.internal:8091
+      CAPTURE_INTERVAL_MS: "60000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    profiles: ["chat-capture-docker"]

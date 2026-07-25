@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "start": "node cursor-job.mjs",
-    "once": "node cursor-job.mjs --once"
+    "once": "node cursor-job.mjs --once",
+    "antigravity": "node antigravity-job.mjs",
+    "antigravity:once": "node antigravity-job.mjs --once",
+    "gemini-inbox": "node gemini-inbox-job.mjs",
+    "gemini-inbox:once": "node gemini-inbox-job.mjs --once"
   },
   "dependencies": {
     "better-sqlite3": "^13.0.1"

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 import httpx
@@ -124,6 +125,68 @@ async def get_kg_nodes(
 ) -> dict[str, Any]:
     results = list_nodes(tenant_id, node_type, limit=limit)
     return {"node_type": node_type, "tenant_id": tenant_id, "results": results, "count": len(results)}
+
+
+class ChatImportRequest(BaseModel):
+    transcript: dict[str, Any]
+    tenant_id: str = "nextchapter"
+    project_id: str | None = None
+
+
+@app.post("/v1/chat-import")
+async def post_chat_import(req: ChatImportRequest) -> dict[str, Any]:
+    """Phase 1b — externe Chats (Antigravity, Gemini, …) ins Gedächtnis."""
+    from .chat_import import import_transcript
+
+    try:
+        return import_transcript(
+            req.transcript,
+            tenant_id=req.tenant_id,
+            project_id=req.project_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.get("/v1/capture/stats")
+async def get_capture_stats() -> dict[str, Any]:
+    """Status der Chat-Capture-Dienste (Cursor, Antigravity, Inbox)."""
+    import json
+    import sqlite3
+    from pathlib import Path
+
+    memory_root = Path(os.environ.get("AIOS_MEMORY_ROOT", "/opt/ai-os/memory"))
+    db_path = os.environ.get("AIOS_MEMORY_DB", str(memory_root / "memory.db"))
+    stats: dict[str, Any] = {"sources": {}, "inbox_path": "/opt/ai-os/ingest/inbox"}
+
+    if os.path.exists(db_path):
+        con = sqlite3.connect(db_path)
+        con.row_factory = sqlite3.Row
+        try:
+            rows = con.execute(
+                "SELECT source, COUNT(*) AS n FROM chunks GROUP BY source ORDER BY n DESC"
+            ).fetchall()
+            stats["sources"] = {r["source"]: r["n"] for r in rows}
+            stats["total_chunks"] = sum(stats["sources"].values())
+            meta = con.execute("SELECT key, value FROM capture_meta").fetchall()
+            stats["capture_meta"] = {r["key"]: r["value"] for r in meta}
+        finally:
+            con.close()
+
+    for name, rel in [
+        ("antigravity", "state/antigravity-poller-state.json"),
+        ("gemini_inbox", "state/gemini-inbox-state.json"),
+    ]:
+        p = memory_root / rel
+        if p.is_file():
+            try:
+                stats[name] = json.loads(p.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                stats[name] = {"error": "invalid json"}
+
+    return stats
 
 
 class ChatCompletionRequest(BaseModel):

@@ -112,8 +112,14 @@ cd ~
 tar -xzf ~/Transfers/Antigravity.tar.gz
 # Pfad je nach Archiv — typisch:
 # ~/Antigravity-x64/antigravity  oder ähnlich
-chmod +x ~/Antigravity*/antigravity 2>/dev/null || true
-# Desktop-Starter optional selbst anlegen
+chmod +x ~/Antigravity-x64/antigravity
+# Desktop-Button: start-antigravity.sh (--no-sandbox, sonst chrome-sandbox-Fehler)
+cat > ~/Antigravity-x64/start-antigravity.sh <<'EOF'
+#!/usr/bin/env bash
+exec ~/Antigravity-x64/antigravity --no-sandbox "$@"
+EOF
+chmod +x ~/Antigravity-x64/start-antigravity.sh
+# Desktop: ~/.local/share/applications/antigravity.desktop → Exec=start-antigravity.sh
 ```
 
 **Inbox für späteres Capture (jetzt schon anlegen):**

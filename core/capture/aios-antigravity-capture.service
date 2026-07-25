@@ -1,0 +1,17 @@
+[Unit]
+Description=AI-OS Antigravity Chat Capture → Memory
+After=network.target aios-orchestrator.service
+
+[Service]
+Type=simple
+WorkingDirectory=%h/Projekte/1100-AI-OS-V2/core/capture
+Environment=AIOS_MEMORY_ROOT=/opt/ai-os/memory
+Environment=ORCHESTRATOR_URL=http://127.0.0.1:8091
+Environment=CAPTURE_INTERVAL_MS=30000
+Environment=NVM_DIR=%h/.nvm
+ExecStart=/bin/bash -lc 'export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; node antigravity-job.mjs'
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target

@@ -19,7 +19,7 @@ Auf der **NCE DEV-VM** läuft ein **Phase-0/1-Skeleton** plus ein **Phase-2-Vorg
 |-------|--------|--------|
 | **0** | Infra + LangFuse + DB-Schema + DEV-VM-Bootstrap + Repo | **weitgehend erledigt** |
 | **1** | Core OS + Memory Gateway + Unified Search | **teilweise** (Memory Gateway Persist-Hook ✅ `core/memory_gateway/` + `GET /v1/models` + `POST /v1/chat/completions`; Orch/Console/MCP + Unified Search + Graph + Query-Router; LangGraph + `POST /v1/compute/mode` fehlen) |
-| **1b** | Chat Capture | **teilweise** (Cursor→SQLite; Gemini/Antigravity/UI fehlen) |
+| **1b** | Chat Capture | **teilweise** (Cursor ✅; Antigravity-Poller ✅; Gemini-Inbox ✅; Console `/platform/capture` ✅; ChatGPT-Export + Drive-Poller ⏳) |
 | **2** | Platform-Agenten + Platform-Gate | **teilweise** (Company-Brain-DP-Commit + KG für `org:*` steht; Platform-Agenten-Laufzeit/Gate selbst offen) |
 | **3** | Agent-SDK | **offen** |
 | **4** | Fach-Agenten | **gesperrt** (vor Gate) |
@@ -45,6 +45,8 @@ Zusätzlich: **Memory Gateway (Phase 1)** — `core/memory_gateway/` routet LLM-
 | **Orchestrator** | `:8091` | `./core/orchestrator/run.sh` | FastAPI: `/health`, `POST /v1/dispatch`, **`GET /v1/models`**, **`POST /v1/chat/completions`** (Memory Gateway), Brain-Listen, DP-Commit, KG-API |
 | **MCP-Gateway** | `:8097` | `./core/mcp_gateway/run.sh` | Allowlist + Mail/Calendar-**Stubs** (nicht in Compose) |
 | **Cursor Capture** | systemd user / `npm start` | `core/capture/` | Pollt Cursor-Transkripte → `/opt/ai-os/memory/memory.db` |
+| **Antigravity Capture** | systemd user | `core/capture/antigravity-job.mjs` | Pollt `~/.gemini/antigravity/brain` → `POST /v1/chat-import` |
+| **Gemini-Inbox Capture** | systemd user | `core/capture/gemini-inbox-job.mjs` | Pollt `/opt/ai-os/ingest/inbox/{gemini,chats}/` → chat-import |
 | **File-Ingest-Watcher** | systemd user | `core/file_ingest_watcher/` | Scannt `Projekte/active/**`, embedded lokal → Qdrant-Collection `raw-files` (Bridge, siehe [ADR 0002](adr/0002-file-ingest-watcher-und-rolle-von-cursor.md)) |
 | **Ingest-Agent** | systemd user Timer (täglich 03:30) | `core/ingest_agent/` | Company-Brain-Seed → DP-Commit (KG) + Qdrant `content` |
 | **Compose Infra** | diverse | `docker compose -f deploy/infra.yml -f deploy/monitoring.yml up -d` | Qdrant, Postgres (Host-Port `127.0.0.1:5432`), LiteLLM, SearXNG, Letta (SQLite), LangFuse |
@@ -105,7 +107,7 @@ Inference-Default: Ollama LAN (`OLLAMA_HOST` / `OLLAMA_DEFAULT_MODEL` in `.env`)
 - Letta-Anbindung (L2/L3) — `query_router.py` kennt `use_letta`, aber es gibt noch kein echtes Letta; als Uebergangs-Fallback (Bug vom 2026-07-25: "gestern"-Fragen lieferten 0 Treffer in Lagebild UND Suche) liest `memory_store.py` jetzt bei `use_letta` die Cursor-Capture-SQLite (`memory.db`) zeitfenster-/keyword-basiert aus (`source_type: "episodic"`) — kein echtes Episodengedaechtnis, aber besser als 0 Treffer
 - Skill-Store (SK) — `query_router.py` kennt `use_sk`, aber `core/skills/` existiert noch nicht
 - Platform-Gate (`python -m tests.platform_gate`)
-- Gemini/Antigravity Capture + Console „Chat-Erfassung“
+- Gemini/Antigravity Capture ✅ (Poller + `/v1/chat-import` + Console `/platform/capture`); ChatGPT-Export + Drive-Poller offen
 - Console `/platform/kg`: Decision-Inbox (Human-Gate für Claims) fehlt noch — Graph-Browse/Suche/Detail ist da
 
 ---

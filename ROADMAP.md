@@ -1056,7 +1056,7 @@ modes:
 | `POST /v1/compute/mode` (Tenant-Modus wechseln) | ⏳ |
 | Auto-Router / CAG / PROD-Outbound-Block | ⏳ Phase 1+ |
 
-**Nächster Roadmap-Punkt:** Phase 1b — Gemini/Antigravity Chat Capture (§6b).
+**Nächster Roadmap-Punkt:** Phase 2 — Platform-Agenten + Platform-Gate (§7).
 
 ### 6.7 LangFuse-Tracing (ab Phase 1 — Pflicht)
 
@@ -1121,6 +1121,21 @@ Gemini / Antigravity / ChatGPT-Export
 ```
 
 **Nicht:** Capture von NCE-DEV in eine Kunden-PROD-DB schreiben.
+
+**Implementierungsstand (2026-07-25):**
+
+| Baustein | Status |
+|----------|--------|
+| `POST /v1/chat-import` + `core/orchestrator/chat_import.py` | ✅ |
+| Antigravity-Poller `core/capture/antigravity-job.mjs` + systemd | ✅ |
+| Gemini-Inbox-Poller `core/capture/gemini-inbox-job.mjs` + systemd | ✅ |
+| Console `/platform/capture` (Chat-Erfassung) | ✅ |
+| `GET /v1/capture/stats` | ✅ |
+| `deploy/chat-capture.yml` (Docker optional) | ✅ Scaffold |
+| ChatGPT-Export-Parser | ⏳ |
+| Drive-Poller Gemini (v1 C2) | ⏳ |
+
+**Nächster Roadmap-Punkt:** Phase 2 — Platform-Agenten + Platform-Gate (§7).
 
 ---
 

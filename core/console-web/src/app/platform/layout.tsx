@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const TABS = [
   { href: "/platform", label: "Health" },
   { href: "/platform/kg", label: "Graph" },
+  { href: "/platform/capture", label: "Chat-Erfassung" },
 ] as const;
 
 export default function PlatformLayout({ children }: { children: React.ReactNode }) {
