@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import type { PlatformHealthResponse } from "@/lib/types";
 import { StatusDot } from "./StatusDot";
@@ -86,6 +87,11 @@ export function PlatformHealthPanel() {
               <span className="mono text-xs">{mem.dbPath}</span>
             </div>
           </div>
+          <p className="muted mt-4 mb-0 text-sm">
+            <Link href="/platform/storage" className="underline underline-offset-2">
+              Speicherverbrauch aller Memory-Stacks →
+            </Link>
+          </p>
         </div>
       ) : null}
 

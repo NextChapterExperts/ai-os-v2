@@ -17,6 +17,7 @@ from .dispatch import dispatch
 from .dp_service import DPCommitError, commit_dataproduct, kg_stats, resolve_node_by_id
 from .intent_router import route_intent
 from .kg_search import list_nodes, search_nodes
+from .run_context_store import load_run_context, save_run_context
 
 from core.memory_gateway.client import chat_completion, list_models
 
@@ -34,6 +35,7 @@ class DispatchResponse(BaseModel):
     intent: str
     result: dict[str, Any]
     context_bundle: dict[str, Any]
+    run_id: str
 
 
 @app.get("/health")
@@ -69,13 +71,28 @@ async def dispatch_intent(req: DispatchRequest) -> DispatchResponse:
         intent,
         result,
     )
+    llm_context = result.pop("llmContext", None)
+    if llm_context:
+        llm_context["orchestratorContext"] = context_bundle
+        save_run_context(run_id, llm_context)
+        result["hasContext"] = True
+    result["runId"] = run_id
     write_agent_run(intent, result, req.tenant_id, extra={"run_id": run_id, "distill": distill})
     return DispatchResponse(
         status="ok",
         intent=intent,
         result=result,
         context_bundle=context_bundle,
+        run_id=run_id,
     )
+
+
+@app.get("/v1/runs/{run_id}/context")
+async def get_run_context(run_id: str) -> dict[str, Any]:
+    context = load_run_context(run_id)
+    if context is None:
+        raise HTTPException(status_code=404, detail="Run context not found")
+    return context
 
 
 @app.get("/v1/brain/offerings")
@@ -359,6 +376,14 @@ async def get_l1_stats() -> dict[str, Any]:
     from core.memory.l1_curator import scan_stats
 
     return scan_stats()
+
+
+@app.get("/v1/memory/storage")
+async def get_memory_storage() -> dict[str, Any]:
+    """Speicherverbrauch aller Memory-Stacks + VM-Festplatte."""
+    from core.memory.storage_stats import collect_storage_stats
+
+    return collect_storage_stats()
 
 
 @app.post("/v1/memory/curate/l1")

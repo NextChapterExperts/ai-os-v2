@@ -1,0 +1,16 @@
+id: mem-letta-005
+name: 'Episodisch: Tagesdigest Letta'
+category: episodic_search
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: Tagesdigest Letta
+  limit: 10
+expect:
+  http_status: 200
+  result_kind: search
+tags:
+- letta
+- episodic
+- search

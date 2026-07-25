@@ -1,0 +1,17 @@
+id: mem-episodic-011
+name: Was lief gestern mit Cursor Capture?
+category: episodic
+endpoint: dispatch
+method: POST
+intent: memory_ask
+params:
+  question: Was lief gestern mit Cursor Capture?
+expect:
+  http_status: 200
+  result_kind: ask
+  min_answer_length: 3
+tags:
+- temporal
+- memory_ask
+- sqlite
+- letta

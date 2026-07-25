@@ -1,0 +1,11 @@
+id: mem-api-capture
+name: Capture stats
+category: capture
+endpoint: orchestrator
+method: GET
+path: /v1/capture/stats
+expect:
+  http_status: 200
+  has_total_chunks: true
+tags:
+- api

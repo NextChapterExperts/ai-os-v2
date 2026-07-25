@@ -1,0 +1,15 @@
+id: mem-raw-002
+name: 'Raw-files: package.json dependencies'
+category: raw_files
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: package.json dependencies
+  limit: 5
+expect:
+  http_status: 200
+  result_kind: search
+tags:
+- raw-files
+- file-ingest

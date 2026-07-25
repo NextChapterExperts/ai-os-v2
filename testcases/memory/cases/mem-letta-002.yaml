@@ -1,0 +1,16 @@
+id: mem-letta-002
+name: 'Episodisch: Episoden Memory Gateway'
+category: episodic_search
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: Episoden Memory Gateway
+  limit: 10
+expect:
+  http_status: 200
+  result_kind: search
+tags:
+- letta
+- episodic
+- search

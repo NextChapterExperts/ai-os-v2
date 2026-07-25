@@ -1,0 +1,17 @@
+id: mem-episodic-006
+name: Was haben wir letzte Woche gemacht?
+category: episodic
+endpoint: dispatch
+method: POST
+intent: memory_ask
+params:
+  question: Was haben wir letzte Woche gemacht?
+expect:
+  http_status: 200
+  result_kind: ask
+  min_answer_length: 3
+tags:
+- temporal
+- memory_ask
+- sqlite
+- letta

@@ -1,0 +1,16 @@
+id: mem-letta-001
+name: 'Episodisch: Worüber haben wir letzte Woche gesprochen?'
+category: episodic_search
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: Worüber haben wir letzte Woche gesprochen?
+  limit: 10
+expect:
+  http_status: 200
+  result_kind: search
+tags:
+- letta
+- episodic
+- search

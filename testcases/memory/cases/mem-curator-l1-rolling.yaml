@@ -1,0 +1,15 @@
+id: mem-curator-l1-rolling
+name: L1 rolling dry
+category: l1_curator
+endpoint: orchestrator
+method: POST
+path: /v1/memory/curate/l1
+body:
+  dry_run: true
+  modes:
+  - rolling
+expect:
+  http_status: 200
+tags:
+- curator
+- dry_run

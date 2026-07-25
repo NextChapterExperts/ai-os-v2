@@ -1,0 +1,15 @@
+id: mem-mixed-001
+name: 'Mixed: Was wissen wir über AI-OS Memory und Offerings?'
+category: mixed_search
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: Was wissen wir über AI-OS Memory und Offerings?
+  limit: 12
+expect:
+  http_status: 200
+  result_kind: search
+tags:
+- mixed
+- router

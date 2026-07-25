@@ -1,0 +1,15 @@
+id: mem-mixed-002
+name: 'Mixed: Company Brain und gestern besprochen'
+category: mixed_search
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: Company Brain und gestern besprochen
+  limit: 12
+expect:
+  http_status: 200
+  result_kind: search
+tags:
+- mixed
+- router

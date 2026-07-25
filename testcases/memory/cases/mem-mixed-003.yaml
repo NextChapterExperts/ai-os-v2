@@ -1,0 +1,15 @@
+id: mem-mixed-003
+name: 'Mixed: Roadmap Phase 2 Platform Gate'
+category: mixed_search
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: Roadmap Phase 2 Platform Gate
+  limit: 12
+expect:
+  http_status: 200
+  result_kind: search
+tags:
+- mixed
+- router

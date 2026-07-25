@@ -1,0 +1,11 @@
+id: mem-api-storage
+name: Storage stats
+category: storage
+endpoint: orchestrator
+method: GET
+path: /v1/memory/storage
+expect:
+  http_status: 200
+  has_stacks: true
+tags:
+- api

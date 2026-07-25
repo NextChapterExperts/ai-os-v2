@@ -1,0 +1,15 @@
+id: mem-graph-005
+name: 'Graph: Engagement active Projekte'
+category: graph
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: Engagement active Projekte
+  limit: 6
+expect:
+  http_status: 200
+  result_kind: search
+tags:
+- graph
+- kg

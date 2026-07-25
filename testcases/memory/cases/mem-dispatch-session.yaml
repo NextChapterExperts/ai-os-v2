@@ -1,0 +1,15 @@
+id: mem-dispatch-session
+name: Dispatch with session_id
+category: working
+endpoint: dispatch
+method: POST
+intent: memory_ask
+params:
+  question: Session test
+  session_id: testcase-session-001
+expect:
+  http_status: 200
+tags:
+- working
+- tactical
+- p9

@@ -1,0 +1,17 @@
+id: mem-episodic-007
+name: Gibt es etwas von gestern zu Memory oder Letta?
+category: episodic
+endpoint: dispatch
+method: POST
+intent: memory_ask
+params:
+  question: Gibt es etwas von gestern zu Memory oder Letta?
+expect:
+  http_status: 200
+  result_kind: ask
+  min_answer_length: 3
+tags:
+- temporal
+- memory_ask
+- sqlite
+- letta

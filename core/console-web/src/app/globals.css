@@ -419,3 +419,38 @@ body {
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 0.85em;
 }
+
+.context-page {
+  display: grid;
+  gap: 2rem;
+}
+
+.context-section {
+  border-top: 1px solid var(--line);
+  padding-top: 1.25rem;
+}
+
+.context-section-title {
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.75rem;
+}
+
+.context-pre {
+  margin: 0;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  background: color-mix(in oklab, white 55%, transparent);
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  max-height: 28rem;
+  overflow: auto;
+}
+
+.context-pre-json {
+  max-height: 20rem;
+}

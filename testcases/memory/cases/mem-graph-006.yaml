@@ -1,0 +1,15 @@
+id: mem-graph-006
+name: 'Graph: Knowledge Graph org nodes'
+category: graph
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: Knowledge Graph org nodes
+  limit: 6
+expect:
+  http_status: 200
+  result_kind: search
+tags:
+- graph
+- kg

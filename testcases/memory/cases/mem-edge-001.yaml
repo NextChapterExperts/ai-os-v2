@@ -1,0 +1,10 @@
+id: mem-edge-001
+name: 'Edge: ping health check'
+category: edge_cases
+endpoint: dispatch
+method: POST
+intent: ping
+expect:
+  http_status: 200
+tags:
+- edge

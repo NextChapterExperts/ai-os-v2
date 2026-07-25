@@ -1,0 +1,14 @@
+id: mem-distill-empty
+name: Empty run distill audit
+category: distill
+endpoint: dispatch
+method: POST
+intent: ping
+params:
+  run_id: testcase-empty-001
+expect:
+  http_status: 200
+tags:
+- working
+- tactical
+- p9

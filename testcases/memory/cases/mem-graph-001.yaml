@@ -1,0 +1,15 @@
+id: mem-graph-001
+name: 'Graph: Welche Offerings gibt es?'
+category: graph
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: Welche Offerings gibt es?
+  limit: 6
+expect:
+  http_status: 200
+  result_kind: search
+tags:
+- graph
+- kg

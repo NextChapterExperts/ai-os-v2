@@ -1,0 +1,15 @@
+id: mem-raw-004
+name: 'Raw-files: docker compose infra'
+category: raw_files
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: docker compose infra
+  limit: 5
+expect:
+  http_status: 200
+  result_kind: search
+tags:
+- raw-files
+- file-ingest

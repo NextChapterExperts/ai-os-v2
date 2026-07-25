@@ -1,0 +1,10 @@
+id: mem-api-rebuild-fts
+name: Rebuild FTS
+category: sqlite
+endpoint: orchestrator
+method: POST
+path: /v1/memory/rebuild-fts
+expect:
+  http_status: 200
+tags:
+- api

@@ -1,0 +1,15 @@
+id: mem-graph-003
+name: 'Graph: OrgPerson Peter'
+category: graph
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: OrgPerson Peter
+  limit: 6
+expect:
+  http_status: 200
+  result_kind: search
+tags:
+- graph
+- kg

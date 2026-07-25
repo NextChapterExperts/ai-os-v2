@@ -1,0 +1,12 @@
+id: mem-edge-003
+name: 'Edge: search ohne query'
+category: edge_cases
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: ''
+expect:
+  http_status: 200
+tags:
+- edge

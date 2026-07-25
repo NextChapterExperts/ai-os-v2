@@ -1,0 +1,16 @@
+id: mem-letta-006
+name: 'Episodisch: Antigravity Session Brain'
+category: episodic_search
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: Antigravity Session Brain
+  limit: 10
+expect:
+  http_status: 200
+  result_kind: search
+tags:
+- letta
+- episodic
+- search

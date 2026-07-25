@@ -1,0 +1,15 @@
+id: mem-graph-002
+name: 'Graph: Decision consulting Governance'
+category: graph
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: Decision consulting Governance
+  limit: 6
+expect:
+  http_status: 200
+  result_kind: search
+tags:
+- graph
+- kg

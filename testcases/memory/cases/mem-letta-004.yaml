@@ -1,0 +1,16 @@
+id: mem-letta-004
+name: 'Episodisch: Cursor Capture Transkript'
+category: episodic_search
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: Cursor Capture Transkript
+  limit: 10
+expect:
+  http_status: 200
+  result_kind: search
+tags:
+- letta
+- episodic
+- search

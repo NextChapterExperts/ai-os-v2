@@ -54,6 +54,12 @@ def route_intent(raw: str, params: dict[str, Any] | None = None) -> str:
             "heute gemacht",
             "bisher",
             "stand der dinge",
+            "stand im",
+            "stand des",
+            "projektstand",
+            "fortschritt",
+            "1100-ai-os",
+            "ai-os-v2",
         )
     ):
         return "memory_ask"

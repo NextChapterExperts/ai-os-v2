@@ -1,0 +1,16 @@
+id: mem-policy-001
+name: 'Policy/Brain: Welche Policy gilt für PII?'
+category: company_brain
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: Welche Policy gilt für PII?
+  limit: 8
+expect:
+  http_status: 200
+  result_kind: search
+tags:
+- graph
+- policy
+- p18

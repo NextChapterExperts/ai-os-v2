@@ -1,0 +1,15 @@
+id: mem-mixed-004
+name: 'Mixed: Unified Search Graph Qdrant Letta'
+category: mixed_search
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: Unified Search Graph Qdrant Letta
+  limit: 12
+expect:
+  http_status: 200
+  result_kind: search
+tags:
+- mixed
+- router

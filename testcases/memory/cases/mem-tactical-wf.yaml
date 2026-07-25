@@ -1,0 +1,16 @@
+id: mem-tactical-wf
+name: Tactical workflow step
+category: tactical
+endpoint: dispatch
+method: POST
+intent: ping
+params:
+  workflow_run_id: testcase-wf-001
+  step: 1
+  step_label: probe
+expect:
+  http_status: 200
+tags:
+- working
+- tactical
+- p9

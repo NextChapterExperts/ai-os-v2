@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -34,6 +35,10 @@ type AskResponse = {
   sourceCount?: number;
   sources?: Source[];
   results?: Source[];
+  runId?: string;
+  hasContext?: boolean;
+  federated?: boolean;
+  memoryBackend?: string;
   error?: string;
   stats?: Stats;
 };
@@ -147,7 +152,18 @@ export function MemorySearch({
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <p className="mono muted m-0 text-xs">
               {data.model} · {sourceCount} Quellen
+              {data.memoryBackend ? ` · ${data.memoryBackend}` : null}
+              {data.federated ? " · federated" : null}
             </p>
+            {data.runId && data.hasContext !== false ? (
+              <Link
+                href={`/context/${data.runId}`}
+                className="btn-ghost"
+                style={{ padding: "0.4rem 0.75rem", fontSize: "0.85rem" }}
+              >
+                LLM-Kontext anzeigen
+              </Link>
+            ) : null}
             {sources.length > 0 ? (
               <button
                 type="button"

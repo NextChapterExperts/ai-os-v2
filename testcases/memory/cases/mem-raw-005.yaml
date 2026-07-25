@@ -1,0 +1,15 @@
+id: mem-raw-005
+name: 'Raw-files: pytest test memory'
+category: raw_files
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: pytest test memory
+  limit: 5
+expect:
+  http_status: 200
+  result_kind: search
+tags:
+- raw-files
+- file-ingest

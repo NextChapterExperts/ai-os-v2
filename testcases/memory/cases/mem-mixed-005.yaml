@@ -1,0 +1,15 @@
+id: mem-mixed-005
+name: 'Mixed: Ingest Agent Qdrant content'
+category: mixed_search
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: Ingest Agent Qdrant content
+  limit: 12
+expect:
+  http_status: 200
+  result_kind: search
+tags:
+- mixed
+- router

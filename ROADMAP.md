@@ -3,7 +3,7 @@
 **Für:** LLMs, Entwickler, die das System von Grund auf bauen  
 **Zweck:** Vollständige technische Spezifikation — ausreichend detailliert um ohne zusätzlichen Kontext zu starten  
 **Basis:** AI-OS v1 (../1000-AI-OS) — eingefroren Juli 2026  
-**Stand:** Juli 2026 (aktualisiert 2026-07-25 — Memory-Stack komplett: L1-Curator + L2/L3-Curator + Working/Tactical + Letta + Unified Search; Phase 1 Gateway + 1b Capture)  
+**Stand:** Juli 2026 (aktualisiert 2026-07-25 — Lagebild federiert + LLM-Kontext-Transparenz; Memory-Stack komplett: L1/L2/L3-Curator + Working/Tactical + Letta + Unified Search; Phase 1 Gateway + 1b Capture)  
 **Modus:** **Eine Implementierung** — keine Alternativen in dieser Roadmap. Jede Entscheidung ist final.  
 **Detail-Spec Company Brain:** [docs/09-COMPANY-BRAIN.md](docs/09-COMPANY-BRAIN.md) · **Memory einfach:** [docs/10-MEMORY-EINFACH.md](docs/10-MEMORY-EINFACH.md)  
 **Erstes Lizenzprodukt (VM):** [docs/11-PLATFORM-VM.md](docs/11-PLATFORM-VM.md)  
@@ -959,9 +959,11 @@ src/app/
 │   └── [id]/page.tsx       # Workflow-Detail
 └── platform/
     ├── page.tsx            # Ebene 3: Plattform-Übersicht (selten öffnen)
-    └── mcp/page.tsx        # MCP-Gateway Status
-    └── search/page.tsx     # Unified Search UI (Platform-Kern)
+    ├── storage/page.tsx    # Memory-Stacks + VM-Festplatte (Speicherverbrauch)
+    ├── mcp/page.tsx        # MCP-Gateway Status
+    ├── search/page.tsx     # Unified Search UI (Platform-Kern)
     └── models/page.tsx     # Modellauswahl (Default: lokal)
+/context/[runId]/page.tsx   # LLM-Kontext pro Orchestrator-Run (Prompt + Retrieval)
 ```
 
 ### 6.5 Unified Search (Platform-Kern — ab Phase 1)
@@ -1059,11 +1061,44 @@ modes:
 | **L3-Curator** Fakten → `org:Claim` + Letta Core (`core/memory/l3_curator.py`) | ✅ |
 | **L1-Curator** Qdrant Dedup + Rolling 90d (`core/memory/l1_curator.py`, So 03:00) | ✅ |
 | **Working/Tactical-Memory** + Run-Destillation P9 (`run_distill.py`, Dispatch-Hook) | ✅ |
+| **Lagebild `memory_ask` federiert** — Projektstand via Graph + L1 (nicht nur Letta); Active-Projekt-Erkennung | ✅ |
+| **Run-Context-Store** — LLM-Prompt + Retrieval pro Run (`run_context_store.py`, `GET /v1/runs/{id}/context`) | ✅ |
+| Console **Speicher-Dashboard** (`/platform/storage`, `GET /v1/memory/storage`) | ✅ |
+| Console **LLM-Kontext-Link** im Lagebild (`/context/{runId}`) — Governance-Basis für Fachagenten/Cloud | ✅ |
+| **Memory-Testcases** (`testcases/memory/`, `scripts/run-memory-testcases.py`, 70+ Cases) | ✅ |
 | L3 Human-Gate UI (Pending-Claims in Console) | ⏳ |
 | `POST /v1/compute/mode` (Tenant-Modus wechseln) | ⏳ |
 | Auto-Router / CAG / PROD-Outbound-Block | ⏳ Phase 1+ |
 
-**Nächster Roadmap-Punkt:** Phase 2 — Platform-Agenten-Laufzeit + Platform-Gate (§7); Memory-Agent L1/L2/L3 + Working/Tactical ✅.
+**Nächster Roadmap-Punkt:** Phase 2 — Platform-Agenten-Laufzeit + Platform-Gate (§7); Memory-Agent L1/L2/L3 + Working/Tactical ✅; Lagebild-Ask + Kontext-Transparenz ✅.
+
+### 6.8 Lagebild — federierter Ask + LLM-Kontext (2026-07-25)
+
+**Problem:** Lagebild-Fragen (`memory_ask`) lasen nur episodisches Letta — ROADMAP/Knowledge Assets in Graph+L1 blieben unsichtbar.
+
+**Lösung:**
+
+```text
+Frage im Lagebild
+    │
+    ├─ _needs_federated_context?  (Stand/Status/Roadmap, Active-Projekt-Slug)
+    │       ja → Unified Search (Graph + L1 content + raw-files) + wenig Letta
+    │       nein → nur episodisch (Letta/SQLite)
+    │
+    ├─ Prompt bauen (System + User mit Chunks, max ~5500 Zeichen)
+    ├─ Ollama via Memory Gateway
+    └─ Run-Context speichern → GET /v1/runs/{run_id}/context
+```
+
+**Zwei Kontext-Ebenen (wichtig für spätere Fachagenten):**
+
+| Ebene | Was | Wo sichtbar |
+|-------|-----|-------------|
+| **Orchestrator Context Bundle** | 6–7 Slices (System, Domain, Task, Retrieval, Episodic, Guardrail, Skill) — *vor* dem Handler | `/context/{runId}` → „Orchestrator Context Bundle“ |
+| **LLM-Prompt-Kontext** | Was tatsächlich ans Modell geht: System-Prompt + Frage + Retrieval-Chunks | `/context/{runId}` → System/User-Prompt + Retrieval |
+
+Persistenz: `AIOS_RUN_CONTEXT_DIR` (Default `/opt/ai-os/memory/state/run-context/{runId}.json`).  
+Routing-Metadaten enthalten `modelTier: local` — später `cloud` / `agent` für Public-Modelle.
 
 ### 6.7 LangFuse-Tracing (ab Phase 1 — Pflicht)
 
@@ -1912,6 +1947,7 @@ class InvoiceExport(DataProduct):
 /workflows/email            E-Mail / Steuer-Export
 /workflows/[id]             Generischer Workflow-Status
 /platform                   Plattform-Übersicht (selten öffnen)
+/platform/storage           Memory-Stacks + VM-Festplatte
 /platform/agents            Agenten-Status + Config
 /platform/mcp               MCP-Gateway + Server-Status
 /platform/kg                Knowledge Graph Visualisierung
@@ -1919,6 +1955,7 @@ class InvoiceExport(DataProduct):
 /platform/monitor           Services + FinOps + Logs
 /platform/tenants           Tenant-Management
 /platform/receipts          Run-Receipts + Audit-Chain-Verifikation (P17)
+/context/[runId]            LLM-Kontext eines Lagebild-/Dispatch-Runs (Prompt + Retrieval)
 ```
 
 ### 10.3 One-Command-Demo-Modus (NEU v2 — Vorbild Olla Nest/ArcaQ)
@@ -2517,6 +2554,8 @@ Praxis-Tests gegen das LAN-Modell (Use Cases: E-Mail-JSON, Kalender, Routing, To
 | QWEN-08 | Capability | Recherche mit SearXNG-Kontext |
 
 **Protokolle:** [docs/07-LOKALES-MODELL-TESTPROTOKOLL.md](docs/07-LOKALES-MODELL-TESTPROTOKOLL.md)
+
+**Memory-Regression (Orchestrator):** `testcases/memory/cases/*.yaml` — 70+ Cases gegen `/v1/dispatch`, `/v1/search`, Storage-API. Runner: `./scripts/run-memory-testcases.py [--category episodic|working|storage]`.
 
 **Letzter Lauf:** 2026-07-12 — `qwen3.6-64k:latest` @ `192.168.178.64:11434` → **6/8 PASS** (QWEN-04 Skript-Bug, QWEN-07 erwartetes Halluzinationsrisiko)
 

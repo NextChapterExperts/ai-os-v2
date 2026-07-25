@@ -61,7 +61,11 @@ export async function POST(req: Request) {
       rawFileCount: result.rawFileCount,
       graphCount: result.graphCount,
       episodicCount: result.episodicCount,
+      federated: result.federated,
+      memoryBackend: result.memoryBackend,
       intent: data.intent,
+      runId: data.run_id ?? result.runId,
+      hasContext: result.hasContext ?? Boolean(data.run_id),
       context_bundle: data.context_bundle,
       stats: memoryStats(),
     });

@@ -1,0 +1,17 @@
+id: mem-episodic-013
+name: Zusammenfassung der Aktivitäten von gestern
+category: episodic
+endpoint: dispatch
+method: POST
+intent: memory_ask
+params:
+  question: Zusammenfassung der Aktivitäten von gestern
+expect:
+  http_status: 200
+  result_kind: ask
+  min_answer_length: 3
+tags:
+- temporal
+- memory_ask
+- sqlite
+- letta

@@ -1,0 +1,15 @@
+id: mem-graph-004
+name: 'Graph: OrgPolicy Datenschutz'
+category: graph
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: OrgPolicy Datenschutz
+  limit: 6
+expect:
+  http_status: 200
+  result_kind: search
+tags:
+- graph
+- kg

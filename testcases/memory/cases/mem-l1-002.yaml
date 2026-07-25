@@ -1,0 +1,17 @@
+id: mem-l1-002
+name: 'L1 Qdrant: AI-OS Roadmap Memory'
+category: l1_qdrant
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: AI-OS Roadmap Memory
+  limit: 8
+expect:
+  http_status: 200
+  result_kind: search
+  min_source_count: 0
+tags:
+- l1
+- qdrant
+- content

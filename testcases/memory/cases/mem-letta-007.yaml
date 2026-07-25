@@ -1,0 +1,16 @@
+id: mem-letta-007
+name: 'Episodisch: Gemini Chat Import'
+category: episodic_search
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: Gemini Chat Import
+  limit: 10
+expect:
+  http_status: 200
+  result_kind: search
+tags:
+- letta
+- episodic
+- search

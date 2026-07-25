@@ -1,0 +1,14 @@
+id: mem-curator-l2
+name: L2 curate dry-run
+category: l2_curator
+endpoint: orchestrator
+method: POST
+path: /v1/memory/curate/l2
+body:
+  tenant_id: nextchapter
+  dry_run: true
+expect:
+  http_status: 200
+tags:
+- curator
+- dry_run

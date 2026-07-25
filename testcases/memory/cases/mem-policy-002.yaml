@@ -1,0 +1,16 @@
+id: mem-policy-002
+name: 'Policy/Brain: Decision org:Decision consulting'
+category: company_brain
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: Decision org:Decision consulting
+  limit: 8
+expect:
+  http_status: 200
+  result_kind: search
+tags:
+- graph
+- policy
+- p18

@@ -1,0 +1,12 @@
+id: mem-edge-002
+name: 'Edge: memory ask empty'
+category: edge_cases
+endpoint: dispatch
+method: POST
+intent: memory_ask
+params:
+  question: ''
+expect:
+  http_status: 200
+tags:
+- edge

@@ -1,0 +1,15 @@
+id: mem-raw-001
+name: 'Raw-files: README redrays BTP'
+category: raw_files
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: README redrays BTP
+  limit: 5
+expect:
+  http_status: 200
+  result_kind: search
+tags:
+- raw-files
+- file-ingest

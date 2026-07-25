@@ -1,0 +1,14 @@
+id: mem-api-search
+name: Direct search API
+category: search_api
+endpoint: orchestrator
+method: POST
+path: /v1/search
+body:
+  query: Memory Gateway
+  tenant_id: nextchapter
+  limit: 5
+expect:
+  http_status: 200
+tags:
+- api

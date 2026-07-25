@@ -1,0 +1,17 @@
+id: mem-l1-007
+name: 'L1 Qdrant: Engagement Front-Door README'
+category: l1_qdrant
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: Engagement Front-Door README
+  limit: 8
+expect:
+  http_status: 200
+  result_kind: search
+  min_source_count: 0
+tags:
+- l1
+- qdrant
+- content

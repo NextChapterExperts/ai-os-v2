@@ -1,0 +1,17 @@
+id: mem-l1-008
+name: 'L1 Qdrant: DataProduct commit Regeln'
+category: l1_qdrant
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: DataProduct commit Regeln
+  limit: 8
+expect:
+  http_status: 200
+  result_kind: search
+  min_source_count: 0
+tags:
+- l1
+- qdrant
+- content

@@ -1,0 +1,15 @@
+id: mem-mixed-006
+name: 'Mixed: Memory Flywheel L1 L2 L3'
+category: mixed_search
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: Memory Flywheel L1 L2 L3
+  limit: 12
+expect:
+  http_status: 200
+  result_kind: search
+tags:
+- mixed
+- router

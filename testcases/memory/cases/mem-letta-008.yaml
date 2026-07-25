@@ -1,0 +1,16 @@
+id: mem-letta-008
+name: 'Episodisch: Episodisches Gedächtnis AI-OS'
+category: episodic_search
+endpoint: dispatch
+method: POST
+intent: unified_search
+params:
+  query: Episodisches Gedächtnis AI-OS
+  limit: 10
+expect:
+  http_status: 200
+  result_kind: search
+tags:
+- letta
+- episodic
+- search
