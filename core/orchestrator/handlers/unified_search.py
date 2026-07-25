@@ -19,6 +19,8 @@ from fastembed import TextEmbedding
 from qdrant_client import QdrantClient
 
 from ..kg_search import search_nodes
+from core.memory_gateway.letta_client import is_available as letta_available, search_archival
+
 from ..memory_store import DEFAULT_PROJECT, chunks_in_window, resolve_window, search_chunks
 from ..query_router import SearchPlan, route_query
 
@@ -119,13 +121,8 @@ def _graph_hits(tenant_id: str, query: str, plan: SearchPlan) -> list[dict[str, 
     return results
 
 
-def _episodic_hits(query: str) -> list[dict[str, Any]]:
-    """Fallback fuer episodische Fragen ("gestern", "besprochen" ...), solange
-    Letta L2/L3 nicht angebunden ist (query_router.py `use_letta` hat noch
-    keinen echten Verbraucher). Nutzt die Cursor-Capture-SQLite als heutigen
-    Ersatz fuer "was haben wir besprochen" — kein Letta-Ersatz, aber besser
-    als 0 Treffer bei einer Frage, deren Antwort tatsaechlich vorliegt.
-    """
+def _sqlite_episodic_hits(query: str) -> list[dict[str, Any]]:
+    """SQLite-Fallback, wenn Letta nicht erreichbar ist."""
     start, end, mode = resolve_window(query)
     if mode in ("yesterday", "week"):
         chunks = chunks_in_window(DEFAULT_PROJECT, start, end, limit=10)
@@ -137,8 +134,6 @@ def _episodic_hits(query: str) -> list[dict[str, Any]]:
         results.append(
             {
                 "id": c["id"],
-                # Kein Kosinus-Score vorhanden - knapp unter Graph, damit
-                # Geltungsfragen (Graph) weiterhin Vorrang haben.
                 "score": 0.9,
                 "source_type": "episodic",
                 "title": c.get("title") or (body[:80] or "Cursor-Chat"),
@@ -149,6 +144,37 @@ def _episodic_hits(query: str) -> list[dict[str, Any]]:
             }
         )
     return results
+
+
+def _letta_episodic_hits(tenant_id: str, query: str) -> list[dict[str, Any]]:
+    start, end, _mode = resolve_window(query)
+    episodes = search_archival(tenant_id, query, count=10, start=start, end=end)
+    results = []
+    for ep in episodes:
+        text = str(ep.get("text") or "")
+        theme = text.split("THEMA:", 1)[1].split("|", 1)[0].strip() if "THEMA:" in text else text[:80]
+        results.append(
+            {
+                "id": ep.get("id") or text[:32],
+                "score": 0.92,
+                "source_type": "episodic",
+                "title": theme or "Episodisches Gedächtnis",
+                "snippet": text[:280],
+                "project_slug": None,
+                "source_path": None,
+                "collection": "letta-archival",
+            }
+        )
+    return results
+
+
+def _episodic_hits(tenant_id: str, query: str) -> list[dict[str, Any]]:
+    """Letta L2 Archival primaer; SQLite-Fallback bei Ausfall."""
+    if letta_available():
+        hits = _letta_episodic_hits(tenant_id, query)
+        if hits:
+            return hits
+    return _sqlite_episodic_hits(query)
 
 
 async def run(
@@ -176,7 +202,7 @@ async def run(
     plan = route_query(query)
 
     graph_hits = _graph_hits(tenant_id, query, plan) if plan.use_g else []
-    episodic_hits = _episodic_hits(query) if plan.use_letta else []
+    episodic_hits = _episodic_hits(tenant_id, query) if plan.use_letta else []
 
     curated: list[dict[str, Any]] = []
     raw_files: list[dict[str, Any]] = []

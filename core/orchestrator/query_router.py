@@ -4,11 +4,10 @@ Entscheidet PRO FRAGE, welche Speicher-Schichten befragt werden, bevor
 gesucht wird — Code, kein LLM. Verhindert Doppel-Suche (L1 + Graph fuer
 "was gilt") und falsche Schicht (L1 statt Graph fuer Geltungsfragen).
 
-Umsetzungsstand: `use_g`, `use_k_resolve`, `use_l1` werden von
-`handlers/unified_search.py` tatsaechlich ausgewertet. `use_letta` und
-`use_sk` sind im Plan bereits vorgesehen (Spec-Vollstaendigkeit), haben
-aber noch keinen Verbraucher — Letta-Anbindung und Skill-Store sind noch
-nicht gebaut (siehe docs/13-IST-STAND.md "Noch geplant").
+Umsetzungsstand: `use_g`, `use_k_resolve`, `use_l1`, `use_letta` werden von
+`handlers/unified_search.py` bzw. `memory_ask.py` ausgewertet (Letta L2
+Archival via `core/memory_gateway/letta_client.py`, SQLite-Fallback).
+`use_sk` ist im Plan vorgesehen, Skill-Store noch nicht gebaut.
 """
 
 from __future__ import annotations

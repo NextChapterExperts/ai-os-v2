@@ -9,7 +9,7 @@
 ## Kurzfazit
 
 Auf der **NCE DEV-VM** läuft ein **Phase-0/1-Skeleton** plus ein **Phase-2-Vorgriff** auf den Company Brain: Infra (Compose), Console, Orchestrator, MCP-Gateway-Stubs, Cursor→SQLite-Capture, Unified Search (`content` + `raw-files` + jetzt **Graph**), Knowledge Graph (`kg_nodes`/`kg_edges`) mit DP-Commit für `org:*`, Query-Router (§12.1) und Console-UI `/platform/kg`.  
-**Noch nicht:** Letta-Anbindung (Query-Router kennt `use_letta`, episodischer SQLite-Fallback aktiv), Skill-Store (`use_sk` dito), LangGraph, Platform-Agenten-Laufzeit, SDK, Platform-Gate, echte MCP-Adapter, Appliance-Image-Build, LangFuse-Keys auf DEV oft leer.
+**Noch nicht:** Skill-Store (`use_sk` dito), LangGraph, Platform-Agenten-Laufzeit, SDK, Platform-Gate, echte MCP-Adapter, Appliance-Image-Build, LangFuse-Keys auf DEV oft leer. **Letta L2** ist angebunden (`core/memory_gateway/letta_client.py`); L3 Core-Memory + semantische Archival-Suche fehlen noch.
 
 ---
 
@@ -31,7 +31,7 @@ Zusätzlich: **File-Ingest-Watcher** (Rohdatei-Suche über `Projekte/active/`, B
 Zusätzlich: **Unified Search** (`unified_search`-Intent, foederiert Graph + `content` + `raw-files` via Query-Router, Console-Seite `/search`).
 Zusätzlich: **Ingest-Agent + Knowledge Graph** — `core/ingest_agent/` committet Company-Brain-Seed als `org:*`-DataProducts über `POST /v1/dataproduct/commit` in `kg_nodes`/`kg_edges` (Postgres) + Audit-Hash-Chain (`ai_os_log`); published `OrgKnowledgeAsset`s zusätzlich in Qdrant `content`. Details: [09-COMPANY-BRAIN.md](09-COMPANY-BRAIN.md), [03-DATENPRODUKTE.md](03-DATENPRODUKTE.md).
 Zusätzlich: **Graph-Suche + Query-Router + Console-UI** — `core/orchestrator/kg_search.py`, `query_router.py`, Console `/platform/kg`.
-Zusätzlich: **Memory Gateway (Phase 1)** — `core/memory_gateway/` routet LLM-Calls über LiteLLM (:4000) mit Ollama-Fallback; nach jedem Call Persist in `memory.db` + Audit `ai_os_log` + optional LangFuse. Endpoints: `GET /v1/models`, `POST /v1/chat/completions`. Console + `memory_ask` nutzen nur noch diese Tür.
+Zusätzlich: **Letta L2 Archival** — `core/memory_gateway/letta_client.py` schreibt Episoden bei Memory-Gateway-Calls und Chat-Import; `unified_search` + `memory_ask` lesen Letta primaer (Keyword/Zeitfenster), SQLite-Fallback bei Ausfall.
 
 ---
 
@@ -57,9 +57,9 @@ Zusätzlich: **Memory Gateway (Phase 1)** — `core/memory_gateway/` routet LLM-
 |--------|-----------|
 | `ping` | Health |
 | `daily_open_loops` | Engagements + Seed-Meetings + Mail-Stub-Actions → kurze Tageslage |
-| `memory_ask` | Zeitfenster aus Frage erkannt ("gestern"/"letzte Woche"/Default "heute", `memory_store.resolve_window`) + Ollama-Summary (LAN); Projekt-Filter faellt auf projektuebergreifend zurueck, wenn der Slug keine Treffer hat |
+| `memory_ask` | Zeitfenster aus Frage (`resolve_window`) + Letta L2 Archival (Fallback SQLite) + Ollama-Summary |
 | `mail_triage` | Stub über MCP-Client |
-| `unified_search` | Query-Router (§12.1) entscheidet pro Frage: Graph (`kg_search`), Qdrant `content` + `raw-files`, oder beides — `source_type`-markiert (`graph`/`curated`/`raw-file`) |
+| `unified_search` | Query-Router (§12.1): Graph, Qdrant, **Letta episodisch** (`source_type: episodic`) oder SQLite-Fallback |
 
 Lagebild-Feld in der Console → `POST /api/dispatch` → Orchestrator. Suche: Console-Seite `/search` (foederiert) und `/platform/kg` (Graph-Browser mit Node-Detail).
 
@@ -79,7 +79,7 @@ Lagebild-Feld in der Console → `POST /api/dispatch` → Orchestrator. Suche: C
 | Pfad | Nutzung |
 |------|---------|
 | `/opt/ai-os/memory/memory.db` | Capture + Console-Suche + `memory_ask` |
-| `/opt/ai-os/memory/state/` | Capture-State, Orchestrator-Audit-JSONL |
+| `/opt/ai-os/memory/state/` | Capture-State, Orchestrator-Audit-JSONL, **`letta-agents.json`** (tenant → agent_id) |
 | `/opt/ai-os/ingest/inbox` | vorbereitet, noch leer |
 | `AIOS_MEMORY_PROJECT=…` | Projektfilter für Memory — Slug haengt vom Cursor-Workspace-Root ab (`core/capture/cursor-job.mjs`) und aendert sich mit ihm; aktuell `home-peter-Projekte` |
 
@@ -92,7 +92,7 @@ Inference-Default: Ollama LAN (`OLLAMA_HOST` / `OLLAMA_DEFAULT_MODEL` in `.env`)
 - MCP Mail/Calendar: deterministische Stubs, keine echten IMAP/CalDAV-Calls
 - Context Bundle: Slice-Struktur vorhanden; Retrieval/Graph/Skills noch Notes
 - Console `/workflows`: UI „geplant“, kein Scheduler/LangGraph
-- Letta in Compose: läuft mit SQLite-Volume (Postgres-Pfad problematisch)
+- Letta in Compose: läuft mit SQLite-Volume; **L2 Archival angebunden** (`letta_client.py`, Agent pro Tenant, Ollama-Embeddings via LAN-IP)
 - Appliance `image-build.sh` / cloud-init: Scaffold, kein produktionsreifes Image
 - `deploy/core.yml`: Orchestrator optional unter Profile `core-docker`; Console/Capture/MCP nicht als Compose-Services
 
@@ -104,7 +104,7 @@ Inference-Default: Ollama LAN (`OLLAMA_HOST` / `OLLAMA_DEFAULT_MODEL` in `.env`)
 - `deploy/platform-agents.yml`, `deploy/agents/*`, `deploy/chat-capture.yml`
 - Services: console-api `:8093`, search `:8094` (dediziert, aktuell Teil des Orchestrators), skill `:8095`, scheduler `:8096`
 - Memory Gateway Persist-Hook ✅ — LangGraph, `POST /v1/compute/mode`, Auto-Router/CAG offen
-- Letta-Anbindung (L2/L3) — `query_router.py` kennt `use_letta`, aber es gibt noch kein echtes Letta; als Uebergangs-Fallback (Bug vom 2026-07-25: "gestern"-Fragen lieferten 0 Treffer in Lagebild UND Suche) liest `memory_store.py` jetzt bei `use_letta` die Cursor-Capture-SQLite (`memory.db`) zeitfenster-/keyword-basiert aus (`source_type: "episodic"`) — kein echtes Episodengedaechtnis, aber besser als 0 Treffer
+- Letta L3 (Core-Memory / Fact-Extraction) + semantische Archival-Suche offen — L2 ✅ via `letta_client.py`; SQLite bleibt Fallback
 - Skill-Store (SK) — `query_router.py` kennt `use_sk`, aber `core/skills/` existiert noch nicht
 - Platform-Gate (`python -m tests.platform_gate`)
 - Gemini/Antigravity Capture ✅ (Poller + `/v1/chat-import` + Console `/platform/capture`); ChatGPT-Export + Drive-Poller offen

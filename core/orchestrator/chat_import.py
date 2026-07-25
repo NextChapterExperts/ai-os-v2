@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any
 
 from core.memory_gateway.audit import write_llm_audit
+from core.memory_gateway.letta_client import format_archival_episode, insert_archival, is_available as letta_available
 
 MEMORY_DB = os.environ.get("AIOS_MEMORY_DB", "/opt/ai-os/memory/memory.db")
 INBOX_ROOT = Path(os.environ.get("AIOS_INGEST_INBOX", "/opt/ai-os/ingest/inbox"))
@@ -190,6 +191,19 @@ def import_transcript(
         usage={"message_count": len(messages), "chunk_count": len(chunk_ids)},
     )
 
+    letta_written = 0
+    if letta_available():
+        for idx, msg in enumerate(messages):
+            if msg["role"] != "user":
+                continue
+            answer = ""
+            if idx + 1 < len(messages) and messages[idx + 1]["role"] == "assistant":
+                answer = messages[idx + 1]["text"]
+            episode = format_archival_episode(msg["text"], source, answer)
+            result = insert_archival(tenant_id, episode)
+            if result.get("success"):
+                letta_written += 1
+
     return {
         "ok": True,
         "source": source,
@@ -199,6 +213,7 @@ def import_transcript(
         "message_count": len(messages),
         "chunk_count": len(chunk_ids),
         "chunk_ids": chunk_ids,
+        "letta_episodes": letta_written,
         "audit_hash": audit_hash,
         "tenant_id": tenant_id,
     }

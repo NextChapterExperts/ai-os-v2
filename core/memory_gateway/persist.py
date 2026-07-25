@@ -8,6 +8,8 @@ import sqlite3
 from datetime import datetime, timezone
 from typing import Any
 
+from .letta_client import insert_episode, is_available as letta_available
+
 MEMORY_DB = os.environ.get("AIOS_MEMORY_DB", "/opt/ai-os/memory/memory.db")
 DEFAULT_PROJECT = os.environ.get("AIOS_MEMORY_PROJECT", "home-peter-Projekte")
 
@@ -108,10 +110,20 @@ def persist_chat_turn(
     finally:
         con.close()
 
+    letta_result: dict[str, Any] | None = None
+    if letta_available() and last_user and assistant_content.strip():
+        letta_result = insert_episode(
+            tenant_id,
+            str(last_user.get("content") or ""),
+            produced_by,
+            assistant_content,
+        )
+
     return {
         "persisted": len(written),
         "chunk_ids": written,
         "session_id": session_id,
         "model": model,
         "produced_by": produced_by,
+        "letta": letta_result,
     }
