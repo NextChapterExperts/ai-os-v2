@@ -65,10 +65,11 @@ export function MemorySearch({
         setError(null);
         setData(null);
         setShowSources(false);
+        const activeUserId = typeof window !== "undefined" ? localStorage.getItem("aios_active_user_id") ?? "person:peter-alexander" : "person:peter-alexander";
         const res = await fetch("/api/dispatch", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query }),
+          body: JSON.stringify({ query, params: { user_id: activeUserId } }),
           cache: "no-store",
         });
         const json = (await res.json()) as AskResponse & {

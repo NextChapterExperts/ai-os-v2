@@ -55,5 +55,25 @@
       "name": "Hochschul-Partner (Studentenprojekt)",
       "kind": "university"
     }
+  ],
+  "people": [
+    {
+      "id": "person:peter-alexander",
+      "name": "Peter Alexander",
+      "email": "peter.alexander@nextchapterexperts.de",
+      "role": "Founder / Operator"
+    },
+    {
+      "id": "person:juri-mustermann",
+      "name": "Juri Mustermann",
+      "email": "juri@nextchapterexperts.de",
+      "role": "Senior Consultant"
+    },
+    {
+      "id": "person:michael-sample",
+      "name": "Michael Sample",
+      "email": "michael@nextchapterexperts.de",
+      "role": "Solution Architect"
+    }
   ]
 }

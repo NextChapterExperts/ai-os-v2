@@ -55,3 +55,31 @@ def offering_by_id(offering_id: str) -> dict[str, Any] | None:
         if o.get("id") == offering_id:
             return o
     return None
+
+
+def list_people(tenant_id: str = "nextchapter") -> list[dict[str, Any]]:
+    """Gibt alle Personen des Tenants aus dem Knowledge Graph und brain.json Seed zurück."""
+    people_map: dict[str, dict[str, Any]] = {}
+
+    # 1. Seed People laden
+    for p in _load().get("people", []):
+        people_map[p["id"]] = dict(p)
+
+    # 2. Knowledge Graph org:Person Einpflegen
+    try:
+        from .kg_search import list_nodes
+
+        nodes = list_nodes(tenant_id, "org:Person", limit=50)
+        for n in nodes:
+            pid = n.get("external_id") or n["id"]
+            if pid not in people_map:
+                people_map[pid] = {
+                    "id": pid,
+                    "name": n.get("title") or pid,
+                    "email": (n.get("payload") or {}).get("email") or "",
+                    "role": (n.get("payload") or {}).get("role") or "Member",
+                }
+    except Exception:
+        pass
+
+    return list(people_map.values())

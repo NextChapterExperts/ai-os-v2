@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { UserSelector } from "@/components/UserSelector";
 
 const NAV = [
   { href: "/", label: "Lagebild" },
@@ -50,9 +51,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
-        <div className="hidden text-right text-xs text-ink-soft sm:block">
-          <div className="mono">tenant · nextchapter</div>
-          <div className="mono">proj · 1100-AI-OS-V2</div>
+        <div className="flex items-center gap-3 text-right text-xs text-ink-soft">
+          <UserSelector />
+          <div className="hidden sm:block">
+            <div className="mono">tenant · nextchapter</div>
+            <div className="mono">proj · 1100-AI-OS-V2</div>
+          </div>
         </div>
       </header>
       <main className="mx-auto w-full max-w-6xl px-5 pb-16 sm:px-8">{children}</main>

@@ -124,3 +124,13 @@ async def test_context_resolution_user_slice():
     )
     assert bundle["system"]["user_id"] == "user_eve"
     assert bundle["system"]["tenant"] == "nextchapter"
+
+
+def test_list_people_seed():
+    from core.orchestrator.brain_store import list_people
+
+    people = list_people("nextchapter")
+    assert isinstance(people, list)
+    assert len(people) > 0
+    ids = [p["id"] for p in people]
+    assert "person:peter-alexander" in ids

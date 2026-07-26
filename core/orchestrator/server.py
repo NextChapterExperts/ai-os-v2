@@ -106,6 +106,13 @@ async def list_offerings() -> dict[str, Any]:
     return {"offerings": _list()}
 
 
+@app.get("/v1/brain/people")
+async def list_people(tenant_id: str = "nextchapter") -> dict[str, Any]:
+    from .brain_store import list_people as _list
+
+    return {"people": _list(tenant_id), "tenant_id": tenant_id}
+
+
 @app.get("/v1/brain/engagements")
 async def list_engagements(status: str | None = None) -> dict[str, Any]:
     from .brain_store import list_engagements as _list
