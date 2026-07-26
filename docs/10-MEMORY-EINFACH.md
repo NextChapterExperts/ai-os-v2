@@ -159,6 +159,38 @@ passiert, sieht das Company Brain sonst nichts davon. Details/Ablösepfad:
 
 ## Company Brain vs. Letta (nochmal klar)
 
+### Das Memory Flywheel (Stufenbau vom Chat zum Firmenhirn)
+
+```
+┌───────────────────────────────────────────────────────────────────────────┐
+│                    AI-OS MEMORY FLYWHEEL LIFECYCLE                        │
+└───────────────────────────────────────────────────────────────────────────┘
+
+ [Aktion / Chat Input]
+          │
+          ▼
++---------------------------------------------------------------------------+
+| 1. WORKING / TACTICAL MEMORY (Flüchtig)                                   |
+| - Scratchpad-Notizen während des Laufes                                   |
+| - Workflow-Steps & LangGraph Checkpoints (Postgres / SQLite)              |
++------------------------------------+--------------------------------------+
+                                     │
+                                     v Run-Ende (run_distill.py mit fcntl)
++------------------------------------+--------------------------------------+
+| 2. L2 LETTA ARCHIVAL MEMORY (Episodisch)                                  |
+| - 24-Stunden Chat-Zusammenfassungen & Tagesdigests                        |
+| - Suchbar über FTS5 / Letta Archival (Assistenten-Gedächtnis)             |
++------------------------------------+--------------------------------------+
+                                     │
+                                     v Wöchentliche Kurierung (l3_curator.py)
++------------------------------------+--------------------------------------+
+| 3. L3 COMPANY BRAIN (Wahrheit & Knowledge Graph)                          |
+| - Extrahierte Fakten -> OrgClaim DataProduct                              |
+| - Single Point of Persistence: POST /v1/dataproduct/commit               |
+| - Graph (kg_nodes / kg_edges) + Kuratiertes Qdrant L1                     |
++---------------------------------------------------------------------------+
+```
+
 ```
 COMPANY BRAIN (Firmenwahrheit)
   ├── K   Dateien

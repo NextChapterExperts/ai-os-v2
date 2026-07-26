@@ -95,21 +95,108 @@ POST /v1/scheduler/jobs       → Neuen Cron-Job anlegen
 
 ---
 
-### Workflow-Engine (LangGraph)
+### Workflow-Engine (LangGraph Checkpointing & Resume)
 
-**Aufgabe:** Stateful, checkpointete Ausführung von Multi-Step-Workflows.
+**Aufgabe:** Stateful, checkpointete Ausführung von Multi-Step-Workflows mit atomarer Zustandsspeicherung.
+
+```
+┌───────────────────────────────────────────────────────────────────────────┐
+│                    LANGGRAPH WORKFLOW ENGINE FLOW                         │
+└───────────────────────────────────────────────────────────────────────────┘
+                                   │
+                                   ▼
+                       +-----------------------+
+                       |   WORKFLOW STARTED    |
+                       +-----------+-----------+
+                                   |
+                                   v
+                       +-----------------------+
+                       | EXECUTE NODE STEP     |
+                       +-----------+-----------+
+                                   |
+        +--------------------------+--------------------------+
+        |                                                     |
+        v Interrupt()                                         v Success / Complete
++-----------------------------------+             +-----------------------+
+| PENDING APPROVAL (Human-Gate)     |             | SAVE CHECKPOINT       |
+| -> save_checkpoint(thread_id)     |             | (Postgres / SQLite)   |
++-----------------+-----------------+             +-----------+-----------+
+                  |                                           |
+                  v POST /v1/workflow/resume                  v
++-----------------------------------+             +-----------------------+
+| RESUME WORKFLOW                   |             | WORKFLOW FINISHED     |
+| -> restore_state & execute next   |             +-----------------------+
++-----------------------------------+
+```
 
 ```python
 # Jeder Workflow = LangGraph StateGraph
 # Jeder Node = atomarer, idempotenter Schritt
-# Checkpoints in Postgres — Workflow nach Neustart fortsetzbar
-# interrupt() für Human-in-the-Loop
+# Checkpoints in Postgres (workflow_checkpoints) + SQLite-Fallback
+# interrupt() für Human-in-the-Loop, POST /v1/workflow/resume für Wiederaufnahme
+```
 
-Workflow-Typen:
-  sequential:   A → B → C → END
-  parallel:     A → [B, C] → D → END (Fan-out)
-  conditional:  A → B → {cond: C | D} → END
-  human-loop:   A → B → interrupt() → C → END
+---
+
+### PII Redaction Gateway (Model Gateway & Guardrails)
+
+```
+┌───────────────────────────────────────────────────────────────────────────┐
+│              PII REDACTION GATEWAY — CLOUD ESCALATION PROTECTION          │
+└───────────────────────────────────────────────────────────────────────────┘
+
+ [User / Agent Prompt]
+         │
+         ▼
++-------------------------+      Sovereign (€0)      +--------------------+
+| COMPUTE MODE CHECKER    | -----------------------> | OLLAMA LOKAL (LAN) |
++------------+------------+                          +--------------------+
+             | Cloud Escalation (balanced/premium/coding)
+             v
++-------------------------------------------------------------------------+
+| PII REDACTION ENGINE (core/orchestrator/pii_redactor.py)                |
+| - Maskiert E-Mails, Telefonnummern, IP-Adressen, IBANs                  |
+| - Erzeugt Mapping: "peter@example.com" -> "[EMAIL_1]"                   |
++------------------------------------+------------------------------------+
+                                     │
+                                     v Anonymisierter Payload
+                        +----------------------------+
+                        | OPENROUTER CLOUD INFERENCE |
+                        +--------------+-------------+
+                                       │
+                                       v Anonymisierte Antwort
++-------------------------------------------------------------------------+
+| RE-SUBSTITUTION ENGINE (restore_pii)                                    |
+| - Ersetzt "[EMAIL_1]" -> "peter@example.com"                            |
++------------------------------------+------------------------------------+
+                                     │
+                                     v Wiederhergestellte Antwort
+                             [FINAL RESPONSE]
+```
+
+---
+
+### Platform-Gate Schranke (Leitprinzip P10)
+
+```
+┌───────────────────────────────────────────────────────────────────────────┐
+│                    PLATFORM-GATE VALIDATION SUITE                         │
+│                    (tests/test_platform_gate.py)                          │
+└───────────────────────────────────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌───────────────────────────────────────────────────────────────────────────┐
+│ Gate 1: Service Health Gate   (Orchestrator :8091 & DBs Healthy)           │
+│ Gate 2: DataProduct Contract  (POST /v1/dataproduct/commit Transaktion)   │
+│ Gate 3: Intent Router         (Deterministisches Routing & Search)        │
+│ Gate 4: Compute Mode          (Sovereign / Balanced Switcher)             │
+│ Gate 5: PII Redactor Contract (DSGVO Cloud-Anonymisierung)                │
+└──────────────────────────────────┬────────────────────────────────────────┘
+                                   │
+                         [PASS (0 Failed)]
+                                   │
+                                   v
+             [FREIGABE FÜR FACH-AGENTEN (PHASE 4)]
 ```
 
 ---

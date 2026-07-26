@@ -117,19 +117,55 @@ Gedächtnis-Kontext:
 
 Genau dieser Text (plus System-Prompt) ist alles, was Ollama „weiß“.
 
-### 5. Orchestrator Context Bundle
+### 5. Orchestrator Context Bundle (6 Slices)
 
-Der **größere Rahmen**, den der Orchestrator bei **jedem** Dispatch mitliefert — auch wenn nicht alles ins LLM fließt:
+Der **größere Rahmen**, den der Orchestrator bei **jedem** Dispatch asynchron und hochparallel (`resolve_context_async` < 50ms) mitliefert:
+
+```
+┌───────────────────────────────────────────────────────────────────────────┐
+│            ASYNCHRONE 6-SLICE CONTEXT BUNDLE RESOLUTION ENGINE            │
+│            (core/orchestrator/context_resolution.py)                      │
+└─────────────────────────────────────┬─────────────────────────────────────┘
+                                      │
+                                      ▼
+                        asyncio.gather (Parallel Execution)
+     ┌────────────────────────────────┬────────────────────────────────┐
+     │                                │                                │
+     ▼                                ▼                                ▼
++-----------------------+  +-----------------------+  +-----------------------+
+| 1. SYSTEM SLICE       |  | 2. DOMAIN SLICE       |  | 3. TASK SLICE         |
+| - Tenant & Compute    |  | - Offerings (TTL-Cache|  | - Intent & Params     |
+| - Active Policies     |  | - Engagements         |  | - Working & Tactical  |
++-----------------------+  +-----------------------+  +-----------------------+
+     │                                │                                │
+     ├────────────────────────────────┼────────────────────────────────┤
+     │                                │                                │
+     ▼                                ▼                                ▼
++-----------------------+  +-----------------------+  +-----------------------+
+| 4. RETRIEVAL SLICE    |  | 5. EPISODIC SLICE     |  | 6. SKILL SLICE        |
+| - Knowledge Graph (G) |  | - L2 Letta Archival   |  | - Relevant Procedural |
+| - Qdrant Content (L1) |  | - Recent Runs         |  |   Skills (Skill-Loop) |
++-----------------------+  +-----------------------+  +-----------------------+
+                                      │
+                                      ▼
+                            +--------------------+
+                            | 7. GUARDRAIL SLICE |
+                            | - PII Redact Rules |
+                            +---------+----------+
+                                      │
+                                      ▼
+                       [CONTEXT BUNDLE (< 50ms)]
+```
 
 | Slice | Inhalt |
 |-------|--------|
-| **system** | Tenant, Compute-Modus (`sovereign`), Policies |
-| **domain** | Offerings & aktive Engagements aus dem Brain |
-| **task** | Intent, Run-ID, Working Memory (Notizen dieses Laufs) |
-| **retrieval** | Platzhalter — Handler füllt Retrieval selbst |
-| **episodic** | Verweis auf Letta / Run-Destillation |
-| **guardrail** | z. B. `sovereign_default`, Quellen on demand |
-| **skill** | Noch leer — später wiederkehrende Verfahren |
+| **system** | Tenant, Compute-Modus (`sovereign`), Policies, resolution_time_ms |
+| **domain** | Offerings & aktive Engagements aus dem Brain (mit In-Memory TTL-Cache) |
+| **task** | Intent, Run-ID, Working Memory (Notizen dieses Laufs), Tactical Memory Steps |
+| **retrieval** | Asynchrones Retrieval über Knowledge Graph & Qdrant Content |
+| **episodic** | Verweis auf Letta L2 Archival / Run-Destillation |
+| **guardrail** | z. B. `sovereign_default`, `pii_auto_redact_on_cloud`, Quellen on demand |
+| **skill** | Versionierte Skill-Dokumente aus dem Skill-Store |
 
 ---
 

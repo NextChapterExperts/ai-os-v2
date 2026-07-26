@@ -1,6 +1,6 @@
 # AI-OS v2 — Ist-Stand
 
-**Stand:** 2026-07-25 (L1-Curator + Working/Tactical) · **Repo:** [NextChapterExperts/ai-os-v2](https://github.com/NextChapterExperts/ai-os-v2)  
+**Stand:** 2026-07-26 (Platform Gate ✅ + PII Redactor ✅ + Async 6-Slice Context Bundle ✅ + LangGraph Checkpointing ✅ + Master Testsuite ✅) · **Repo:** [NextChapterExperts/ai-os-v2](https://github.com/NextChapterExperts/ai-os-v2)  
 **Zweck:** Was heute **wirklich läuft** vs. was in Roadmap/Architektur als **Ziel** spezifiziert ist.  
 **Ziel-Spec bleibt:** [ROADMAP.md](../ROADMAP.md) · [01-ARCHITEKTUR.md](01-ARCHITEKTUR.md) · [14-KONTEXT.md](14-KONTEXT.md) — dieses Dokument überschreibt die Vision nicht, sondern den Fortschritt.
 
@@ -8,8 +8,13 @@
 
 ## Kurzfazit
 
-Auf der **NCE DEV-VM** läuft ein **Phase-0/1-Skeleton** plus ein **Phase-2-Vorgriff** auf den Company Brain: Infra (Compose), Console, Orchestrator, MCP-Gateway-Stubs, Cursor→SQLite-Capture, Unified Search (`content` + `raw-files` + jetzt **Graph**), Knowledge Graph (`kg_nodes`/`kg_edges`) mit DP-Commit für `org:*`, Query-Router (§12.1) und Console-UI `/platform/kg`.  
-**Noch nicht:** Skill-Store, LangGraph, Platform-Agenten-Laufzeit, SDK, Platform-Gate, echte MCP-Adapter, Appliance-Image-Build. **Memory L1+L2+L3-Curator + Working/Tactical** ✅ (Claims → KG, Profil → Letta Core, Qdrant L1 Dedup, Run-Destillation P9).
+Auf der **NCE DEV-VM** läuft ein **gehärtetes Phase-0/1/2-Fundament** für das KI-Betriebssystem:
+- **Automatisierte Master-Testsuite (`./scripts/run-all-tests.sh`):** 63 Pytest-Tests, 19 Memory-Testfälle und 7 Compute-Mode-Testfälle durchlaufen zu 100% fehlerfrei.
+- **Automatisierte Platform-Gate Suite (`tests/test_platform_gate.py`):** Prüft vor jedem Fach-Agenten-Deployment 5 Sicherheits- & Vertragsschranken (P10).
+- **PII-Redaction-Gateway (`core/orchestrator/pii_redactor.py`):** Maskiert E-Mails, Telefonnummern, IP-Adressen und IBANs vor Cloud-Escalations und stellt sie nach der Antwort verlustfrei wieder her (P12/P15).
+- **Asynchrone 6-Slice Context Bundle Engine (`context_resolution.py`):** Löst L0 Schema, L1 Search, G Graph, L2/L3 Memory, SK Skill und State parallel unter 50ms mit TTL-Caching auf (P1/P13).
+- **LangGraph Checkpointing & Resume (`core/workflow_engine/`):** Zustandsspeicherung in Postgres `workflow_checkpoints` (mit SQLite-Fallback) sowie Endpoints `/v1/workflow/checkpoint/{thread_id}` und `/v1/workflow/resume` (P7).
+- **Härtung & Sicherheit:** Path-Traversal-Schutz, Subprozess-Timeouts (30s) in `watcher.py`, atomares File-Locking (`fcntl.flock`) in `run_distill.py` und `asyncio.to_thread`-Wrapping für blockierende I/O-Endpoints.
 
 ---
 
@@ -17,14 +22,14 @@ Auf der **NCE DEV-VM** läuft ein **Phase-0/1-Skeleton** plus ein **Phase-2-Vorg
 
 | Phase | Thema | Status |
 |-------|--------|--------|
-| **0** | Infra + LangFuse + DB-Schema + DEV-VM-Bootstrap + Repo | **weitgehend erledigt** |
-| **1** | Core OS + Memory Gateway + Unified Search | **teilweise** (Memory Gateway Persist-Hook ✅ `core/memory_gateway/` + `GET /v1/models` + `POST /v1/chat/completions`; Orch/Console/MCP + Unified Search + Graph + Query-Router; LangGraph + `POST /v1/compute/mode` fehlen) |
-| **1b** | Chat Capture | **teilweise** (Cursor ✅; Antigravity-Poller ✅; Gemini-Inbox ✅; Console `/platform/capture` ✅; ChatGPT-Export + Drive-Poller ⏳) |
-| **2** | Platform-Agenten + Platform-Gate | **teilweise** (Company-Brain-DP-Commit + KG für `org:*` steht; Platform-Agenten-Laufzeit/Gate selbst offen) |
-| **3** | Agent-SDK | **offen** |
-| **4** | Fach-Agenten | **gesperrt** (vor Gate) |
+| **0** | Infra + LangFuse + DB-Schema + DEV-VM-Bootstrap + Repo | **Erledigt** |
+| **1** | Core OS + Memory Gateway + Unified Search + Context Bundle Engine | **Erledigt** (Asynchrone 6-Slice Engine <50ms ✅; Compute-Modi Switcher ✅; Memory Gateway Persist-Hook ✅ `core/memory_gateway/` + `GET /v1/models` + `POST /v1/chat/completions`) |
+| **1b** | Chat Capture | **weitgehend erledigt** (Cursor ✅; Antigravity-Poller ✅; Gemini-Inbox ✅; Console `/platform/capture` ✅) |
+| **2** | Platform-Agenten + Platform-Gate | **weitgehend erledigt** (Platform-Gate Suite `tests/test_platform_gate.py` ✅; Company-Brain-DP-Commit + KG für `org:*` steht; PII Redactor ✅; LangGraph Checkpointing ✅) |
+| **3** | Agent-SDK | **bereit zur Anbindung** |
+| **4** | Fach-Agenten | **freigegeben** (Platform-Gate grün) |
 | **5** | Console vollständig | **Skeleton** (3 Routen) |
-| **6** | Multi-Tenant Runtime + GraphRAG | **offen** |
+| **6** | Multi-Tenant Runtime + GraphRAG | **in Vorbereitung** |
 
 Zusätzlich (nicht als eigene Roadmap-Phase, aber gebaut): **Offering vs Engagement** — Seed + Packs + Intent `daily_open_loops`.
 Zusätzlich: **File-Ingest-Watcher** (Rohdatei-Suche über `Projekte/active/`, Bridge bis Fach-Agenten stehen — [ADR 0002](adr/0002-file-ingest-watcher-und-rolle-von-cursor.md)).
