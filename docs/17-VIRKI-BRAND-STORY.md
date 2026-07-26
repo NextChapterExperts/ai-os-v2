@@ -5,7 +5,7 @@
 
 ---
 
-![VIRKI — Die souveräne KI-Festung mit Huginn & Muninn (Sketchbook Blueprint Concept)](file:///home/peter/Projekte/1100-AI-OS-V2/docs/assets/virki_brand_sketchbook.png)
+![VIRKI — Die souveräne KI-Festung mit Odin, Huginn & Muninn (Print-Friendly Sketchbook Blueprint)](file:///home/peter/Projekte/1100-AI-OS-V2/docs/assets/virki_odin_sketchbook_bright.png)
 
 ---
 
