@@ -3,7 +3,7 @@
 **Für:** LLMs, Entwickler, die das System von Grund auf bauen  
 **Zweck:** Vollständige technische Spezifikation — ausreichend detailliert um ohne zusätzlichen Kontext zu starten  
 **Basis:** AI-OS v1 (../1000-AI-OS) — eingefroren Juli 2026  
-**Stand:** Juli 2026 (aktualisiert 2026-07-26 — Platform-Gate Suite `tests/test_platform_gate.py` [P10] und PII Redaction Gateway `core/orchestrator/pii_redactor.py` [P12/P15] abgeschlossen; 58 Pytest-Tests grün)  
+**Stand:** Juli 2026 (aktualisiert 2026-07-26 — Context-Bundle Optimierung (6 Slices <50ms) in `context_resolution.py` [P1/P13] & LangGraph Checkpointing & Resume in `workflow_engine/` [P7/P15] abgeschlossen; 63 Pytest-Tests grün)  
 **Modus:** **Eine Implementierung** — keine Alternativen in dieser Roadmap. Jede Entscheidung ist final.  
 **Detail-Spec Company Brain:** [docs/09-COMPANY-BRAIN.md](docs/09-COMPANY-BRAIN.md) · **Memory einfach:** [docs/10-MEMORY-EINFACH.md](docs/10-MEMORY-EINFACH.md) · **Kontext Lagebild→LLM:** [docs/14-KONTEXT.md](docs/14-KONTEXT.md)  
 **Erstes Lizenzprodukt (VM):** [docs/11-PLATFORM-VM.md](docs/11-PLATFORM-VM.md)  

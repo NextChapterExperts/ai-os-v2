@@ -664,5 +664,28 @@ async def post_working_note(run_id: str, req: WorkingNoteRequest) -> dict[str, A
     ensure_run(run_id, "nextchapter")
     data = append_note(run_id, req.text, kind=req.kind)
     if data is None:
-        raise HTTPException(status_code=404, detail="Working-Memory nicht gefunden")
+        raise HTTPException(status_code=404, detail="Run geschaltet/nicht gefunden")
     return data
+
+
+class ResumeWorkflowRequest(BaseModel):
+    thread_id: str
+    input_data: dict[str, Any] = Field(default_factory=dict)
+    checkpoint_id: str | None = None
+
+
+@app.get("/v1/workflow/checkpoint/{thread_id}")
+async def get_workflow_checkpoint(thread_id: str) -> dict[str, Any]:
+    from core.workflow_engine.checkpoint_store import load_checkpoint
+
+    ckpt = load_checkpoint(thread_id)
+    if ckpt is None:
+        raise HTTPException(status_code=404, detail="Kein Checkpoint für diesen Thread gefunden")
+    return ckpt
+
+
+@app.post("/v1/workflow/resume")
+async def post_workflow_resume(req: ResumeWorkflowRequest) -> dict[str, Any]:
+    from core.workflow_engine.engine import resume_workflow
+
+    return resume_workflow(req.thread_id, req.input_data, req.checkpoint_id)
