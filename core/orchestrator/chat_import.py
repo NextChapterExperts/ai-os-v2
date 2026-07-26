@@ -104,6 +104,8 @@ def _upsert_chunks(
     messages: list[dict[str, Any]],
     source_path: str,
     project_id: str,
+    user_id: str = "default_user",
+    visibility: str = "team",
 ) -> list[str]:
     if not messages:
         return []
@@ -114,10 +116,10 @@ def _upsert_chunks(
     try:
         ensure_schema(con)
         upsert = """
-            INSERT INTO chunks (id, source, project_id, chat_id, role, title, body, source_path, created_at, ingested_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO chunks (id, source, project_id, user_id, visibility, chat_id, role, title, body, source_path, created_at, ingested_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
-              body=excluded.body, title=excluded.title, ingested_at=excluded.ingested_at
+              body=excluded.body, title=excluded.title, user_id=excluded.user_id, visibility=excluded.visibility, ingested_at=excluded.ingested_at
         """
         for idx, msg in enumerate(messages):
             body = msg["text"]
@@ -127,7 +129,7 @@ def _upsert_chunks(
             ts = str(msg.get("ts") or now)
             con.execute(
                 upsert,
-                (cid, source, project_id, chat_id, role, title, body, source_path, ts, now),
+                (cid, source, project_id, user_id, visibility, chat_id, role, title, body, source_path, ts, now),
             )
             written.append(cid)
         con.commit()
@@ -141,6 +143,8 @@ def import_transcript(
     *,
     tenant_id: str = "nextchapter",
     project_id: str | None = None,
+    user_id: str | None = None,
+    visibility: str = "team",
 ) -> dict[str, Any]:
     """Importiert ein normalisiertes Transcript ins Gedächtnis."""
     source = str(transcript.get("source") or "chat")
@@ -158,12 +162,17 @@ def import_transcript(
     inbox_path = inbox_dir / fname
     inbox_path.write_text(_render_markdown(transcript, messages), encoding="utf-8")
 
+    uid = user_id or str(transcript.get("user_id") or "default_user")
+    vis = visibility or str(transcript.get("visibility") or "team")
+
     chunk_ids = _upsert_chunks(
         source=source,
         chat_id=session_id,
         messages=messages,
         source_path=str(inbox_path),
         project_id=pid,
+        user_id=uid,
+        visibility=vis,
     )
 
     preview = messages[0]["text"][:200] if messages else ""

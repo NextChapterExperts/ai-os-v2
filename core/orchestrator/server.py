@@ -29,6 +29,7 @@ app = FastAPI(title="AI-OS Orchestrator", version="2.0.0-skeleton")
 class DispatchRequest(BaseModel):
     intent: str
     tenant_id: str = "nextchapter"
+    user_id: str = "default_user"
     params: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -53,7 +54,8 @@ async def dispatch_intent(req: DispatchRequest) -> DispatchResponse:
 
     run_id = str(req.params.get("run_id") or req.params.get("session_id") or uuid.uuid4())
     workflow_run_id = req.params.get("workflow_run_id")
-    params = {**req.params, "run_id": run_id}
+    user_id = str(req.params.get("user_id") or req.user_id)
+    params = {**req.params, "run_id": run_id, "user_id": user_id}
 
     intent = route_intent(req.intent, params)
     ensure_run(run_id, req.tenant_id, intent=intent)
@@ -383,6 +385,8 @@ class ChatImportRequest(BaseModel):
     transcript: dict[str, Any]
     tenant_id: str = "nextchapter"
     project_id: str | None = None
+    user_id: str | None = None
+    visibility: str = "team"
 
 
 @app.post("/v1/chat-import")
@@ -397,6 +401,8 @@ async def post_chat_import(req: ChatImportRequest) -> dict[str, Any]:
             req.transcript,
             tenant_id=req.tenant_id,
             project_id=req.project_id,
+            user_id=req.user_id,
+            visibility=req.visibility,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -516,6 +522,7 @@ async def post_chat_completions(req: ChatCompletionRequest) -> dict[str, Any]:
 class SearchRequest(BaseModel):
     query: str
     tenant_id: str = "nextchapter"
+    user_id: str = "default_user"
     limit: int = 8
 
 
@@ -524,7 +531,7 @@ async def post_search(req: SearchRequest) -> dict[str, Any]:
     """Dedizierter Unified-Search-Endpoint (Phase 1, ROADMAP §6.5)."""
     from .handlers import unified_search
 
-    return await unified_search.run({}, req.tenant_id, {"query": req.query, "limit": req.limit})
+    return await unified_search.run({}, req.tenant_id, {"query": req.query, "limit": req.limit, "user_id": req.user_id})
 
 
 class MemorySyncRequest(BaseModel):

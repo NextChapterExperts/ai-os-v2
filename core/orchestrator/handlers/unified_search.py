@@ -129,6 +129,8 @@ async def run(
             "tenant_id": tenant_id,
         }
 
+    user_id = str(params.get("user_id") or (context_bundle.get("system") or {}).get("user_id") or "default_user")
+
     plan = route_query(query)
 
     graph_hits = _graph_hits(tenant_id, query, plan) if plan.use_g else []
@@ -136,7 +138,7 @@ async def run(
     episodic_limit = 10 if plan.use_letta else 5
     if plan.use_g and not plan.use_l1 and not plan.use_letta:
         episodic_limit = 0
-    episodic_hits = search_episodic(tenant_id, query, limit=episodic_limit) if episodic_limit else []
+    episodic_hits = search_episodic(tenant_id, query, limit=episodic_limit, user_id=user_id) if episodic_limit else []
 
     curated: list[dict[str, Any]] = []
     raw_files: list[dict[str, Any]] = []

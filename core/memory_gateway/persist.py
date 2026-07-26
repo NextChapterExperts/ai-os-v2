@@ -34,6 +34,8 @@ def persist_chat_turn(
     produced_by: str,
     model: str,
     project_id: str | None = None,
+    user_id: str | None = None,
+    visibility: str = "team",
 ) -> dict[str, Any]:
     """Speichert den letzten User-Turn + Assistant-Antwort in memory.db."""
     if not os.path.exists(MEMORY_DB):
@@ -41,6 +43,8 @@ def persist_chat_turn(
 
     now = datetime.now(timezone.utc).isoformat()
     pid = project_id or DEFAULT_PROJECT
+    uid = user_id or "default_user"
+    vis = visibility or "team"
     source_path = f"memory-gateway/{tenant_id}/{session_id}"
     written: list[str] = []
 
@@ -49,10 +53,10 @@ def persist_chat_turn(
     try:
         _ensure_schema(con)
         upsert = """
-            INSERT INTO chunks (id, source, project_id, chat_id, role, title, body, source_path, created_at, ingested_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO chunks (id, source, project_id, user_id, visibility, chat_id, role, title, body, source_path, created_at, ingested_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
-              body=excluded.body, title=excluded.title, ingested_at=excluded.ingested_at
+              body=excluded.body, title=excluded.title, user_id=excluded.user_id, visibility=excluded.visibility, ingested_at=excluded.ingested_at
         """
         if last_user:
             body = str(last_user.get("content") or "")
@@ -63,6 +67,8 @@ def persist_chat_turn(
                     cid,
                     "memory-gateway",
                     pid,
+                    uid,
+                    vis,
                     session_id,
                     "user",
                     body[:80],
@@ -82,6 +88,8 @@ def persist_chat_turn(
                     cid,
                     "memory-gateway",
                     pid,
+                    uid,
+                    vis,
                     session_id,
                     "assistant",
                     assistant_content[:80],

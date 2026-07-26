@@ -60,26 +60,32 @@ def chunks_in_window(
     end: str,
     limit: int = 40,
     role: str | None = "user",
+    user_id: str | None = None,
 ) -> list[dict[str, Any]]:
-    """Chunks in [start, end), optional auf `project_id` + `role` eingeschraenkt."""
+    """Chunks in [start, end), optional auf `project_id` + `role` + `user_id`/`visibility` eingeschraenkt."""
     if not os.path.exists(MEMORY_DB):
         return []
+    uid = user_id or "default_user"
     con = sqlite3.connect(MEMORY_DB)
     con.row_factory = sqlite3.Row
     try:
         cols = {r[1] for r in con.execute("PRAGMA table_info(chunks)")}
         has_project_col = "project_id" in cols
+        has_user_col = "user_id" in cols
 
         def _query(with_project: bool) -> list[dict[str, Any]]:
             sql = (
-                "SELECT id, role, title, body, chat_id, source, ingested_at, project_id "
+                "SELECT id, role, title, body, chat_id, source, ingested_at, project_id, user_id, visibility "
                 "FROM chunks WHERE ingested_at >= ? AND ingested_at < ?"
             )
             params: list[Any] = [start, end]
             if role:
                 sql += " AND role = ?"
                 params.append(role)
-            if with_project and has_project_col and project_id:
+            if has_user_col:
+                sql += " AND (visibility = 'company' OR (visibility = 'team' AND (project_id IS NULL OR project_id = ?)) OR (visibility = 'private' AND user_id = ?))"
+                params.extend([project_id or DEFAULT_PROJECT, uid])
+            elif with_project and has_project_col and project_id:
                 sql += " AND project_id = ?"
                 params.append(project_id)
             sql += " ORDER BY ingested_at ASC LIMIT ?"
@@ -99,11 +105,13 @@ def search_chunks(
     project_id: str | None = None,
     limit: int = 10,
     since_days: int = 30,
+    user_id: str | None = None,
 ) -> list[dict[str, Any]]:
     """Freitext (LIKE) ueber Chunk-Titel/-Body der letzten `since_days` Tage."""
     q = (query or "").strip()
     if not os.path.exists(MEMORY_DB) or not q:
         return []
+    uid = user_id or "default_user"
     tz = ZoneInfo("Europe/Berlin")
     since = (datetime.now(tz) - timedelta(days=since_days)).astimezone(timezone.utc).isoformat()
     like = f"%{q}%"
@@ -112,14 +120,18 @@ def search_chunks(
     try:
         cols = {r[1] for r in con.execute("PRAGMA table_info(chunks)")}
         has_project_col = "project_id" in cols
+        has_user_col = "user_id" in cols
 
         def _query(with_project: bool) -> list[dict[str, Any]]:
             sql = (
-                "SELECT id, role, title, body, chat_id, source, ingested_at, project_id "
+                "SELECT id, role, title, body, chat_id, source, ingested_at, project_id, user_id, visibility "
                 "FROM chunks WHERE ingested_at >= ? AND (body LIKE ? OR title LIKE ?)"
             )
             params: list[Any] = [since, like, like]
-            if with_project and has_project_col and project_id:
+            if has_user_col:
+                sql += " AND (visibility = 'company' OR (visibility = 'team' AND (project_id IS NULL OR project_id = ?)) OR (visibility = 'private' AND user_id = ?))"
+                params.extend([project_id or DEFAULT_PROJECT, uid])
+            elif with_project and has_project_col and project_id:
                 sql += " AND project_id = ?"
                 params.append(project_id)
             sql += " ORDER BY ingested_at DESC LIMIT ?"
@@ -145,27 +157,33 @@ def search_chunks_fts(
     query: str,
     project_id: str | None = None,
     limit: int = 10,
+    user_id: str | None = None,
 ) -> list[dict[str, Any]]:
     """FTS5-Suche über chunks_fts (schneller und genauer als LIKE)."""
     fts_q = _escape_fts(query)
     if not fts_q or not os.path.exists(MEMORY_DB):
         return []
 
+    uid = user_id or "default_user"
     con = ensure_schema()
     con.row_factory = sqlite3.Row
     try:
         cols = {r[1] for r in con.execute("PRAGMA table_info(chunks)")}
         has_project_col = "project_id" in cols
+        has_user_col = "user_id" in cols
 
         def _query(with_project: bool) -> list[dict[str, Any]]:
             sql = (
                 "SELECT c.id, c.role, c.title, c.body, c.chat_id, c.source, "
-                "c.ingested_at, c.project_id, c.source_path "
+                "c.ingested_at, c.project_id, c.user_id, c.visibility, c.source_path "
                 "FROM chunks_fts f JOIN chunks c ON c.rowid = f.rowid "
                 "WHERE chunks_fts MATCH ?"
             )
             params: list[Any] = [fts_q]
-            if with_project and has_project_col and project_id:
+            if has_user_col:
+                sql += " AND (c.visibility = 'company' OR (c.visibility = 'team' AND (c.project_id IS NULL OR c.project_id = ?)) OR (c.visibility = 'private' AND c.user_id = ?))"
+                params.extend([project_id or DEFAULT_PROJECT, uid])
+            elif with_project and has_project_col and project_id:
                 sql += " AND c.project_id = ?"
                 params.append(project_id)
             sql += " ORDER BY rank LIMIT ?"
@@ -177,6 +195,6 @@ def search_chunks_fts(
             rows = _query(with_project=False)
         return rows
     except sqlite3.OperationalError:
-        return search_chunks(query, project_id=project_id, limit=limit)
+        return search_chunks(query, project_id=project_id, limit=limit, user_id=user_id)
     finally:
         con.close()

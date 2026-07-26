@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS chunks (
     id TEXT PRIMARY KEY,
     source TEXT NOT NULL,
     project_id TEXT NOT NULL DEFAULT 'unknown',
+    user_id TEXT NOT NULL DEFAULT 'default_user',
+    visibility TEXT NOT NULL DEFAULT 'team',
     chat_id TEXT NOT NULL,
     role TEXT NOT NULL,
     title TEXT NOT NULL DEFAULT '',
@@ -44,6 +46,7 @@ CREATE TRIGGER IF NOT EXISTS chunks_au AFTER UPDATE ON chunks BEGIN
 END;
 CREATE INDEX IF NOT EXISTS idx_chunks_project_ingested ON chunks(project_id, ingested_at);
 CREATE INDEX IF NOT EXISTS idx_chunks_source_ingested ON chunks(source, ingested_at);
+CREATE INDEX IF NOT EXISTS idx_chunks_user_visibility ON chunks(user_id, visibility);
 """
 
 
@@ -56,6 +59,10 @@ def ensure_schema(con: sqlite3.Connection | None = None) -> sqlite3.Connection:
     cols = {r[1] for r in con.execute("PRAGMA table_info(chunks)")}
     if "project_id" not in cols:
         con.execute("ALTER TABLE chunks ADD COLUMN project_id TEXT NOT NULL DEFAULT 'unknown'")
+    if "user_id" not in cols:
+        con.execute("ALTER TABLE chunks ADD COLUMN user_id TEXT NOT NULL DEFAULT 'default_user'")
+    if "visibility" not in cols:
+        con.execute("ALTER TABLE chunks ADD COLUMN visibility TEXT NOT NULL DEFAULT 'team'")
     if owns:
         con.commit()
     return con

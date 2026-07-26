@@ -61,9 +61,11 @@ def search_episodic(
     *,
     limit: int = 10,
     project_id: str | None = None,
+    user_id: str | None = None,
 ) -> list[dict[str, Any]]:
     """Letta + SQLite mergen, deduplizieren, nach Score sortieren."""
     pid = project_id or DEFAULT_PROJECT
+    uid = user_id or "default_user"
     start, end, mode = resolve_window(query)
     merged: dict[str, dict[str, Any]] = {}
 
@@ -73,11 +75,11 @@ def search_episodic(
             merged[_dedupe_key(hit)] = hit
 
     if mode in ("yesterday", "week", "today"):
-        sqlite_rows = chunks_in_window(pid, start, end, limit=limit)
+        sqlite_rows = chunks_in_window(pid, start, end, limit=limit, user_id=uid)
     else:
-        sqlite_rows = search_chunks_fts(query, project_id=pid, limit=limit)
+        sqlite_rows = search_chunks_fts(query, project_id=pid, limit=limit, user_id=uid)
         if not sqlite_rows:
-            sqlite_rows = search_chunks(query, project_id=pid, limit=limit)
+            sqlite_rows = search_chunks(query, project_id=pid, limit=limit, user_id=uid)
 
     for c in sqlite_rows:
         hit = _chunk_hit(c, score=0.9, collection="memory.db")

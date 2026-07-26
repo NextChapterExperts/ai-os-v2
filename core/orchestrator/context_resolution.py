@@ -76,6 +76,8 @@ async def resolve_context_async(
     workflow_run_id = params.get("workflow_run_id")
     query = str(params.get("query") or params.get("q") or intent)
 
+    user_id = str(params.get("user_id") or "default_user")
+
     # Parallel Execution: Domain Cache + Memory Snapshots + Retrieval
     domain_task = asyncio.to_thread(_get_cached_domain)
     memory_task = _resolve_memory_slice(run_id, workflow_run_id)
@@ -90,6 +92,7 @@ async def resolve_context_async(
     return {
         "system": {
             "tenant": tenant_id,
+            "user_id": user_id,
             "compute_mode": params.get("compute_mode", "sovereign"),
             "policies": ["pii_local_default", "no_raw_chat_as_decision"],
             "resolution_time_ms": round(elapsed_ms, 2),
