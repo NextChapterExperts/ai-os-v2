@@ -65,6 +65,7 @@ Ein Agent, der keinen typisierten Datenprodukt-Output liefert, keine MCP-Adapter
 
 | Dokument | Inhalt |
 |----------|--------|
+| **[AGENTS.md](AGENTS.md)** | **Verbindlicher Entwicklungs-Workflow für KI-Agenten** (Vor & Nach Änderungen) |
 | **[ROADMAP.md](ROADMAP.md)** | **Sehr detaillierte Bauanleitung** — für LLMs und Entwickler |
 | [docs/00-VISION.md](docs/00-VISION.md) | Plattform-Vision (aus v1 aktualisiert) |
 | [docs/01-ARCHITEKTUR.md](docs/01-ARCHITEKTUR.md) | Vollständige v2-Architektur |
