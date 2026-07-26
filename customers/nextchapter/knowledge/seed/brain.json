@@ -2,6 +2,14 @@
   "tenant": "nextchapter",
   "offerings": [
     {
+      "id": "off-ai-os-platform",
+      "name": "AI-OS Platform Appliance",
+      "kind": "platform",
+      "status": "active",
+      "summary": "Souveränes, self-hosted KI-Betriebssystem für Unternehmen und Agenturen.",
+      "package": "packages/platform/ai-os"
+    },
+    {
       "id": "off-sap-apim-training",
       "name": "SAP API Management Training",
       "kind": "training",
@@ -19,6 +27,15 @@
     }
   ],
   "engagements": [
+    {
+      "id": "eng-ai-os-v2",
+      "title": "AI-OS v2 — Souveränes KI-Betriebssystem",
+      "status": "active",
+      "offering_id": "off-ai-os-platform",
+      "next_step": "Multi-User Layer & First-Party Brain Integration",
+      "org_id": "org-internal-nce",
+      "owner_person_id": "person:peter-alexander"
+    },
     {
       "id": "eng-sap-apim-kw-next",
       "title": "SAP API Mgmt — nächster Kursblock",

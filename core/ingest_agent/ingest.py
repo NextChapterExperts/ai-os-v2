@@ -476,6 +476,13 @@ def main() -> None:
 
     if not args.dry_run and not args.skip_l1:
         ingest_knowledge_assets_to_l1(results)
+        try:
+            from .doc_ingest import ingest_project_docs
+
+            doc_res = ingest_project_docs()
+            log.info("Dokumentations-Ingest: %d Dateien → %d Chunks", doc_res["files"], doc_res["chunks"])
+        except Exception as exc:
+            log.warning("Doc-Ingest fehlgeschlagen: %s", exc)
 
     stats_summary: dict[str, int] = {}
     for r in results:

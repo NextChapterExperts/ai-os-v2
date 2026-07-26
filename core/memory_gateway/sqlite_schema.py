@@ -55,14 +55,16 @@ def ensure_schema(con: sqlite3.Connection | None = None) -> sqlite3.Connection:
     if owns:
         os.makedirs(os.path.dirname(MEMORY_DB), exist_ok=True)
         con = sqlite3.connect(MEMORY_DB)
+    tables = {r[0] for r in con.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+    if "chunks" in tables:
+        cols = {r[1] for r in con.execute("PRAGMA table_info(chunks)").fetchall()}
+        if "project_id" not in cols:
+            con.execute("ALTER TABLE chunks ADD COLUMN project_id TEXT NOT NULL DEFAULT 'unknown'")
+        if "user_id" not in cols:
+            con.execute("ALTER TABLE chunks ADD COLUMN user_id TEXT NOT NULL DEFAULT 'default_user'")
+        if "visibility" not in cols:
+            con.execute("ALTER TABLE chunks ADD COLUMN visibility TEXT NOT NULL DEFAULT 'team'")
     con.executescript(_SCHEMA_SQL)
-    cols = {r[1] for r in con.execute("PRAGMA table_info(chunks)")}
-    if "project_id" not in cols:
-        con.execute("ALTER TABLE chunks ADD COLUMN project_id TEXT NOT NULL DEFAULT 'unknown'")
-    if "user_id" not in cols:
-        con.execute("ALTER TABLE chunks ADD COLUMN user_id TEXT NOT NULL DEFAULT 'default_user'")
-    if "visibility" not in cols:
-        con.execute("ALTER TABLE chunks ADD COLUMN visibility TEXT NOT NULL DEFAULT 'team'")
     if owns:
         con.commit()
     return con
