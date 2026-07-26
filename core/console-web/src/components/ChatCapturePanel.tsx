@@ -21,7 +21,7 @@ export function ChatCapturePanel() {
     setPending(true);
     setError(null);
     try {
-      const res = await fetch("/api/capture/stats", { cache: "no-store" });
+      const res = await fetch(`/api/capture/stats?_t=${Date.now()}`, { cache: "no-store" });
       const json = (await res.json()) as CaptureStats & { error?: string };
       if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
       setData(json);

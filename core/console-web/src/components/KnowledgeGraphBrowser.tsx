@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 type KgStats = {
@@ -41,7 +41,8 @@ type KgNodeDetail = {
 };
 
 async function getJson<T>(url: string): Promise<T> {
-  const res = await fetch(url, { cache: "no-store" });
+  const sep = url.includes("?") ? "&" : "?";
+  const res = await fetch(`${url}${sep}_t=${Date.now()}`, { cache: "no-store" });
   const json = await res.json();
   if (!res.ok) throw new Error(typeof json.error === "string" ? json.error : JSON.stringify(json.error));
   return json as T;
@@ -62,33 +63,35 @@ export function KnowledgeGraphBrowser() {
   const [selectedNode, setSelectedNode] = useState<KgNodeDetail | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
 
-  const [pending, startTransition] = useTransition();
+  const [pending, setPending] = useState(false);
 
-  const loadStats = useCallback(() => {
-    startTransition(async () => {
-      try {
-        setStatsError(null);
-        setStats(await getJson<KgStats>("/api/kg/stats"));
-      } catch (err) {
-        setStatsError(err instanceof Error ? err.message : "Stats fehlgeschlagen");
-      }
-    });
+  const loadStats = useCallback(async () => {
+    setPending(true);
+    try {
+      setStatsError(null);
+      setStats(await getJson<KgStats>("/api/kg/stats"));
+    } catch (err) {
+      setStatsError(err instanceof Error ? err.message : "Stats fehlgeschlagen");
+    } finally {
+      setPending(false);
+    }
   }, []);
 
   useEffect(() => {
     loadStats();
   }, [loadStats]);
 
-  const openNode = useCallback((id: string) => {
-    startTransition(async () => {
-      try {
-        setDetailError(null);
-        const node = await getJson<KgNodeDetail>(`/api/kg/resolve/${id}`);
-        setSelectedNode(node);
-      } catch (err) {
-        setDetailError(err instanceof Error ? err.message : "Knoten nicht gefunden");
-      }
-    });
+  const openNode = useCallback(async (id: string) => {
+    setPending(true);
+    try {
+      setDetailError(null);
+      const node = await getJson<KgNodeDetail>(`/api/kg/resolve/${id}`);
+      setSelectedNode(node);
+    } catch (err) {
+      setDetailError(err instanceof Error ? err.message : "Knoten nicht gefunden");
+    } finally {
+      setPending(false);
+    }
   }, []);
 
   // Deep-Link von der Suche (/search): Treffer vom Typ "graph" verlinken
@@ -96,22 +99,23 @@ export function KnowledgeGraphBrowser() {
   // suchen zu muessen.
   useEffect(() => {
     const nodeId = searchParams.get("node");
-    if (nodeId) openNode(nodeId);
+    if (nodeId) void openNode(nodeId);
   }, [searchParams, openNode]);
 
-  const openType = useCallback((nodeType: string) => {
+  const openType = useCallback(async (nodeType: string) => {
     setSelectedType(nodeType);
     setSelectedNode(null);
-    startTransition(async () => {
-      try {
-        const data = await getJson<{ results: KgNodeSummary[] }>(
-          `/api/kg/nodes?node_type=${encodeURIComponent(nodeType)}`,
-        );
-        setNodesOfType(data.results);
-      } catch (err) {
-        setDetailError(err instanceof Error ? err.message : "Laden fehlgeschlagen");
-      }
-    });
+    setPending(true);
+    try {
+      const data = await getJson<{ results: KgNodeSummary[] }>(
+        `/api/kg/nodes?node_type=${encodeURIComponent(nodeType)}`,
+      );
+      setNodesOfType(data.results);
+    } catch (err) {
+      setDetailError(err instanceof Error ? err.message : "Laden fehlgeschlagen");
+    } finally {
+      setPending(false);
+    }
   }, []);
 
   return (

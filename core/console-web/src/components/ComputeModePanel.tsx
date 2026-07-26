@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type ComputeModeEntry = {
   id: string;
@@ -25,47 +25,49 @@ type ComputeModeResponse = {
 export function ComputeModePanel() {
   const [data, setData] = useState<ComputeModeResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [pending, setPending] = useState(false);
 
-  const load = useCallback(() => {
-    startTransition(async () => {
-      try {
-        setError(null);
-        const res = await fetch("/api/compute/mode", { cache: "no-store" });
-        const json = (await res.json()) as ComputeModeResponse;
-        if (!res.ok) {
-          throw new Error(json.error ?? `HTTP ${res.status}`);
-        }
-        setData(json);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Modus laden fehlgeschlagen");
+  const load = useCallback(async () => {
+    setPending(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/compute/mode?_t=${Date.now()}`, { cache: "no-store" });
+      const json = (await res.json()) as ComputeModeResponse;
+      if (!res.ok) {
+        throw new Error(json.error ?? `HTTP ${res.status}`);
       }
-    });
+      setData(json);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Modus laden fehlgeschlagen");
+    } finally {
+      setPending(false);
+    }
   }, []);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  function selectMode(mode: string) {
+  async function selectMode(mode: string) {
     if (pending || data?.active_mode === mode) return;
-    startTransition(async () => {
-      try {
-        setError(null);
-        const res = await fetch("/api/compute/mode", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mode }),
-        });
-        const json = (await res.json()) as ComputeModeResponse;
-        if (!res.ok) {
-          throw new Error(json.error ?? `HTTP ${res.status}`);
-        }
-        setData(json);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Moduswechsel fehlgeschlagen");
+    setPending(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/compute/mode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode }),
+      });
+      const json = (await res.json()) as ComputeModeResponse;
+      if (!res.ok) {
+        throw new Error(json.error ?? `HTTP ${res.status}`);
       }
-    });
+      setData(json);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Moduswechsel fehlgeschlagen");
+    } finally {
+      setPending(false);
+    }
   }
 
   return (

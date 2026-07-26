@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type Todo = { text: string; done: boolean };
 
@@ -134,7 +134,7 @@ type ParsedParticipant = {
 export function MeetingsPanel() {
   const [data, setData] = useState<MeetingsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [pending, setPending] = useState(false);
   const [queryInput, setQueryInput] = useState("");
   const [filters, setFilters] = useState<FilterState>({
     q: "",
@@ -152,25 +152,27 @@ export function MeetingsPanel() {
   const [participantBusy, setParticipantBusy] = useState(false);
   const fetchSeq = useRef(0);
 
-  const fetchMeetings = useCallback((next: FilterState) => {
+  const fetchMeetings = useCallback(async (next: FilterState) => {
     const seq = ++fetchSeq.current;
-    startTransition(async () => {
-      try {
-        setError(null);
-        const params = new URLSearchParams();
-        if (next.q.trim()) params.set("q", next.q.trim());
-        if (next.unassigned) params.set("unassigned", "true");
-        if (next.openTodo) params.set("has_open_todo", "true");
-        const res = await fetch(`/api/meetings?${params}`, { cache: "no-store" });
-        const json = (await res.json()) as MeetingsResponse;
-        if (seq !== fetchSeq.current) return;
-        if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
-        setData(json);
-      } catch (err) {
-        if (seq !== fetchSeq.current) return;
-        setError(err instanceof Error ? err.message : "Laden fehlgeschlagen");
-      }
-    });
+    setPending(true);
+    try {
+      setError(null);
+      const params = new URLSearchParams();
+      if (next.q.trim()) params.set("q", next.q.trim());
+      if (next.unassigned) params.set("unassigned", "true");
+      if (next.openTodo) params.set("has_open_todo", "true");
+      params.set("_t", String(Date.now()));
+      const res = await fetch(`/api/meetings?${params}`, { cache: "no-store" });
+      const json = (await res.json()) as MeetingsResponse;
+      if (seq !== fetchSeq.current) return;
+      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+      setData(json);
+    } catch (err) {
+      if (seq !== fetchSeq.current) return;
+      setError(err instanceof Error ? err.message : "Laden fehlgeschlagen");
+    } finally {
+      if (seq === fetchSeq.current) setPending(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -195,7 +197,11 @@ export function MeetingsPanel() {
     fetchMeetings(next);
   };
 
-  const refresh = () => fetchMeetings(filters);
+  const refresh = () => {
+    const next = { ...filters, q: queryInput.trim() };
+    setFilters(next);
+    fetchMeetings(next);
+  };
 
   const engagementOptions = data?.engagement_options ?? [];
 
@@ -245,41 +251,43 @@ export function MeetingsPanel() {
       setPendingFiles((prev) => [...prev, ...list]);
       return;
     }
-    startTransition(async () => {
-      try {
-        setError(null);
-        await uploadFiles(editingId, list);
-        const res = await fetch(`/api/meetings/${editingId}`, { cache: "no-store" });
-        const json = await res.json();
-        if (res.ok && json.meeting?.attachments) {
-          setFormAttachments(json.meeting.attachments);
-        }
-        refresh();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Upload fehlgeschlagen");
+    setPending(true);
+    try {
+      setError(null);
+      await uploadFiles(editingId, list);
+      const res = await fetch(`/api/meetings/${editingId}?_t=${Date.now()}`, { cache: "no-store" });
+      const json = await res.json();
+      if (res.ok && json.meeting?.attachments) {
+        setFormAttachments(json.meeting.attachments);
       }
-    });
+      refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload fehlgeschlagen");
+    } finally {
+      setPending(false);
+    }
   }
 
   async function removeAttachment(att: Attachment) {
     if (!editingId) return;
     if (!confirm(`Anhang „${att.filename}" löschen?`)) return;
-    startTransition(async () => {
-      try {
-        const res = await fetch(
-          `/api/meetings/${editingId}/attachments/${att.id}`,
-          { method: "DELETE" },
-        );
-        if (!res.ok) {
-          const json = await res.json();
-          throw new Error(json.detail ?? json.error ?? `HTTP ${res.status}`);
-        }
-        setFormAttachments((prev) => prev.filter((a) => a.id !== att.id));
-        refresh();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Anhang löschen fehlgeschlagen");
+    setPending(true);
+    try {
+      const res = await fetch(
+        `/api/meetings/${editingId}/attachments/${att.id}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.detail ?? json.error ?? `HTTP ${res.status}`);
       }
-    });
+      setFormAttachments((prev) => prev.filter((a) => a.id !== att.id));
+      refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Anhang löschen fehlgeschlagen");
+    } finally {
+      setPending(false);
+    }
   }
 
   function toggleEngagement(id: string) {
@@ -374,7 +382,7 @@ export function MeetingsPanel() {
     }
   }
 
-  function onSubmit(e: FormEvent) {
+  async function onSubmit(e: FormEvent) {
     e.preventDefault();
     const payload = {
       title: form.title.trim(),
@@ -390,52 +398,54 @@ export function MeetingsPanel() {
     };
     if (!payload.title) return;
 
-    startTransition(async () => {
-      try {
-        setError(null);
-        const url = editingId ? `/api/meetings/${editingId}` : "/api/meetings";
-        const method = editingId ? "PATCH" : "POST";
-        const res = await fetch(url, {
-          method,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.detail ?? json.error ?? `HTTP ${res.status}`);
-        const meetingId = (json.meeting?.id as string | undefined) ?? editingId;
-        if (meetingId && pendingFiles.length > 0) {
-          await uploadFiles(meetingId, pendingFiles);
-        }
-        setShowForm(false);
-        setEditingId(null);
-        setForm(EMPTY_FORM);
-        setFormAttachments([]);
-        setPendingFiles([]);
-        refresh();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Speichern fehlgeschlagen");
+    setPending(true);
+    try {
+      setError(null);
+      const url = editingId ? `/api/meetings/${editingId}` : "/api/meetings";
+      const method = editingId ? "PATCH" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.detail ?? json.error ?? `HTTP ${res.status}`);
+      const meetingId = (json.meeting?.id as string | undefined) ?? editingId;
+      if (meetingId && pendingFiles.length > 0) {
+        await uploadFiles(meetingId, pendingFiles);
       }
-    });
+      setShowForm(false);
+      setEditingId(null);
+      setForm(EMPTY_FORM);
+      setFormAttachments([]);
+      setPendingFiles([]);
+      refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Speichern fehlgeschlagen");
+    } finally {
+      setPending(false);
+    }
   }
 
-  function onDelete(id: string) {
+  async function onDelete(id: string) {
     if (!confirm("Meeting wirklich löschen?")) return;
-    startTransition(async () => {
-      try {
-        const res = await fetch(`/api/meetings/${id}`, { method: "DELETE" });
-        if (!res.ok) {
-          const json = await res.json();
-          throw new Error(json.detail ?? json.error ?? `HTTP ${res.status}`);
-        }
-        if (editingId === id) {
-          setShowForm(false);
-          setEditingId(null);
-        }
-        refresh();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Löschen fehlgeschlagen");
+    setPending(true);
+    try {
+      const res = await fetch(`/api/meetings/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const json = await res.json();
+        throw new Error(json.detail ?? json.error ?? `HTTP ${res.status}`);
       }
-    });
+      if (editingId === id) {
+        setShowForm(false);
+        setEditingId(null);
+      }
+      refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Löschen fehlgeschlagen");
+    } finally {
+      setPending(false);
+    }
   }
 
   return (

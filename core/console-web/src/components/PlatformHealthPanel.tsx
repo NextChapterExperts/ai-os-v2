@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { PlatformHealthResponse } from "@/lib/types";
 import { StatusDot } from "./StatusDot";
 
@@ -17,23 +17,25 @@ export function PlatformHealthPanel() {
   const [data, setData] = useState<PlatformHealthResponse | null>(null);
   const [mem, setMem] = useState<MemStats | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [pending, setPending] = useState(false);
 
-  const load = useCallback(() => {
-    startTransition(async () => {
-      try {
-        setError(null);
-        const [healthRes, memRes] = await Promise.all([
-          fetch("/api/platform/health", { cache: "no-store" }),
-          fetch("/api/memory/stats", { cache: "no-store" }),
-        ]);
-        if (!healthRes.ok) throw new Error(`HTTP ${healthRes.status}`);
-        setData((await healthRes.json()) as PlatformHealthResponse);
-        if (memRes.ok) setMem((await memRes.json()) as MemStats);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Probe fehlgeschlagen");
-      }
-    });
+  const load = useCallback(async () => {
+    setPending(true);
+    try {
+      setError(null);
+      const ts = Date.now();
+      const [healthRes, memRes] = await Promise.all([
+        fetch(`/api/platform/health?_t=${ts}`, { cache: "no-store" }),
+        fetch(`/api/memory/stats?_t=${ts}`, { cache: "no-store" }),
+      ]);
+      if (!healthRes.ok) throw new Error(`HTTP ${healthRes.status}`);
+      setData((await healthRes.json()) as PlatformHealthResponse);
+      if (memRes.ok) setMem((await memRes.json()) as MemStats);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Probe fehlgeschlagen");
+    } finally {
+      setPending(false);
+    }
   }, []);
 
   useEffect(() => {

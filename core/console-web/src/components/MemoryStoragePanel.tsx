@@ -55,7 +55,7 @@ export function MemoryStoragePanel() {
     setPending(true);
     setError(null);
     try {
-      const res = await fetch("/api/memory/storage", { cache: "no-store" });
+      const res = await fetch(`/api/memory/storage?_t=${Date.now()}`, { cache: "no-store" });
       const json = (await res.json()) as StorageResponse;
       if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
       setData(json);
