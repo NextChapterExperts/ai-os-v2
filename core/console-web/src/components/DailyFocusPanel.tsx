@@ -2,225 +2,394 @@
 
 import { useState, useEffect } from "react";
 
-type MilestoneState = "queued" | "in_execution" | "released";
+type MilestoneState = "pending" | "active" | "completed";
 
-interface StrategicMilestone {
+interface PhaseGate {
   id: string;
-  project: string;
-  gate: string;
+  phaseNumber: string;
   title: string;
-  deliverable: string;
-  targetDate: string;
-  isCriticalPath?: boolean;
+  subtitle: string;
+  dateRange: string;
+  deliverableFile: string;
+  description: string;
+  keyActions: string[];
   defaultState: MilestoneState;
 }
 
-const STRATEGIC_MILESTONES: StrategicMilestone[] = [
+const PHASES: PhaseGate[] = [
   {
-    id: "waqam-gate-1",
-    project: "waqam-project",
-    gate: "Gate 1 · Kickoff",
-    title: "Studenten-Pitch & Rollenvergabe",
-    deliverable: "Projekt-Pitch (projekt_pitch_studenten_de.md) freigeben & Rollen zuweisen.",
-    targetDate: "27.07.2026 (Montag)",
-    isCriticalPath: true,
-    defaultState: "queued",
+    id: "phase-1",
+    phaseNumber: "01",
+    title: "Kickoff & Rollen",
+    subtitle: "Studenten-Pitch & Freigabe",
+    dateRange: "Mo. 27.07.",
+    deliverableFile: "projekt_pitch_studenten_de.md",
+    description: "Studenten-Pitch sichten, Anforderungsprofil für 2–3 Studierende freigeben und Aufgabenverteilung zuteilen.",
+    keyActions: [
+      "Pitch-Unterlagen (DE/EN) prüfen & freigeben",
+      "Rollenverteilung (rollenverteilung_studenten.md) festlegen",
+    ],
+    defaultState: "active",
   },
   {
-    id: "waqam-gate-2a",
-    project: "waqam-project",
-    gate: "Gate 2A · Scoping",
-    title: "Paket 1: SAP AI Portfolio & Scoping",
-    deliverable: "Grundlagen Autonomous Enterprise & Feature-Bewertung finalisieren.",
-    targetDate: "28.07.2026 (Dienstag)",
-    isCriticalPath: true,
-    defaultState: "queued",
+    id: "phase-2a",
+    phaseNumber: "02",
+    title: "Paket 1: Portfolio",
+    subtitle: "SAP AI Scoping & Features",
+    dateRange: "Di. 28.07.",
+    deliverableFile: "paket1_sap_ai_portfolio.md",
+    description: "Grundlagen des Autonomous Enterprise definieren und existierende SAP AI Features bewerten.",
+    keyActions: [
+      "SAP Business AI Scope abstimmen",
+      "Feature-Matrix für Studenten aufbereiten",
+    ],
+    defaultState: "pending",
   },
   {
-    id: "waqam-gate-2b",
-    project: "waqam-project",
-    gate: "Gate 2B · Simulator",
-    title: "Paket 2: Stochastik, Risiko & Simulator-Kopplung",
-    deliverable: "Realpessimismus-Blog-Hürden mit Störungs-Handbuch & Simulator koppeln.",
-    targetDate: "31.07.2026 (Freitag)",
-    isCriticalPath: true,
-    defaultState: "queued",
+    id: "phase-2b",
+    phaseNumber: "03",
+    title: "Paket 2: Stochastik",
+    subtitle: "Risiko & Simulator",
+    dateRange: "Mi. 29.07. – Fr. 31.07.",
+    deliverableFile: "paket2_stochastik_risiko.md",
+    description: "KI-Halluzinationsrisiken & Realpessimismus-Bloghürden mit dem Störungs-Handbuch & Simulator koppeln.",
+    keyActions: [
+      "Störungs- & Manipulations-Handbuch integrieren",
+      "Simulator-Testfälle für Stresstest definieren",
+    ],
+    defaultState: "pending",
   },
   {
-    id: "waqam-gate-3",
-    project: "waqam-project",
-    gate: "Gate 3 · Board UI",
-    title: "Paket 3: WAQAM Board Overhaul & EXT-01",
-    deliverable: "Waqamboard UI & Lieferanten-Onboarding Störungs-Szenario überarbeiten.",
-    targetDate: "04.08.2026 (Dienstag)",
-    isCriticalPath: true,
-    defaultState: "queued",
+    id: "phase-3",
+    phaseNumber: "04",
+    title: "Paket 3: WAQAM Board",
+    subtitle: "Use Case & UI Overhaul",
+    dateRange: "Mo. 03.08. – Di. 04.08.",
+    deliverableFile: "paket3_use_case_simulation.md",
+    description: "EXT-01 Lieferanten-Onboarding Szenario im WAQAM Board überarbeiten und Vorstandsslides vorbereiten.",
+    keyActions: [
+      "Board UI auf neusten Stand bringen",
+      "Lieferanten-Onboarding Testfall durchspielen",
+    ],
+    defaultState: "pending",
   },
   {
-    id: "waqam-gate-4",
-    project: "waqam-project",
-    gate: "Gate 4 · Go-Live",
-    title: "🎉 Go-Live Release: Studenten-Projekt Startklar",
-    deliverable: "Paket 1–3 als PDF & GitHub-Repository für Studenten freigeben.",
-    targetDate: "07.08.2026 (Freitag)",
-    isCriticalPath: true,
-    defaultState: "queued",
+    id: "phase-4",
+    phaseNumber: "05",
+    title: "Final Release",
+    subtitle: "Go-Live & Briefing Kit",
+    dateRange: "Fr. 07.08. (RELEASE)",
+    deliverableFile: "projekt_overview.canvas",
+    description: "Pakete 1–3 als fertiges Studenten-Kit (PDF & Repository) übergeben. Offizieller Projektstart!",
+    keyActions: [
+      "Dry Run aus Studenten-Perspektive durchführen",
+      "GitHub Repo & Unterlagen für Studenten freigeben",
+    ],
+    defaultState: "pending",
   },
 ];
 
-const PORTFOLIO_HORIZON = [
-  { name: "ai-sap-videos", target: "Ende Aug. 2026", status: "3 Video-Skripte & Clips" },
-  { name: "redrays-btp", target: "Anfang Sept. 2026", status: "Alignment BTP-Security" },
-  { name: "lizenz-simulation", target: "Oktober 2026", status: "BTP Lizenz-Simulator" },
-  { name: "website-nce", target: "Continuous", status: "Live-Prototyp & Branding" },
-  { name: "1100-AI-OS-V2", target: "Continuous", status: "Platform Engine & Muninn" },
+const OTHER_PROJECTS = [
+  { name: "ai-sap-videos", date: "Ende Aug. 2026", scope: "3 Videos anschauen / Skripte", tag: "Content" },
+  { name: "redrays-btp", date: "Anfang Sept. 2026", scope: "Alignment BTP Security Scanner", tag: "Security" },
+  { name: "lizenz-simulation", date: "Oktober 2026", scope: "BTP Lizenz- & Kosten-Simulator", tag: "Tooling" },
+  { name: "website-nce", date: "Continuous", scope: "VIRKI Landingpage & Prototyp", tag: "Web" },
+  { name: "1100-AI-OS-V2", date: "Continuous", scope: "Platform Engine & Governance", tag: "Platform" },
 ];
 
 export function DailyFocusPanel() {
-  const [states, setStates] = useState<Record<string, MilestoneState>>({});
+  const [phaseStates, setPhaseStates] = useState<Record<string, MilestoneState>>({});
+  const [selectedPhaseId, setSelectedPhaseId] = useState<string>("phase-1");
 
   useEffect(() => {
-    const saved = localStorage.getItem("aios_portfolio_milestone_states");
+    const saved = localStorage.getItem("aios_waqam_phase_states");
     if (saved) {
       try {
-        setStates(JSON.parse(saved));
+        setPhaseStates(JSON.parse(saved));
       } catch (e) {
-        console.error("Failed to parse milestone states", e);
+        console.error("Failed to parse phase states", e);
       }
     }
   }, []);
 
-  const cycleState = (id: string, currentState: MilestoneState) => {
-    const next: Record<MilestoneState, MilestoneState> = {
-      queued: "in_execution",
-      in_execution: "released",
-      released: "queued",
-    };
-    const updated = { ...states, [id]: next[currentState] };
-    setStates(updated);
-    localStorage.setItem("aios_portfolio_milestone_states", JSON.stringify(updated));
+  const setPhaseState = (id: string, state: MilestoneState) => {
+    const updated = { ...phaseStates, [id]: state };
+    setPhaseStates(updated);
+    localStorage.setItem("aios_waqam_phase_states", JSON.stringify(updated));
   };
 
-  const getState = (m: StrategicMilestone): MilestoneState => {
-    return states[m.id] || m.defaultState;
+  const getPhaseState = (phase: PhaseGate): MilestoneState => {
+    return phaseStates[phase.id] || phase.defaultState;
   };
 
-  const releasedCount = STRATEGIC_MILESTONES.filter((m) => getState(m) === "released").length;
-  const totalCount = STRATEGIC_MILESTONES.length;
-  const progressPct = Math.round((releasedCount / totalCount) * 100);
+  const completedCount = PHASES.filter((p) => getPhaseState(p) === "completed").length;
+  const progressPct = Math.round((completedCount / PHASES.length) * 100);
+  const activePhase = PHASES.find((p) => p.id === selectedPhaseId) || PHASES[0];
+  const activeState = getPhaseState(activePhase);
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6 shadow-2xl backdrop-blur-md text-slate-100">
-      {/* Ambient background glow */}
-      <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl" />
+    <div className="relative overflow-hidden rounded-3xl border border-indigo-500/20 bg-[#0B0F17] p-8 shadow-2xl text-slate-100 font-sans">
+      {/* Background ambient lighting */}
+      <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-indigo-600/10 blur-[120px]" />
+      <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-amber-500/10 blur-[120px]" />
 
-      {/* Executive Header */}
-      <div className="relative z-10 flex flex-col gap-4 border-b border-slate-800/80 pb-5 sm:flex-row sm:items-center sm:justify-between">
+      {/* Top Banner Header */}
+      <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between border-b border-slate-800/80 pb-6">
         <div>
-          <div className="flex items-center gap-2.5">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/15 px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider text-rose-300 border border-rose-500/30">
-              <span className="h-1.5 w-1.5 rounded-full bg-rose-400 animate-pulse" />
-              Critical Path Prio 1
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-400 border border-amber-500/20">
+              <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
+              Priorität 1 · Höchste Dringlichkeit
             </span>
-            <span className="mono text-xs font-medium text-cyan-400">
-              waqam-project · Release Readiness
+            <span className="text-xs font-mono text-indigo-400 tracking-wide uppercase">
+              waqam-project
             </span>
           </div>
-          <h2 className="mt-1.5 text-2xl font-black tracking-tight text-white">
-            Portfolio Control Radar
+
+          <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+            WAQAM Studenten-Start
           </h2>
-          <p className="mt-0.5 text-xs text-slate-400">
-            Meilenstein-Steuerung für den Studenten-Start · Ziel-Go-Live: <strong className="text-slate-200">07.08.2026</strong>
+          <p className="mt-1 text-sm text-slate-400 max-w-2xl leading-relaxed">
+            Meilenstein-Fahrplan für die 3 Kernpakete. Ziel-Release:{" "}
+            <span className="font-semibold text-slate-200">Freitag, 07. August 2026</span>
           </p>
         </div>
 
-        {/* Executive Progress Ring / Metric */}
-        <div className="flex items-center gap-4 rounded-xl border border-slate-800 bg-slate-900/60 p-3 backdrop-blur-sm">
+        {/* Executive Overall Progress Card */}
+        <div className="flex items-center gap-5 rounded-2xl border border-slate-800/80 bg-slate-900/50 p-4 backdrop-blur-md shrink-0">
           <div className="text-right">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Target Progress</div>
-            <div className="text-lg font-black text-white">
-              {releasedCount} / {totalCount} <span className="text-xs font-medium text-cyan-400">({progressPct}%)</span>
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              Release Readiness
+            </div>
+            <div className="text-2xl font-black text-white mt-0.5">
+              {completedCount} / {PHASES.length}{" "}
+              <span className="text-sm font-semibold text-indigo-400">({progressPct}%)</span>
             </div>
           </div>
-          <div className="h-10 w-10 rounded-full border-2 border-slate-700 p-0.5 flex items-center justify-center">
-            <div
-              className="h-full w-full rounded-full bg-gradient-to-tr from-amber-400 to-cyan-400 transition-all duration-500"
-              style={{ opacity: progressPct > 0 ? 1 : 0.2 }}
-            />
+          <div className="relative flex h-14 w-14 items-center justify-center rounded-full border-2 border-slate-700 bg-slate-950">
+            <svg className="h-12 w-12 -rotate-90" viewBox="0 0 36 36">
+              <path
+                className="text-slate-800"
+                strokeWidth="3"
+                stroke="currentColor"
+                fill="none"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+              />
+              <path
+                className="text-indigo-500 transition-all duration-500"
+                strokeDasharray={`${progressPct}, 100`}
+                strokeWidth="3"
+                strokeLinecap="round"
+                stroke="currentColor"
+                fill="none"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+              />
+            </svg>
+            <span className="absolute text-xs font-bold text-white">{progressPct}%</span>
           </div>
         </div>
       </div>
 
-      {/* Critical Path Milestone Pipeline */}
-      <div className="relative z-10 mt-6 space-y-3">
-        <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-amber-300">
-          <span>🎯 Meilenstein-Pipeline (Freigabe-Roadmap bis 07.08.)</span>
-          <span className="text-[11px] font-normal text-slate-400">Klick auf Karte ändert Status</span>
+      {/* Interactive Timeline Track */}
+      <div className="relative z-10 mt-8">
+        <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
+          <span>📍 Phasen-Fahrplan (Woche 1 & Woche 2)</span>
+          <span className="text-slate-500 font-normal">Phase anklicken für Detail-Ansicht</span>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          {STRATEGIC_MILESTONES.map((m) => {
-            const state = getState(m);
+        {/* Timeline Grid */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          {PHASES.map((phase) => {
+            const state = getPhaseState(phase);
+            const isSelected = phase.id === selectedPhaseId;
+
             return (
-              <div
-                key={m.id}
-                onClick={() => cycleState(m.id, state)}
-                className={`group cursor-pointer rounded-xl border p-4 transition-all duration-200 hover:-translate-y-0.5 ${
-                  state === "released"
-                    ? "border-emerald-500/40 bg-emerald-950/20 text-emerald-100 shadow-emerald-950/50"
-                    : state === "in_execution"
-                    ? "border-amber-500/60 bg-amber-950/30 text-amber-100 shadow-amber-950/50"
-                    : "border-slate-800 bg-slate-950/70 hover:border-cyan-500/40"
+              <button
+                key={phase.id}
+                type="button"
+                onClick={() => setSelectedPhaseId(phase.id)}
+                className={`relative flex flex-col justify-between rounded-2xl border p-4 text-left transition-all duration-200 ${
+                  isSelected
+                    ? "border-indigo-500 bg-indigo-950/30 ring-2 ring-indigo-500/20 shadow-lg shadow-indigo-950/50"
+                    : state === "completed"
+                    ? "border-emerald-500/30 bg-emerald-950/10 hover:border-emerald-500/50"
+                    : state === "active"
+                    ? "border-amber-500/40 bg-amber-950/20 hover:border-amber-500/60"
+                    : "border-slate-800/80 bg-slate-900/40 hover:border-slate-700"
                 }`}
               >
-                <div className="flex items-center justify-between text-[10px] font-bold">
-                  <span className="mono text-cyan-400">{m.gate}</span>
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-xs font-bold text-indigo-400">
+                      PHASE {phase.phaseNumber}
+                    </span>
+                    <span
+                      className={`h-2.5 w-2.5 rounded-full ${
+                        state === "completed"
+                          ? "bg-emerald-400 shadow-sm shadow-emerald-400"
+                          : state === "active"
+                          ? "bg-amber-400 animate-pulse shadow-sm shadow-amber-400"
+                          : "bg-slate-700"
+                      }`}
+                    />
+                  </div>
+
+                  <h3 className="mt-2 text-sm font-bold text-white leading-snug">
+                    {phase.title}
+                  </h3>
+                  <p className="mt-0.5 text-xs text-slate-400 truncate">
+                    {phase.subtitle}
+                  </p>
+                </div>
+
+                <div className="mt-4 flex items-center justify-between border-t border-slate-800/60 pt-2.5 text-[11px]">
+                  <span className="font-mono text-slate-400">{phase.dateRange}</span>
                   <span
-                    className={`rounded px-1.5 py-0.5 uppercase tracking-wider ${
-                      state === "released"
-                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-                        : state === "in_execution"
-                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse"
-                        : "bg-slate-800 text-slate-400 border border-slate-700"
+                    className={`font-semibold uppercase tracking-wider ${
+                      state === "completed"
+                        ? "text-emerald-400"
+                        : state === "active"
+                        ? "text-amber-300"
+                        : "text-slate-500"
                     }`}
                   >
-                    {state === "released" ? "RELEASED" : state === "in_execution" ? "IN EXECUTION" : "QUEUED"}
+                    {state === "completed" ? "Abgenommen" : state === "active" ? "In Arbeit" : "Offen"}
                   </span>
                 </div>
-
-                <h4 className="mt-2 text-xs font-bold leading-snug text-white group-hover:text-cyan-300 transition-colors">
-                  {m.title}
-                </h4>
-
-                <p className="mt-1.5 text-[11px] leading-relaxed text-slate-400 line-clamp-3">
-                  {m.deliverable}
-                </p>
-
-                <div className="mt-3 border-t border-slate-800/60 pt-2 text-[10px] font-mono text-slate-400">
-                  {m.targetDate}
-                </div>
-              </div>
+              </button>
             );
           })}
         </div>
       </div>
 
-      {/* Strategic Horizon Radar */}
-      <div className="relative z-10 mt-6 border-t border-slate-800/80 pt-4">
-        <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5">
-          🌌 Portfolio Horizon (Strategischer Ausblick)
+      {/* Selected Phase Detail Panel (Executive Drilldown) */}
+      <div className="relative z-10 mt-6 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 backdrop-blur-md">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-slate-800/80 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xs font-bold text-indigo-400">
+                Phase {activePhase.phaseNumber} Details
+              </span>
+              <span className="text-slate-600">·</span>
+              <span className="text-xs text-amber-300 font-medium">
+                {activePhase.dateRange}
+              </span>
+            </div>
+            <h3 className="text-xl font-bold text-white mt-1">
+              {activePhase.title} — {activePhase.subtitle}
+            </h3>
+          </div>
+
+          {/* Interactive State Toggle Buttons */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPhaseState(activePhase.id, "pending")}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                activeState === "pending"
+                  ? "bg-slate-700 text-white border border-slate-600"
+                  : "bg-slate-900 text-slate-400 hover:text-white border border-slate-800"
+              }`}
+            >
+              Offen
+            </button>
+            <button
+              type="button"
+              onClick={() => setPhaseState(activePhase.id, "active")}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                activeState === "active"
+                  ? "bg-amber-500 text-slate-950 font-bold border border-amber-400"
+                  : "bg-slate-900 text-slate-400 hover:text-amber-300 border border-slate-800"
+              }`}
+            >
+              In Arbeit
+            </button>
+            <button
+              type="button"
+              onClick={() => setPhaseState(activePhase.id, "completed")}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                activeState === "completed"
+                  ? "bg-emerald-500 text-slate-950 font-bold border border-emerald-400"
+                  : "bg-slate-900 text-slate-400 hover:text-emerald-300 border border-slate-800"
+              }`}
+            >
+              ✓ Abgenommen
+            </button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3 lg:grid-cols-5 text-xs">
-          {PORTFOLIO_HORIZON.map((item) => (
+        {/* Phase Details Content Grid */}
+        <div className="mt-5 grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="md:col-span-2 space-y-4">
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Beschreibung & Zielsetzung
+              </h4>
+              <p className="mt-1.5 text-sm text-slate-300 leading-relaxed">
+                {activePhase.description}
+              </p>
+            </div>
+
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+                Konkrete Handlungsschritte
+              </h4>
+              <ul className="space-y-2 text-sm text-slate-200">
+                {activePhase.keyActions.map((action, idx) => (
+                  <li key={idx} className="flex items-start gap-2.5">
+                    <span className="mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-indigo-500/20 text-[10px] font-bold text-indigo-300">
+                      {idx + 1}
+                    </span>
+                    <span>{action}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-4 space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Zentrales Deliverable-Artefakt
+            </h4>
+            <div className="flex items-center gap-2.5 rounded-lg border border-slate-800 bg-slate-900 p-2.5 text-xs font-mono text-indigo-300">
+              <svg className="h-4 w-4 shrink-0 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span className="truncate">{activePhase.deliverableFile}</span>
+            </div>
+            <p className="text-[11px] text-slate-400 leading-normal">
+              Liegt im Repository <span className="font-mono text-slate-300">/home/peter/Projekte/active/waqam-project/</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Portfolio Horizon (Sleek Bottom Cards) */}
+      <div className="relative z-10 mt-8 border-t border-slate-800/80 pt-6">
+        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
+          🌌 Portfolio Horizont (Weitere aktive Projekte)
+        </h4>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-5 text-xs">
+          {OTHER_PROJECTS.map((item) => (
             <div
               key={item.name}
-              className="rounded-xl border border-slate-800/80 bg-slate-950/50 p-3 transition-colors hover:border-slate-700"
+              className="group rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4 transition-all hover:border-indigo-500/40 hover:bg-slate-900/70"
             >
-              <div className="font-bold text-slate-200">{item.name}</div>
-              <div className="mt-0.5 text-[11px] font-medium text-amber-300">{item.target}</div>
-              <div className="mt-1 text-[10px] text-slate-400 truncate">{item.status}</div>
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-white group-hover:text-indigo-300 transition-colors">
+                  {item.name}
+                </span>
+                <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[9px] font-semibold text-slate-300">
+                  {item.tag}
+                </span>
+              </div>
+              <div className="mt-1.5 text-xs font-medium text-amber-300">
+                {item.date}
+              </div>
+              <div className="mt-1 text-[11px] text-slate-400 leading-normal line-clamp-2">
+                {item.scope}
+              </div>
             </div>
           ))}
         </div>
