@@ -2,245 +2,225 @@
 
 import { useState, useEffect } from "react";
 
-type TaskStatus = "todo" | "in_progress" | "done";
+type MilestoneState = "queued" | "in_execution" | "released";
 
-interface TaskItem {
+interface StrategicMilestone {
   id: string;
   project: string;
-  period: "today" | "this_week" | "next_week";
+  gate: string;
   title: string;
-  desc: string;
-  deadline: string;
-  defaultStatus: TaskStatus;
+  deliverable: string;
+  targetDate: string;
+  isCriticalPath?: boolean;
+  defaultState: MilestoneState;
 }
 
-const INITIAL_TASKS: TaskItem[] = [
+const STRATEGIC_MILESTONES: StrategicMilestone[] = [
   {
-    id: "waqam-pitch",
-    project: "waqam-project (Prio 1)",
-    period: "today",
-    title: "Studenten-Pitch & Rollen vergeben",
-    desc: "Pitch-Unterlagen (projekt_pitch_studenten_de.md) prüfen & Rollen zuweisen.",
-    deadline: "27.07. (Morgen)",
-    defaultStatus: "todo",
+    id: "waqam-gate-1",
+    project: "waqam-project",
+    gate: "Gate 1 · Kickoff",
+    title: "Studenten-Pitch & Rollenvergabe",
+    deliverable: "Projekt-Pitch (projekt_pitch_studenten_de.md) freigeben & Rollen zuweisen.",
+    targetDate: "27.07.2026 (Montag)",
+    isCriticalPath: true,
+    defaultState: "queued",
   },
   {
-    id: "waqam-p1",
-    project: "waqam-project (Prio 1)",
-    period: "this_week",
+    id: "waqam-gate-2a",
+    project: "waqam-project",
+    gate: "Gate 2A · Scoping",
     title: "Paket 1: SAP AI Portfolio & Scoping",
-    desc: "Grundlagen Autonomous Enterprise & Feature-Bewertung finalisieren.",
-    deadline: "28.07. (Dienstag)",
-    defaultStatus: "todo",
+    deliverable: "Grundlagen Autonomous Enterprise & Feature-Bewertung finalisieren.",
+    targetDate: "28.07.2026 (Dienstag)",
+    isCriticalPath: true,
+    defaultState: "queued",
   },
   {
-    id: "waqam-p2",
-    project: "waqam-project (Prio 1)",
-    period: "this_week",
+    id: "waqam-gate-2b",
+    project: "waqam-project",
+    gate: "Gate 2B · Simulator",
     title: "Paket 2: Stochastik, Risiko & Simulator-Kopplung",
-    desc: "Realpessimismus-Blog-Hürden mit dem Störungs-Handbuch & Simulator koppeln.",
-    deadline: "31.07. (Freitag)",
-    defaultStatus: "todo",
+    deliverable: "Realpessimismus-Blog-Hürden mit Störungs-Handbuch & Simulator koppeln.",
+    targetDate: "31.07.2026 (Freitag)",
+    isCriticalPath: true,
+    defaultState: "queued",
   },
   {
-    id: "waqam-p3",
-    project: "waqam-project (Prio 1)",
-    period: "next_week",
-    title: "Paket 3: Waqamboard Overhaul & EXT-01",
-    desc: "Waqamboard UI & Lieferanten-Onboarding Szenario überarbeiten.",
-    deadline: "04.08. (Dienstag)",
-    defaultStatus: "todo",
+    id: "waqam-gate-3",
+    project: "waqam-project",
+    gate: "Gate 3 · Board UI",
+    title: "Paket 3: WAQAM Board Overhaul & EXT-01",
+    deliverable: "Waqamboard UI & Lieferanten-Onboarding Störungs-Szenario überarbeiten.",
+    targetDate: "04.08.2026 (Dienstag)",
+    isCriticalPath: true,
+    defaultState: "queued",
   },
   {
-    id: "waqam-release",
-    project: "waqam-project (Prio 1)",
-    period: "next_week",
-    title: "🎉 Go-Live: Studenten-Projekt Startklar",
-    desc: "Paket 1–3 als PDF & GitHub Repository an Studenten übergeben.",
-    deadline: "07.08. (Freitag)",
-    defaultStatus: "todo",
+    id: "waqam-gate-4",
+    project: "waqam-project",
+    gate: "Gate 4 · Go-Live",
+    title: "🎉 Go-Live Release: Studenten-Projekt Startklar",
+    deliverable: "Paket 1–3 als PDF & GitHub-Repository für Studenten freigeben.",
+    targetDate: "07.08.2026 (Freitag)",
+    isCriticalPath: true,
+    defaultState: "queued",
   },
 ];
 
-const OTHER_PROJECTS = [
-  { name: "ai-sap-videos", deadline: "Mitte/Ende August 2026", status: "3 Videos anschauen / Skripte" },
-  { name: "redrays-btp", deadline: "Anfang September 2026", status: "Alignment mit BTP-Kollegen" },
-  { name: "lizenz-simulation", deadline: "Ende Sept. / Okt. 2026", status: "Partner-Projekt Start" },
-  { name: "website-nce", deadline: "Kontinuierlich", status: "Prototyp & Live-Ausbau" },
-  { name: "1100-AI-OS-V2", deadline: "Kontinuierlich", status: "Plattform-Engine Core" },
+const PORTFOLIO_HORIZON = [
+  { name: "ai-sap-videos", target: "Ende Aug. 2026", status: "3 Video-Skripte & Clips" },
+  { name: "redrays-btp", target: "Anfang Sept. 2026", status: "Alignment BTP-Security" },
+  { name: "lizenz-simulation", target: "Oktober 2026", status: "BTP Lizenz-Simulator" },
+  { name: "website-nce", target: "Continuous", status: "Live-Prototyp & Branding" },
+  { name: "1100-AI-OS-V2", target: "Continuous", status: "Platform Engine & Muninn" },
 ];
 
 export function DailyFocusPanel() {
-  const [taskStates, setTaskStates] = useState<Record<string, TaskStatus>>({});
+  const [states, setStates] = useState<Record<string, MilestoneState>>({});
 
   useEffect(() => {
-    const saved = localStorage.getItem("aios_daily_focus_tasks");
+    const saved = localStorage.getItem("aios_portfolio_milestone_states");
     if (saved) {
       try {
-        setTaskStates(JSON.parse(saved));
+        setStates(JSON.parse(saved));
       } catch (e) {
-        console.error("Failed to parse saved task states", e);
+        console.error("Failed to parse milestone states", e);
       }
     }
   }, []);
 
-  const toggleTask = (id: string, currentStatus: TaskStatus) => {
-    const nextStatus: Record<TaskStatus, TaskStatus> = {
-      todo: "in_progress",
-      in_progress: "done",
-      done: "todo",
+  const cycleState = (id: string, currentState: MilestoneState) => {
+    const next: Record<MilestoneState, MilestoneState> = {
+      queued: "in_execution",
+      in_execution: "released",
+      released: "queued",
     };
-    const newStates = {
-      ...taskStates,
-      [id]: nextStatus[currentStatus],
-    };
-    setTaskStates(newStates);
-    localStorage.setItem("aios_daily_focus_tasks", JSON.stringify(newStates));
+    const updated = { ...states, [id]: next[currentState] };
+    setStates(updated);
+    localStorage.setItem("aios_portfolio_milestone_states", JSON.stringify(updated));
   };
 
-  const getStatus = (task: TaskItem): TaskStatus => {
-    return taskStates[task.id] || task.defaultStatus;
+  const getState = (m: StrategicMilestone): MilestoneState => {
+    return states[m.id] || m.defaultState;
   };
 
-  const doneCount = INITIAL_TASKS.filter((t) => getStatus(t) === "done").length;
-  const totalCount = INITIAL_TASKS.length;
-  const progressPct = Math.round((doneCount / totalCount) * 100);
+  const releasedCount = STRATEGIC_MILESTONES.filter((m) => getState(m) === "released").length;
+  const totalCount = STRATEGIC_MILESTONES.length;
+  const progressPct = Math.round((releasedCount / totalCount) * 100);
 
   return (
-    <div className="space-y-6 rounded-2xl border border-sky-500/30 bg-slate-900/90 p-6 shadow-xl text-slate-100">
-      {/* Header & Banner */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-800 pb-4">
+    <div className="relative overflow-hidden rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6 shadow-2xl backdrop-blur-md text-slate-100">
+      {/* Ambient background glow */}
+      <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl" />
+
+      {/* Executive Header */}
+      <div className="relative z-10 flex flex-col gap-4 border-b border-slate-800/80 pb-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="rounded-full bg-rose-500/20 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider text-rose-300 border border-rose-500/30">
-              🔴 Priorität 1
+          <div className="flex items-center gap-2.5">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/15 px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider text-rose-300 border border-rose-500/30">
+              <span className="h-1.5 w-1.5 rounded-full bg-rose-400 animate-pulse" />
+              Critical Path Prio 1
             </span>
-            <span className="mono text-xs text-sky-400">waqam-project · Studenten-Start</span>
+            <span className="mono text-xs font-medium text-cyan-400">
+              waqam-project · Release Readiness
+            </span>
           </div>
-          <h2 className="text-xl font-extrabold text-white mt-1">
-            Fokus-Lagebild: Was ist wann zu tun?
+          <h2 className="mt-1.5 text-2xl font-black tracking-tight text-white">
+            Portfolio Control Radar
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Ziel: <strong>07.08.2026</strong> (Ende nächster Woche startbereit für Studierende)
+          <p className="mt-0.5 text-xs text-slate-400">
+            Meilenstein-Steuerung für den Studenten-Start · Ziel-Go-Live: <strong className="text-slate-200">07.08.2026</strong>
           </p>
         </div>
 
-        {/* Progress Bar */}
-        <div className="sm:text-right min-w-[160px]">
-          <div className="text-xs font-bold text-slate-300">
-            Fortschritt: {doneCount}/{totalCount} ({progressPct}%)
+        {/* Executive Progress Ring / Metric */}
+        <div className="flex items-center gap-4 rounded-xl border border-slate-800 bg-slate-900/60 p-3 backdrop-blur-sm">
+          <div className="text-right">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Target Progress</div>
+            <div className="text-lg font-black text-white">
+              {releasedCount} / {totalCount} <span className="text-xs font-medium text-cyan-400">({progressPct}%)</span>
+            </div>
           </div>
-          <div className="mt-1.5 h-2.5 w-full rounded-full bg-slate-800 overflow-hidden border border-slate-700">
+          <div className="h-10 w-10 rounded-full border-2 border-slate-700 p-0.5 flex items-center justify-center">
             <div
-              className="h-full bg-gradient-to-r from-amber-500 to-emerald-400 transition-all duration-300"
-              style={{ width: `${progressPct}%` }}
+              className="h-full w-full rounded-full bg-gradient-to-tr from-amber-400 to-cyan-400 transition-all duration-500"
+              style={{ opacity: progressPct > 0 ? 1 : 0.2 }}
             />
           </div>
         </div>
       </div>
 
-      {/* Task Sections */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        {/* Today & This Week */}
-        <div className="space-y-4">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-amber-300 flex items-center gap-2">
-            ⚡ Morgen & Diese Woche (bis 31.07.)
-          </h3>
-          <div className="space-y-2.5">
-            {INITIAL_TASKS.filter((t) => t.period === "today" || t.period === "this_week").map((task) => {
-              const status = getStatus(task);
-              return (
-                <div
-                  key={task.id}
-                  onClick={() => toggleTask(task.id, status)}
-                  className={`cursor-pointer rounded-xl border p-3.5 transition-all hover:scale-[1.01] ${
-                    status === "done"
-                      ? "border-emerald-500/40 bg-emerald-950/20 opacity-75"
-                      : status === "in_progress"
-                      ? "border-amber-500/50 bg-amber-950/30"
-                      : "border-slate-800 bg-slate-950/80 hover:border-slate-700"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3">
-                      <button className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border font-mono text-xs">
-                        {status === "done" ? "✓" : status === "in_progress" ? "▸" : ""}
-                      </button>
-                      <div>
-                        <div className={`text-sm font-bold ${status === "done" ? "line-through text-slate-400" : "text-white"}`}>
-                          {task.title}
-                        </div>
-                        <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
-                          {task.desc}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="shrink-0 rounded bg-slate-800 px-2 py-0.5 text-[10px] font-semibold text-slate-300 border border-slate-700">
-                      {task.deadline}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+      {/* Critical Path Milestone Pipeline */}
+      <div className="relative z-10 mt-6 space-y-3">
+        <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-amber-300">
+          <span>🎯 Meilenstein-Pipeline (Freigabe-Roadmap bis 07.08.)</span>
+          <span className="text-[11px] font-normal text-slate-400">Klick auf Karte ändert Status</span>
         </div>
 
-        {/* Next Week (Target Release) */}
-        <div className="space-y-4">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-sky-300 flex items-center gap-2">
-            🎯 Nächste Woche (bis 07.08. — Go-Live)
-          </h3>
-          <div className="space-y-2.5">
-            {INITIAL_TASKS.filter((t) => t.period === "next_week").map((task) => {
-              const status = getStatus(task);
-              return (
-                <div
-                  key={task.id}
-                  onClick={() => toggleTask(task.id, status)}
-                  className={`cursor-pointer rounded-xl border p-3.5 transition-all hover:scale-[1.01] ${
-                    status === "done"
-                      ? "border-emerald-500/40 bg-emerald-950/20 opacity-75"
-                      : status === "in_progress"
-                      ? "border-amber-500/50 bg-amber-950/30"
-                      : "border-slate-800 bg-slate-950/80 hover:border-slate-700"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3">
-                      <button className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border font-mono text-xs">
-                        {status === "done" ? "✓" : status === "in_progress" ? "▸" : ""}
-                      </button>
-                      <div>
-                        <div className={`text-sm font-bold ${status === "done" ? "line-through text-slate-400" : "text-white"}`}>
-                          {task.title}
-                        </div>
-                        <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
-                          {task.desc}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="shrink-0 rounded bg-slate-800 px-2 py-0.5 text-[10px] font-semibold text-sky-300 border border-sky-800">
-                      {task.deadline}
-                    </span>
-                  </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          {STRATEGIC_MILESTONES.map((m) => {
+            const state = getState(m);
+            return (
+              <div
+                key={m.id}
+                onClick={() => cycleState(m.id, state)}
+                className={`group cursor-pointer rounded-xl border p-4 transition-all duration-200 hover:-translate-y-0.5 ${
+                  state === "released"
+                    ? "border-emerald-500/40 bg-emerald-950/20 text-emerald-100 shadow-emerald-950/50"
+                    : state === "in_execution"
+                    ? "border-amber-500/60 bg-amber-950/30 text-amber-100 shadow-amber-950/50"
+                    : "border-slate-800 bg-slate-950/70 hover:border-cyan-500/40"
+                }`}
+              >
+                <div className="flex items-center justify-between text-[10px] font-bold">
+                  <span className="mono text-cyan-400">{m.gate}</span>
+                  <span
+                    className={`rounded px-1.5 py-0.5 uppercase tracking-wider ${
+                      state === "released"
+                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                        : state === "in_execution"
+                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse"
+                        : "bg-slate-800 text-slate-400 border border-slate-700"
+                    }`}
+                  >
+                    {state === "released" ? "RELEASED" : state === "in_execution" ? "IN EXECUTION" : "QUEUED"}
+                  </span>
                 </div>
-              );
-            })}
-          </div>
+
+                <h4 className="mt-2 text-xs font-bold leading-snug text-white group-hover:text-cyan-300 transition-colors">
+                  {m.title}
+                </h4>
+
+                <p className="mt-1.5 text-[11px] leading-relaxed text-slate-400 line-clamp-3">
+                  {m.deliverable}
+                </p>
+
+                <div className="mt-3 border-t border-slate-800/60 pt-2 text-[10px] font-mono text-slate-400">
+                  {m.targetDate}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Portfolio Overview Footer */}
-      <div className="border-t border-slate-800 pt-4 mt-4">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
-          📅 Weitere Portfolio-Termine im Überblick
-        </h4>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:grid-cols-5 text-xs">
-          {OTHER_PROJECTS.map((item) => (
-            <div key={item.name} className="rounded-lg border border-slate-800 bg-slate-950/60 p-2.5">
+      {/* Strategic Horizon Radar */}
+      <div className="relative z-10 mt-6 border-t border-slate-800/80 pt-4">
+        <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5">
+          🌌 Portfolio Horizon (Strategischer Ausblick)
+        </div>
+
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3 lg:grid-cols-5 text-xs">
+          {PORTFOLIO_HORIZON.map((item) => (
+            <div
+              key={item.name}
+              className="rounded-xl border border-slate-800/80 bg-slate-950/50 p-3 transition-colors hover:border-slate-700"
+            >
               <div className="font-bold text-slate-200">{item.name}</div>
-              <div className="text-[11px] text-amber-300 mt-0.5">{item.deadline}</div>
-              <div className="text-[10px] text-slate-400 mt-1 truncate">{item.status}</div>
+              <div className="mt-0.5 text-[11px] font-medium text-amber-300">{item.target}</div>
+              <div className="mt-1 text-[10px] text-slate-400 truncate">{item.status}</div>
             </div>
           ))}
         </div>
