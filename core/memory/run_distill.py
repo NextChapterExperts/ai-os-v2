@@ -49,10 +49,18 @@ def _format_distill_text(
     return "\n".join(lines)
 
 
+import fcntl
+
+
 def _write_distill_audit(entry: dict[str, Any]) -> None:
     AUDIT_PATH.parent.mkdir(parents=True, exist_ok=True)
     with AUDIT_PATH.open("a", encoding="utf-8") as f:
-        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        try:
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+            f.flush()
+        finally:
+            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
 
 def distill_after_run(

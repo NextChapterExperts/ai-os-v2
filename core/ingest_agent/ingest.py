@@ -52,12 +52,34 @@ log = logging.getLogger("ingest-agent")
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PROJEKTE_ROOT = REPO_ROOT.parent
-SEED_ROOT = REPO_ROOT / "customers" / "nextchapter" / "knowledge" / "seed"
-ACTIVE_ROOT = PROJEKTE_ROOT / "active"
 
 ORCHESTRATOR_URL = os.environ.get("ORCHESTRATOR_URL", "http://127.0.0.1:8091")
 TENANT_ID = os.environ.get("AIOS_TENANT_ID", "nextchapter")
+SEED_ROOT = REPO_ROOT / "customers" / TENANT_ID / "knowledge" / "seed"
+ACTIVE_ROOT = PROJEKTE_ROOT / "active"
 PRODUCED_BY = "ingest-agent"
+
+
+def _chunk_text(text: str, size: int, overlap: int) -> list[str]:
+    text = text.strip()
+    if not text:
+        return []
+    chunks = []
+    start = 0
+    n = len(text)
+    while start < n:
+        end = min(start + size, n)
+        if end < n:
+            break_idx = text.rfind(" ", start, end)
+            if break_idx > start + (size // 2):
+                end = break_idx
+        chunk = text[start:end].strip()
+        if chunk:
+            chunks.append(chunk)
+        if end >= n:
+            break
+        start = max(end - overlap, start + 1)
+    return chunks
 
 QDRANT_URL = os.environ.get("QDRANT_URL", "http://127.0.0.1:6333")
 CONTENT_COLLECTION = os.environ.get("QDRANT_COLLECTION_CONTENT", "content")
@@ -363,20 +385,6 @@ def _extract_text(path: Path) -> str:
         except Exception:
             return raw
     return raw
-
-
-def _chunk_text(text: str, size: int, overlap: int) -> list[str]:
-    text = text.strip()
-    if not text:
-        return []
-    chunks, start = [], 0
-    while start < len(text):
-        end = min(start + size, len(text))
-        chunks.append(text[start:end])
-        if end == len(text):
-            break
-        start = end - overlap
-    return chunks
 
 
 def ingest_knowledge_assets_to_l1(results: list[dict[str, Any]]) -> None:

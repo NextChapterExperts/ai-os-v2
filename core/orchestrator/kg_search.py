@@ -74,10 +74,9 @@ def _edge_rows_to_labels(conn: Any, rows: list[dict[str, Any]], key: str) -> lis
 
 
 def _tokenize(query: str) -> list[str]:
-    words = re.findall(r"\w+", query.lower())
+    words = [w.strip(".-") for w in re.findall(r"[\w.-]+", query.lower())]
+    words = [w for w in words if w]
     tokens = [w for w in words if w not in STOPWORDS and len(w) >= 2]
-    # Fallback: wenn nach Stopwort-Filter nichts uebrig bleibt (z.B. Frage nur
-    # aus Fuellwoertern), lieber ungefiltert suchen als leer zurueckzugeben.
     return (tokens or words)[:MAX_TOKENS]
 
 

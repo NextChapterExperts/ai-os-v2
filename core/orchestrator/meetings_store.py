@@ -90,8 +90,12 @@ def _safe_filename(name: str) -> str:
 
 
 def _attachment_dir(meeting_id: str) -> Path:
-    safe = meeting_id.replace("/", "_").replace("..", "_")
-    return ATTACHMENTS_ROOT / safe
+    safe = re.sub(r"[^a-zA-Z0-9_-]", "_", meeting_id)
+    base = ATTACHMENTS_ROOT.resolve()
+    p = (base / safe).resolve()
+    if not str(p).startswith(str(base)):
+        raise ValueError(f"Invalid meeting_id: {meeting_id}")
+    return p
 
 
 def _list_attachments_for(meeting_id: str, tenant_id: str) -> list[dict[str, Any]]:

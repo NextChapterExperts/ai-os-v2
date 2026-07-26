@@ -161,12 +161,19 @@ def chunk_text(text: str, size: int, overlap: int) -> list[str]:
         return []
     chunks = []
     start = 0
-    while start < len(text):
-        end = min(start + size, len(text))
-        chunks.append(text[start:end])
-        if end == len(text):
+    n = len(text)
+    while start < n:
+        end = min(start + size, n)
+        if end < n:
+            break_idx = text.rfind(" ", start, end)
+            if break_idx > start + (size // 2):
+                end = break_idx
+        chunk = text[start:end].strip()
+        if chunk:
+            chunks.append(chunk)
+        if end >= n:
             break
-        start = end - overlap
+        start = max(end - overlap, start + 1)
     return chunks
 
 
@@ -226,21 +233,35 @@ def git_snapshot() -> None:
     if not GIT_SNAPSHOT_ENABLED or not GIT_SNAPSHOT_REPO.exists():
         return
     try:
-        subprocess.run(["git", "-C", str(GIT_SNAPSHOT_REPO), "add", "-A"], check=True, capture_output=True)
+        subprocess.run(
+            ["git", "-C", str(GIT_SNAPSHOT_REPO), "add", "-A"],
+            check=True,
+            capture_output=True,
+            timeout=30,
+        )
         status = subprocess.run(
             ["git", "-C", str(GIT_SNAPSHOT_REPO), "status", "--porcelain"],
-            check=True, capture_output=True, text=True,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         if not status.stdout.strip():
             return
         ts = time.strftime("%Y-%m-%d %H:%M:%S")
         subprocess.run(
             ["git", "-C", str(GIT_SNAPSHOT_REPO), "commit", "-q", "-m", f"auto-snapshot: {ts}"],
-            check=True, capture_output=True,
+            check=True,
+            capture_output=True,
+            timeout=30,
         )
         log.info("Git-Snapshot erstellt (%s)", ts)
     except subprocess.CalledProcessError as exc:
         log.warning("Git-Snapshot fehlgeschlagen: %s", exc.stderr.decode(errors="ignore") if exc.stderr else exc)
+    except subprocess.TimeoutExpired:
+        log.warning("Git-Snapshot Zeitüberschreitung (Timeout nach 30s)")
+    except Exception as exc:
+        log.warning("Git-Snapshot unerwarteter Fehler: %s", exc)
 
 
 def run_scan(client: QdrantClient, embedder: TextEmbedding, conn: sqlite3.Connection) -> None:

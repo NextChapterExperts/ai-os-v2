@@ -34,7 +34,7 @@ def test_resolve_window_yesterday():
 
 @pytest.mark.integration
 def test_letta_roundtrip_if_available():
-    from core.memory_gateway.letta_client import insert_episode, is_available, search_archival
+    from core.memory_gateway.letta_client import insert_episode, is_available, list_archival, search_archival
 
     if not is_available():
         pytest.skip("Letta nicht erreichbar")

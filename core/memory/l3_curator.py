@@ -100,7 +100,21 @@ def _get_embedder() -> TextEmbedding:
     return _embedder
 
 
+try:
+    import numpy as np
+except ImportError:
+    np = None
+
+
 def _cosine(a: list[float], b: list[float]) -> float:
+    if np is not None:
+        va = np.array(a, dtype=np.float32)
+        vb = np.array(b, dtype=np.float32)
+        na = np.linalg.norm(va)
+        nb = np.linalg.norm(vb)
+        if na == 0 or nb == 0:
+            return 0.0
+        return float(np.dot(va, vb) / (na * nb))
     dot = sum(x * y for x, y in zip(a, b, strict=False))
     na = sum(x * x for x in a) ** 0.5
     nb = sum(y * y for y in b) ** 0.5

@@ -399,6 +399,7 @@ async def post_chat_import(req: ChatImportRequest) -> dict[str, Any]:
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
+        log.exception("Error in post_chat_import")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
@@ -409,11 +410,12 @@ async def get_capture_stats() -> dict[str, Any]:
     import sqlite3
     from pathlib import Path
 
-    memory_root = Path(os.environ.get("AIOS_MEMORY_ROOT", "/opt/ai-os/memory"))
-    db_path = os.environ.get("AIOS_MEMORY_DB", str(memory_root / "memory.db"))
-    stats: dict[str, Any] = {"sources": {}, "inbox_path": "/opt/ai-os/ingest/inbox"}
+    memory_root = Path(os.environ.get("AIOS_MEMORY_ROOT", "/opt/ai-os/memory")).resolve()
+    inbox_root = Path(os.environ.get("AIOS_INGEST_INBOX", "/opt/ai-os/ingest/inbox")).resolve()
+    db_path = Path(os.environ.get("AIOS_MEMORY_DB", str(memory_root / "memory.db"))).resolve()
+    stats: dict[str, Any] = {"sources": {}, "inbox_path": str(inbox_root)}
 
-    if os.path.exists(db_path):
+    if db_path.is_file():
         con = sqlite3.connect(db_path)
         con.row_factory = sqlite3.Row
         try:
@@ -431,7 +433,9 @@ async def get_capture_stats() -> dict[str, Any]:
         ("antigravity", "state/antigravity-poller-state.json"),
         ("gemini_inbox", "state/gemini-inbox-state.json"),
     ]:
-        p = memory_root / rel
+        p = (memory_root / rel).resolve()
+        if not str(p).startswith(str(memory_root)):
+            continue
         if p.is_file():
             try:
                 stats[name] = json.loads(p.read_text(encoding="utf-8"))
@@ -503,6 +507,7 @@ async def post_chat_completions(req: ChatCompletionRequest) -> dict[str, Any]:
             detail=exc.response.text[:500],
         ) from exc
     except Exception as exc:
+        log.exception("Error in post_chat_completions")
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
@@ -603,25 +608,28 @@ class L1CurateRequest(BaseModel):
 @app.get("/v1/memory/l1/stats")
 async def get_l1_stats() -> dict[str, Any]:
     """L1 Qdrant `content` — Statistik."""
+    import asyncio
     from core.memory.l1_curator import scan_stats
 
-    return scan_stats()
+    return await asyncio.to_thread(scan_stats)
 
 
 @app.get("/v1/memory/storage")
 async def get_memory_storage() -> dict[str, Any]:
     """Speicherverbrauch aller Memory-Stacks + VM-Festplatte."""
+    import asyncio
     from core.memory.storage_stats import collect_storage_stats
 
-    return collect_storage_stats()
+    return await asyncio.to_thread(collect_storage_stats)
 
 
 @app.post("/v1/memory/curate/l1")
 async def post_l1_curate(req: L1CurateRequest) -> dict[str, Any]:
     """L1-Curator — Qdrant Dedup + Rolling Retention."""
+    import asyncio
     from core.memory.l1_curator import run_l1_curate
 
-    return run_l1_curate(modes=req.modes, dry_run=req.dry_run)
+    return await asyncio.to_thread(run_l1_curate, modes=req.modes, dry_run=req.dry_run)
 
 
 @app.get("/v1/memory/working/{run_id}")

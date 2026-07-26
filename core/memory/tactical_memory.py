@@ -11,12 +11,17 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-STATE_DIR = Path(os.environ.get("AIOS_MEMORY_ROOT", "/opt/ai-os/memory")) / "state" / "tactical"
+import re
+
+STATE_DIR = Path(os.environ.get("AIOS_MEMORY_ROOT", "/opt/ai-os/memory")).resolve() / "state" / "tactical"
 
 
 def _path(workflow_run_id: str) -> Path:
-    safe = workflow_run_id.replace("/", "_").replace("..", "_")
-    return STATE_DIR / f"{safe}.json"
+    safe = re.sub(r"[^a-zA-Z0-9_-]", "_", workflow_run_id)
+    p = (STATE_DIR / f"{safe}.json").resolve()
+    if not str(p).startswith(str(STATE_DIR)):
+        raise ValueError(f"Invalid workflow_run_id: {workflow_run_id}")
+    return p
 
 
 def _now() -> str:
