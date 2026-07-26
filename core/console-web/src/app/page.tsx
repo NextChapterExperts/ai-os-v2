@@ -6,6 +6,7 @@ import { StatusDot } from "@/components/StatusDot";
 import { MemorySearch } from "@/components/MemorySearch";
 import { LagebildRibbon } from "@/components/LagebildRibbon";
 import { ComputeModePanel } from "@/components/ComputeModePanel";
+import { DailyFocusPanel } from "@/components/DailyFocusPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -55,6 +56,10 @@ export default async function LagebildPage() {
         <Suspense fallback={<p className="muted">Suche lädt…</p>}>
           <MemorySearch autofocus />
         </Suspense>
+      </section>
+
+      <section className="rise rise-delay-1 mt-6">
+        <DailyFocusPanel />
       </section>
 
       <section className="rise rise-delay-1 mt-8">
