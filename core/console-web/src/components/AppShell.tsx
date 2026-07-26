@@ -6,6 +6,7 @@ import { UserSelector } from "@/components/UserSelector";
 
 const NAV = [
   { href: "/", label: "Lagebild" },
+  { href: "/portfolio", label: "Projekte" },
   { href: "/meetings", label: "Meetings" },
   { href: "/search", label: "Suche" },
   { href: "/workflows", label: "Workflows" },
