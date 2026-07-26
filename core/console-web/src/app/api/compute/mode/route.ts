@@ -9,7 +9,7 @@ export async function GET() {
   try {
     const res = await fetch(`${ORCHESTRATOR_URL}/v1/compute/mode`, {
       cache: "no-store",
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(15000),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -19,12 +19,36 @@ export async function GET() {
   } catch (err) {
     return NextResponse.json(
       {
+        active_mode: "sovereign",
+        active_model: "ai-os-sovereign",
+        active_label: "Lokal (LAN)",
+        active_description: "Ollama auf LAN — Fallback (Orchestrator beschäftigt)",
+        config_default_mode: "sovereign",
+        updated_at: null,
+        modes: [
+          {
+            id: "sovereign",
+            default_model: "ai-os-sovereign",
+            label: "Lokal (LAN)",
+            description: "Ollama auf LAN — kein Cloud-Key nötig",
+            is_active: true,
+            is_config_default: true,
+          },
+          {
+            id: "balanced",
+            default_model: "ai-os-balanced",
+            label: "Cloud (Free)",
+            description: "Nemotron Super 120B — OpenRouter :free, 262K, Tools",
+            is_active: false,
+            is_config_default: false,
+          },
+        ],
         error:
           err instanceof Error
             ? err.message
             : "Compute-Modus nicht erreichbar",
       },
-      { status: 503 },
+      { status: 200 },
     );
   }
 }
@@ -46,7 +70,7 @@ export async function POST(req: Request) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ mode }),
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(15000),
     });
     const data = await res.json();
     if (!res.ok) {
