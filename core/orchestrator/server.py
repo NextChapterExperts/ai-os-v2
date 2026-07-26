@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field, ValidationError
 
 from .audit import write_agent_run
-from .context_resolution import resolve_context
+from .context_resolution import resolve_context, resolve_context_async
 from .dataproducts import DP_CLASS_BY_NODE_TYPE
 from .dispatch import dispatch
 from .dp_service import DPCommitError, commit_dataproduct, kg_stats, resolve_node_by_id
@@ -60,7 +60,7 @@ async def dispatch_intent(req: DispatchRequest) -> DispatchResponse:
     if workflow_run_id:
         ensure_workflow(str(workflow_run_id), req.tenant_id, name=intent)
 
-    context_bundle = resolve_context(intent, req.tenant_id, params)
+    context_bundle = await resolve_context_async(intent, req.tenant_id, params)
     result = await dispatch(intent, context_bundle, req.tenant_id, params)
     append_from_dispatch(run_id, intent, result)
     if workflow_run_id:
