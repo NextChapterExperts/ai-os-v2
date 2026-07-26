@@ -1,0 +1,28 @@
+id: compute-llm-005
+name: compute_mode-Override ohne Persistenz zu ändern
+category: llm_inference
+endpoint: orchestrator
+method: POST
+path: /v1/chat/completions
+setup:
+  path: /v1/compute/mode
+  method: POST
+  body:
+    mode: sovereign
+  expect:
+    active_mode: sovereign
+body:
+  messages:
+    - role: user
+      content: "Antworte mit genau einem Wort: OK"
+  compute_mode: premium
+  max_tokens: 15
+  persist: false
+  tenant_id: nextchapter
+expect:
+  http_status: 200
+  compute_mode: premium
+  model: ai-os-premium
+  source_in:
+    - litellm
+  has_content_or_raw: true

@@ -1,0 +1,12 @@
+id: compute-mode-002
+name: Umschalten auf balanced persistiert
+category: mode_api
+endpoint: orchestrator
+method: POST
+path: /v1/compute/mode
+body:
+  mode: balanced
+expect:
+  http_status: 200
+  active_mode: balanced
+  active_model: ai-os-balanced

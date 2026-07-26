@@ -1,0 +1,16 @@
+id: compute-intent-001
+name: Intent Was steht heute an routet zu daily_open_loops
+category: mode_api
+endpoint: orchestrator
+method: POST
+path: /v1/dispatch
+body:
+  intent: Was steht heute an
+  tenant_id: nextchapter
+  params:
+    query: Was steht heute an
+    intent_text: Was steht heute an
+expect:
+  http_status: 200
+  result_intent: daily_open_loops
+  answer_contains: Offene Schleifen heute

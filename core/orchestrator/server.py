@@ -21,6 +21,7 @@ from .kg_search import list_nodes, search_nodes
 from .run_context_store import load_run_context, save_run_context
 
 from core.memory_gateway.client import chat_completion, list_models
+from core.memory_gateway.config import compute_mode_snapshot, set_active_mode
 
 app = FastAPI(title="AI-OS Orchestrator", version="2.0.0-skeleton")
 
@@ -451,6 +452,25 @@ class ChatCompletionRequest(BaseModel):
     temperature: float = 0.2
     max_tokens: int = 512
     persist: bool = True
+
+
+class ComputeModeRequest(BaseModel):
+    mode: str
+
+
+@app.get("/v1/compute/mode")
+async def get_compute_mode() -> dict[str, Any]:
+    """Aktiver Compute-Modus + Modell-Alias (persistiert in compute-mode.json)."""
+    return compute_mode_snapshot()
+
+
+@app.post("/v1/compute/mode")
+async def post_compute_mode(req: ComputeModeRequest) -> dict[str, Any]:
+    try:
+        set_active_mode(req.mode)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return compute_mode_snapshot()
 
 
 @app.get("/v1/models")

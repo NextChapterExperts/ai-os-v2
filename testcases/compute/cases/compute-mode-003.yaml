@@ -1,0 +1,12 @@
+id: compute-mode-003
+name: Umschalten auf premium persistiert
+category: mode_api
+endpoint: orchestrator
+method: POST
+path: /v1/compute/mode
+body:
+  mode: premium
+expect:
+  http_status: 200
+  active_mode: premium
+  active_model: ai-os-premium

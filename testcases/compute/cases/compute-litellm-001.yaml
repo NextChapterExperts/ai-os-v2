@@ -1,0 +1,15 @@
+id: compute-litellm-001
+name: LiteLLM direkt — ai-os-balanced erreichbar
+category: litellm_direct
+endpoint: litellm
+method: POST
+path: /v1/chat/completions
+body:
+  model: ai-os-balanced
+  messages:
+    - role: user
+      content: "OK"
+  max_tokens: 10
+expect:
+  http_status: 200
+  model_contains: ai-os-balanced

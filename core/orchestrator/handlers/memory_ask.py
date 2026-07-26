@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from core.memory_gateway.client import chat_completion
-from core.memory_gateway.config import OLLAMA_MODEL
+from core.memory_gateway.config import OLLAMA_MODEL, get_mode
 from core.memory_gateway.episodic_search import context_chunks
 
 from ..memory_store import DEFAULT_PROJECT, resolve_window
@@ -142,7 +142,8 @@ async def _federated_hits(
 
 def _system_prompt(*, federated: bool) -> str:
     system = (
-        "Du bist das AI-OS Company Brain. Antworte auf Deutsch, nur aus dem Kontext. "
+        "Du bist das AI-OS Company Brain. Antworte ausschließlich auf Deutsch. "
+        "Keine Meta-Kommentare, kein Englisch, keine Gedankengänge — nur die Antwort. "
         "KURZ: max. 5 Bulletpoints, eine Zeile je Punkt, nur große Themen. "
         "Keine Dateipfade. Max. 1 Satz Fazit."
     )
@@ -236,6 +237,7 @@ async def _summarize(
     tenant_id: str,
     *,
     federated: bool = False,
+    compute_mode: str | None = None,
 ) -> tuple[str, str, str, list[dict[str, Any]]]:
     if not chunks:
         return "Im Gedächtnis dieses Projekts liegen dazu noch keine Einträge.", "none", "", []
@@ -244,23 +246,138 @@ async def _summarize(
     system = _system_prompt(federated=federated)
     user_content = f"Frage: {question}\n\nGedächtnis-Kontext:\n{context_text}"
 
+    mode = compute_mode or get_mode(None)
+    messages = [
+        {"role": "system", "content": system},
+        {"role": "user", "content": user_content},
+    ]
     result = await chat_completion(
-        [
-            {"role": "system", "content": system},
-            {"role": "user", "content": user_content},
-        ],
+        messages,
         tenant_id=tenant_id,
         produced_by="memory_ask",
+        compute_mode=mode,
         max_tokens=320,
         temperature=0.2,
         persist=False,
     )
+    answer = _clean_answer(result["content"] or "")
+    if not answer or _looks_like_thinking(answer):
+        retry_system = (
+            system
+            + " Antwortformat: nur Bulletpoints (•), eine Zeile je Punkt, kein Fließtext davor oder danach."
+        )
+        retry = await chat_completion(
+            [
+                {"role": "system", "content": retry_system},
+                {"role": "user", "content": user_content},
+            ],
+            tenant_id=tenant_id,
+            produced_by="memory_ask",
+            compute_mode=mode if mode != "premium" else "balanced",
+            max_tokens=280,
+            temperature=0.1,
+            persist=False,
+        )
+        answer = _clean_answer(retry["content"] or "") or answer
+        if retry.get("model"):
+            result = retry
+    if not answer:
+        answer = "Keine brauchbare Antwort vom Modell — bitte Modus wechseln oder erneut fragen."
     return (
-        result["content"] or "Keine Antwort.",
+        answer,
         result.get("model") or OLLAMA_MODEL,
         context_text,
         chunks_used,
     )
+
+
+_THINKING_MARKERS = (
+    "here's a thinking process",
+    "thinking process",
+    "analyze user input",
+    "the user wants",
+    "we need to answer",
+    "let's craft",
+    "make sure each bullet",
+    "user safety:",
+    "okay, let's tackle",
+    "let's tackle this query",
+)
+
+
+def _looks_like_thinking(text: str) -> bool:
+    lower = text.lower().strip()
+    if not lower:
+        return True
+    return any(m in lower for m in _THINKING_MARKERS)
+
+
+def _extract_bullet_answer(text: str) -> str:
+    bullets: list[str] = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.startswith(("-", "*", "•", "·")):
+            item = re.sub(r"^[-*•·]\s*", "", stripped).strip()
+            if item and not _looks_like_thinking(item):
+                bullets.append(item)
+            continue
+        numbered = re.match(r"^\d+\.\s*(.+)", stripped)
+        if numbered:
+            item = numbered.group(1).strip()
+            if item and not _looks_like_thinking(item):
+                bullets.append(item)
+    if not bullets:
+        return ""
+    return "\n".join(f"• {item}" for item in bullets[:5])
+
+
+def _clean_answer(text: str) -> str:
+    """Entfernt Thinking-Leaks; extrahiert Bullet-Antworten aus Cloud-/Coding-Modellen."""
+    cleaned = text.strip()
+    if not cleaned:
+        return cleaned
+
+    bullets = _extract_bullet_answer(cleaned)
+    if bullets and _looks_like_thinking(cleaned):
+        return bullets
+
+    if _looks_like_thinking(cleaned):
+        parts = re.split(r"\n\s*\n", cleaned)
+        for part in reversed(parts):
+            candidate = part.strip()
+            if not candidate or _looks_like_thinking(candidate):
+                continue
+            extracted = _extract_bullet_answer(candidate)
+            if extracted:
+                return extracted
+            if any(ch in candidate for ch in "äöüßÄÖÜ") or candidate.lower().startswith(
+                ("fazit", "zusammenfassung", "kurz:")
+            ):
+                return candidate
+
+    prefixes = (
+        "We need to answer",
+        "The user wants",
+        "The user says",
+        "Okay, the user wants",
+        "User says:",
+        "Make sure each bullet",
+    )
+    for prefix in prefixes:
+        if cleaned.startswith(prefix):
+            parts = cleaned.split("\n\n", 1)
+            if len(parts) > 1:
+                cleaned = parts[1].strip()
+            break
+
+    if _looks_like_thinking(cleaned):
+        extracted = _extract_bullet_answer(cleaned)
+        if extracted:
+            return extracted
+
+    return cleaned or text.strip()
 
 
 def _merge_chunks(
@@ -290,6 +407,7 @@ async def run(
     question = str(params.get("query") or params.get("intent_text") or "Was haben wir heute gemacht?")
     project_id = str(params.get("project_id") or DEFAULT_PROJECT)
     run_id = str(params.get("run_id") or "")
+    compute_mode = params.get("compute_mode")
     _start, _end, mode = resolve_window(question)
 
     federated = _needs_federated_context(question)
@@ -308,7 +426,11 @@ async def run(
         chunks = episodic_chunks
 
     answer, model, context_text, chunks_used = await _summarize(
-        question, chunks, tenant_id, federated=federated
+        question,
+        chunks,
+        tenant_id,
+        federated=federated,
+        compute_mode=str(compute_mode) if compute_mode else None,
     )
     llm_context = build_llm_context(
         run_id=run_id,

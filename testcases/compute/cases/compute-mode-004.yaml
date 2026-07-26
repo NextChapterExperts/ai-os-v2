@@ -1,0 +1,12 @@
+id: compute-mode-004
+name: Umschalten auf coding persistiert
+category: mode_api
+endpoint: orchestrator
+method: POST
+path: /v1/compute/mode
+body:
+  mode: coding
+expect:
+  http_status: 200
+  active_mode: coding
+  active_model: ai-os-coding

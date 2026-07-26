@@ -22,9 +22,38 @@ def _extract_content(data: dict[str, Any]) -> str:
     choices = data.get("choices") or []
     if not choices:
         msg = data.get("message") or {}
-        return str(msg.get("content") or msg.get("thinking") or "").strip()
+        return _message_text(msg)
     msg = choices[0].get("message") or {}
-    return str(msg.get("content") or msg.get("thinking") or "").strip()
+    return _message_text(msg)
+
+
+def _looks_like_thinking_leak(text: str) -> bool:
+    lower = text.lower().strip()
+    if not lower:
+        return True
+    markers = (
+        "here's a thinking process",
+        "thinking process",
+        "analyze user input",
+        "the user wants",
+        "we need to answer",
+        "let's craft",
+        "make sure each bullet",
+        "user safety:",
+        "okay, let's tackle",
+    )
+    return any(m in lower for m in markers)
+
+
+def _message_text(msg: dict[str, Any]) -> str:
+    content = str(msg.get("content") or "").strip()
+    if content and not _looks_like_thinking_leak(content):
+        return content
+    for key in ("reasoning_content", "thinking"):
+        text = str(msg.get(key) or "").strip()
+        if text and not _looks_like_thinking_leak(text):
+            return text
+    return content
 
 
 def _prompt_preview(messages: list[dict[str, Any]]) -> str:
@@ -103,27 +132,53 @@ async def chat_completion(
     mode = get_mode(compute_mode)
     resolved_model = model or model_for_mode(mode)
     sid = session_id or str(uuid.uuid4())
+    sovereign_alias = model_for_mode("sovereign")
+    use_ollama_direct = mode == "sovereign" and (
+        model is None or resolved_model == sovereign_alias
+    )
 
-    try:
-        data = await _call_litellm(
-            resolved_model,
-            messages,
-            temperature=temperature,
-            max_tokens=max_tokens,
-        )
-        source = "litellm"
-    except Exception:
-        log.exception("LiteLLM fehlgeschlagen — Fallback Ollama direkt")
-        from .config import OLLAMA_MODEL
+    if use_ollama_direct:
+        try:
+            from .config import OLLAMA_MODEL
 
-        data = await _call_ollama_direct(
-            OLLAMA_MODEL,
-            messages,
-            temperature=temperature,
-            max_tokens=max_tokens,
-        )
-        source = "ollama-direct"
-        resolved_model = data.get("model", resolved_model)
+            data = await _call_ollama_direct(
+                OLLAMA_MODEL,
+                messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+            source = "ollama-direct"
+            resolved_model = sovereign_alias
+        except Exception:
+            log.exception("Ollama direkt fehlgeschlagen — Fallback LiteLLM")
+            data = await _call_litellm(
+                resolved_model,
+                messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+            source = "litellm"
+    else:
+        try:
+            data = await _call_litellm(
+                resolved_model,
+                messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+            source = "litellm"
+        except Exception:
+            log.exception("LiteLLM fehlgeschlagen — Fallback Ollama direkt")
+            from .config import OLLAMA_MODEL
+
+            data = await _call_ollama_direct(
+                OLLAMA_MODEL,
+                messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+            source = "ollama-direct"
+            resolved_model = data.get("model", resolved_model)
 
     content = _extract_content(data)
     usage = data.get("usage") if isinstance(data.get("usage"), dict) else {}
@@ -178,7 +233,7 @@ async def chat_completion(
 
 async def list_models() -> dict[str, Any]:
     """Modelle von LiteLLM + Compute-Modi aus config/compute.yaml."""
-    from .config import list_compute_modes
+    from .config import compute_mode_snapshot, list_compute_modes
 
     models: list[dict[str, Any]] = []
     try:
@@ -190,13 +245,11 @@ async def list_models() -> dict[str, Any]:
     except Exception:
         log.exception("LiteLLM /v1/models nicht erreichbar")
 
-    modes = list_compute_modes()
-    default_mode = get_mode(None)
-    default_model = model_for_mode(default_mode)
-
+    snapshot = compute_mode_snapshot()
     return {
-        "default_mode": default_mode,
-        "default_model": default_model,
-        "modes": modes,
+        **snapshot,
+        "default_mode": snapshot["active_mode"],
+        "default_model": snapshot["active_model"],
+        "modes": list_compute_modes(),
         "models": models,
     }

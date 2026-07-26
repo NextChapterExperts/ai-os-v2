@@ -3,7 +3,7 @@
 **Für:** LLMs, Entwickler, die das System von Grund auf bauen  
 **Zweck:** Vollständige technische Spezifikation — ausreichend detailliert um ohne zusätzlichen Kontext zu starten  
 **Basis:** AI-OS v1 (../1000-AI-OS) — eingefroren Juli 2026  
-**Stand:** Juli 2026 (aktualisiert 2026-07-25 — Lagebild federiert + LLM-Kontext-Transparenz; Memory-Stack komplett: L1/L2/L3-Curator + Working/Tactical + Letta + Unified Search; Phase 1 Gateway + 1b Capture)  
+**Stand:** Juli 2026 (aktualisiert 2026-07-26 — Compute-Modi UI + OpenRouter Free Frontier/Coding; Intent „Was steht heute an“ → daily_open_loops; Sovereign Ollama direkt mit `think:false`; Memory-Ask DE-Antwortbereinigung; 14 Compute-Testcases)  
 **Modus:** **Eine Implementierung** — keine Alternativen in dieser Roadmap. Jede Entscheidung ist final.  
 **Detail-Spec Company Brain:** [docs/09-COMPANY-BRAIN.md](docs/09-COMPANY-BRAIN.md) · **Memory einfach:** [docs/10-MEMORY-EINFACH.md](docs/10-MEMORY-EINFACH.md) · **Kontext Lagebild→LLM:** [docs/14-KONTEXT.md](docs/14-KONTEXT.md)  
 **Erstes Lizenzprodukt (VM):** [docs/11-PLATFORM-VM.md](docs/11-PLATFORM-VM.md)  
@@ -17,7 +17,7 @@ AI-OS v2 ist ein **state-of-the-art, souveränes KI-Betriebssystem** mit genau e
 
 | Ziel | Wie v2 es erreicht |
 |------|-------------------|
-| **Kosten sparen** | Default-Inference über Ollama (€0/Token). Cloud nur bewusst via OpenRouter `:floor`. Skill-Loop reduziert wiederholte LLM-Calls. FinOps in LangFuse pro Tenant/Modell. |
+| **Kosten sparen** | Default-Inference über Ollama (€0/Token). Cloud bewusst via OpenRouter (`:free` auf DEV, `:floor` in PROD). Skill-Loop reduziert wiederholte LLM-Calls. FinOps in LangFuse pro Tenant/Modell. |
 | **Qualität erhöhen** | Context Bundle (6 Slices) + GraphRAG + Unified Search vor jedem LLM-Call. Guardrails + Human-in-the-Loop. Capability-Tests gegen lokales Modell. |
 | **Skalierbar** | Layered Deployment (Infra → Core → Platform → Fach). Tenant-Runtime-Isolation. Postgres-Checkpoints. Horizontale Skalierung über Compose-Profile. |
 | **Erweiterbar** | MCP-Gateway + SDK-Contract. Fach-Agenten als SKU-Pakete. Skills versioniert. Neue Agenten = neues Compose-File + Contract-Tests. |
@@ -221,7 +221,7 @@ ai-os-v2/
 │   │
 │   ├── model-gateway/                  # NEU v2 — LLM-Modellauswahl (Platform-Kern)
 │   │   ├── registry.py                 # Verfügbare Modelle (Ollama, OpenRouter, …)
-│   │   ├── compute_modes.py            # sovereign | balanced | premium
+│   │   ├── compute_modes.py            # sovereign | balanced | premium | coding
 │   │   └── finops.py                   # Kosten-Tracking → LangFuse + ai_os_log
 │   │
 │   ├── workflow-engine/                # LangGraph-basierte Workflow-Engine
@@ -506,9 +506,9 @@ LITELLM_PORT=4000
 OLLAMA_HOST=192.168.178.64
 OLLAMA_PORT=11434
 OLLAMA_DEFAULT_MODEL=qwen3.6-64k:latest
-DEFAULT_COMPUTE_MODE=sovereign          # sovereign | balanced | premium
+DEFAULT_COMPUTE_MODE=sovereign          # sovereign | balanced | premium | coding
 
-# Cloud — ausschließlich OpenRouter (balanced/premium)
+# Cloud — OpenRouter (balanced/premium/coding); Key leer = nur sovereign
 OPENROUTER_API_KEY=
 
 # LangFuse (Pflicht ab Tag 1)
@@ -545,8 +545,9 @@ SCHEDULER_PORT=8096
 # Tenant
 DEFAULT_TENANT=nextchapter
 
-# Compute-Modus: sovereign | balanced | premium
+# Compute-Modus: sovereign | balanced | premium | coding
 DEFAULT_COMPUTE_MODE=sovereign
+AIOS_COMPUTE_MODE_PATH=/opt/ai-os/memory/state/compute-mode.json
 ```
 
 ### 5.3 Python-Konventionen
@@ -1018,14 +1019,18 @@ Console / Agent / SDK
 # config/compute.yaml — Default: lokal
 modes:
   sovereign:
-    default_model: ai-os-sovereign    # Ollama qwen3.6-64k
+    default_model: ai-os-sovereign    # Ollama qwen3.6-64k (LAN)
     label: "Lokal (LAN)"
   balanced:
-    default_model: ai-os-balanced     # z.B. OpenRouter google/gemini-2.5-flash-lite
-    label: "Ausgewogen"
+    default_model: ai-os-balanced     # OpenRouter nemotron-3-super-120b :free
+    label: "Cloud (Free)"
   premium:
-    default_model: ai-os-premium      # z.B. OpenRouter anthropic/claude-sonnet-4
-    label: "Premium"
+    default_model: ai-os-premium      # OpenRouter nemotron-3-ultra-550b :free
+    label: "Frontier (Free)"
+  coding:
+    default_model: ai-os-coding       # OpenRouter poolside/laguna-m.1 :free
+    label: "Coding (Free)"
+default_mode: sovereign
 ```
 
 ```python
@@ -1036,7 +1041,9 @@ modes:
 # Nach Completion: persist_chat_turn(tenant, messages, meta) — nie optional in PROD
 ```
 
-**Start-Konfiguration:** `ai-os-sovereign` (Ollama) ist der einzige aktive Modus. OpenRouter-Modelle in `litellm-config.yaml` sind vorkonfiguriert und werden bei gesetztem `OPENROUTER_API_KEY` für `balanced`/`premium` freigeschaltet — **gleicher** Ingest-Hook.
+**Start-Konfiguration:** `ai-os-sovereign` (Ollama LAN) ist Default. OpenRouter-Modelle in `litellm-config.yaml` sind vorkonfiguriert (`:free` auf DEV) und werden bei gesetztem `OPENROUTER_API_KEY` für `balanced`/`premium`/`coding` freigeschaltet — **gleicher** Ingest-Hook. Fallback-Kette: balanced/premium/coding → `ai-os-fallback` (`openrouter/free`).
+
+**Sovereign-Pfad (2026-07-26):** Qwen liefert über LiteLLM/OpenAI-kompatibel oft nur `reasoning_content`. Der Memory-Gateway-Client nutzt für `sovereign` deshalb **Ollama `/api/chat` direkt** mit `think: false` — danach LiteLLM-Fallback.
 
 **Policy „eine Tür“:** Kein direkter Outbound zu Public-LLM-APIs aus der VM (DEV: Warnung/Allowlist; PROD: blockiert). Console-Chat nur über Gateway.
 
@@ -1044,17 +1051,22 @@ modes:
 
 **CAG — Cache-Augmented Generation (Vorbild Olla Nest):** Wiederkehrende System-Prompts + stabile Kontext-Slices werden als KV-Cache-Präfix gehalten. Spart Tokens und Latenz bei häufig genutzten Platform-Prompts. Aktiv für `sovereign` (Ollama `keep_alive` + Prompt-Präfix-Cache).
 
-**Implementierungsstand (2026-07-25):**
+**Implementierungsstand (2026-07-26):**
 
 | Baustein | Status |
 |----------|--------|
 | `core/memory_gateway/` (client, persist, audit, langfuse_hook) | ✅ |
-| `config/compute.yaml` (sovereign/balanced/premium) | ✅ |
+| `config/compute.yaml` (sovereign/balanced/premium/coding) | ✅ |
 | Orchestrator `GET /v1/models` + `POST /v1/chat/completions` | ✅ |
+| **`GET/POST /v1/compute/mode`** — persistiert in `compute-mode.json` | ✅ |
+| **Console ComputeModePanel** — aktives Modell im Lagebild | ✅ |
+| **Sovereign Ollama direkt** (`think: false`) + LiteLLM-Fallback | ✅ |
+| **OpenRouter Free** — Nemotron Super/Ultra, Laguna Coding, Fallback | ✅ |
 | Persist-Hook → `memory.db` + `ai_os_log` Hash-Chain | ✅ |
 | LangFuse-Trace (optional bei gesetzten Keys) | ✅ Hook, Keys oft leer auf DEV |
 | `memory_ask` + Console `memory-ask.ts` über Gateway | ✅ |
-| LiteLLM-Primary + Ollama-Fallback | ✅ |
+| **`memory_ask` DE-Antwortbereinigung** — Thinking-Leaks, Retry | ✅ |
+| LiteLLM-Primary + Ollama-Fallback (Cloud-Modi) | ✅ |
 | Letta L2 (`letta_client.py`) + SQLite-Backfill/Sync | ✅ |
 | Episodische Suche merged (`episodic_search.py`) + `POST /v1/search` | ✅ |
 | **L2-Curator** Tagesdigest → Letta (`core/memory/l2_curator.py`, tägl. 02:00) | ✅ |
@@ -1062,15 +1074,17 @@ modes:
 | **L1-Curator** Qdrant Dedup + Rolling 90d (`core/memory/l1_curator.py`, So 03:00) | ✅ |
 | **Working/Tactical-Memory** + Run-Destillation P9 (`run_distill.py`, Dispatch-Hook) | ✅ |
 | **Lagebild `memory_ask` federiert** — Projektstand via Graph + L1 (nicht nur Letta); Active-Projekt-Erkennung | ✅ |
+| **Intent „Was steht heute an“** → `daily_open_loops` (Brain-Engagements + Kalender) | ✅ |
 | **Run-Context-Store** — LLM-Prompt + Retrieval pro Run (`run_context_store.py`, `GET /v1/runs/{id}/context`) | ✅ |
 | Console **Speicher-Dashboard** (`/platform/storage`, `GET /v1/memory/storage`) | ✅ |
 | Console **LLM-Kontext-Link** im Lagebild (`/context/{runId}`) — Governance-Basis für Fachagenten/Cloud | ✅ |
 | **Memory-Testcases** (`testcases/memory/`, `scripts/run-memory-testcases.py`, 70+ Cases) | ✅ |
+| **Compute-Testcases** (`testcases/compute/`, `scripts/run-compute-mode-testcases.py`, 14 Cases) | ✅ |
 | L3 Human-Gate UI (Pending-Claims in Console) | ⏳ |
-| `POST /v1/compute/mode` (Tenant-Modus wechseln) | ⏳ |
 | Auto-Router / CAG / PROD-Outbound-Block | ⏳ Phase 1+ |
+| Coding-Modus nur für Code-Tasks (Routing-Guard) | ⏳ |
 
-**Nächster Roadmap-Punkt:** Phase 2 — Platform-Agenten-Laufzeit + Platform-Gate (§7); Memory-Agent L1/L2/L3 + Working/Tactical ✅; Lagebild-Ask + Kontext-Transparenz ✅.
+**Nächster Roadmap-Punkt:** Phase 2 — Platform-Agenten-Laufzeit + Platform-Gate (§7); Compute-Modi + Lagebild-Tagesfrage ✅.
 
 ### 6.8 Lagebild — federierter Ask + LLM-Kontext (2026-07-25)
 
@@ -1100,6 +1114,23 @@ Frage im Lagebild
 Persistenz: `AIOS_RUN_CONTEXT_DIR` (Default `/opt/ai-os/memory/state/run-context/{runId}.json`).  
 Routing-Metadaten enthalten `modelTier: local` — später `cloud` / `agent` für Public-Modelle.  
 **Ausführlich (menschlich):** [docs/14-KONTEXT.md](docs/14-KONTEXT.md)
+
+### 6.9 Compute-Modi im Lagebild + Tagesfrage (2026-07-26)
+
+**Console:** `ComputeModePanel` auf dem Lagebild — zeigt aktiven Modus/Modell, Umschalten via `POST /v1/compute/mode` (Orchestrator), persistiert unter `AIOS_COMPUTE_MODE_PATH`.
+
+**Intent-Routing Tagesfrage:**
+
+```text
+„Was steht heute an“ / „steht heute an“ / „was steht an“
+    → daily_open_loops (Brain-Engagements, Termine, Mails)
+    → strukturierte DE-Antwort aus Seed/Brain — unabhängig vom UI-Modus
+    → Hintergrund-Memory-Snippet immer sovereign (lokal, kurz)
+```
+
+**memory_ask** (Wissensfragen im Lagebild): nutzt den gewählten Compute-Modus; Sovereign über Ollama direkt; Cloud/Coding mit DE-Prompt + `_clean_answer()` gegen Thinking-Leaks. **Coding** ist für agentic Code — allgemeine Lagebild-Fragen → Balanced/Frontier oder `daily_open_loops`.
+
+**Regression:** `python3 scripts/run-compute-mode-testcases.py` — 14 Cases (Modus-API, LiteLLM-Routing, Intent, Overrides).
 
 ### 6.7 LangFuse-Tracing (ab Phase 1 — Pflicht)
 
@@ -2657,6 +2688,8 @@ Praxis-Tests gegen das LAN-Modell (Use Cases: E-Mail-JSON, Kalender, Routing, To
 
 **Memory-Regression (Orchestrator):** `testcases/memory/cases/*.yaml` — 70+ Cases gegen `/v1/dispatch`, `/v1/search`, Storage-API. Runner: `./scripts/run-memory-testcases.py [--category episodic|working|storage]`.
 
+**Compute-Regression:** `testcases/compute/cases/*.yaml` — Modus-API, LiteLLM-Inference, Intent-Routing (`Was steht heute an` → `daily_open_loops`). Runner: `python3 scripts/run-compute-mode-testcases.py`. **Letzter Lauf:** 2026-07-26 — **14/14 PASS**.
+
 **Letzter Lauf:** 2026-07-12 — `qwen3.6-64k:latest` @ `192.168.178.64:11434` → **6/8 PASS** (QWEN-04 Skript-Bug, QWEN-07 erwartetes Halluzinationsrisiko)
 
 ```bash
@@ -3103,30 +3136,35 @@ MCP-Adapter `speech-to-text`: Voice-Memos → Ingest → L1/L2.
 
 ## 23. Inference: Ollama + OpenRouter
 
-AI-OS v2 nutzt **genau zwei Inference-Kanäle** über LiteLLM:
+AI-OS v2 nutzt **zwei Inference-Kanäle** über LiteLLM (Cloud) bzw. Ollama direkt (Sovereign):
 
 ```
-sovereign  →  Ollama LAN (Default, €0/Token, DSGVO)
-balanced   →  OpenRouter :floor (günstigste Cloud-Modelle)
-premium    →  OpenRouter Top-Modelle (Qualitätsspitzen)
+sovereign  →  Ollama LAN (Default, €0/Token, DSGVO) — /api/chat, think:false
+balanced   →  OpenRouter Free / :floor (Cloud günstig)
+premium    →  OpenRouter Free Frontier / Top-Modelle (Qualität)
+coding     →  OpenRouter Free Coding (agentic Code — kein Alltags-Lagebild)
 ```
 
 ### Compute-Modi
 
 | Modus | Route | Einsatz |
 |-------|-------|---------|
-| `sovereign` | Ollama LAN (`ai-os-sovereign`) | **Default** — PII, Standard-Tasks, 80 %+ aller Calls |
-| `balanced` | OpenRouter `:floor` (`ai-os-balanced`) | Marketing-Entwürfe, längere Texte |
-| `premium` | OpenRouter Top (`ai-os-premium`) | Blog-Final, komplexe Analyse — Human-Review-Gate Pflicht |
+| `sovereign` | Ollama LAN (`ai-os-sovereign` → qwen3.6-64k) | **Default** — PII, Standard-Tasks, Tagesübersicht-Hintergrund |
+| `balanced` | OpenRouter (`ai-os-balanced`, DEV: nemotron-3-super-120b :free) | Längere Texte, allgemeine Wissensfragen |
+| `premium` | OpenRouter (`ai-os-premium`, DEV: nemotron-3-ultra-550b :free) | Komplexe Analyse — Human-Review-Gate in PROD |
+| `coding` | OpenRouter (`ai-os-coding`, poolside/laguna-m.1 :free) | Code-Generierung, Refactoring — **nicht** für „Was steht heute an“ |
 
-### Routing-Regeln (deterministisch, in `ai_os_router.py`)
+**Fallbacks (LiteLLM):** `ai-os-balanced` / `ai-os-premium` / `ai-os-coding` → `ai-os-fallback` (`openrouter/free`).
 
-1. Default: `sovereign` — immer Ollama
-2. Keyword `linkedin`, `premium`, `blog-final` → `premium`
-3. Metadata `tier=premium` → `premium`
-4. Metadata `tier=balanced` → `balanced`
-5. PII erkannt (Guardrails) → erzwingt `sovereign`, Cloud blockiert
-6. PII + Anonymizer erfolgreich → `balanced` erlaubt
+### Routing-Regeln (deterministisch, in `intent_router.py` + `ai_os_router.py`)
+
+1. Default: `sovereign` — immer Ollama (direkt, `think: false`)
+2. Tagesfragen (`was steht heute an`, `steht heute an`, …) → Handler `daily_open_loops` (Brain, kein Cloud-LLM)
+3. Keyword `linkedin`, `premium`, `blog-final` → `premium`
+4. Metadata `tier=premium` → `premium`
+5. Metadata `tier=balanced` → `balanced`
+6. PII erkannt (Guardrails) → erzwingt `sovereign`, Cloud blockiert
+7. PII + Anonymizer erfolgreich → `balanced` erlaubt
 
 ### OpenRouter-Konfiguration
 
@@ -3134,11 +3172,11 @@ premium    →  OpenRouter Top-Modelle (Qualitätsspitzen)
 |---------|--------|
 | Unified API | Ein Key, 300+ Modelle über LiteLLM |
 | Provider-Passthrough | Token-Preis = Anbieter-Preis |
-| Automatische Fallbacks | Provider-Ausfall → nächster Provider |
-| `:floor` / `:nitro` / `:exacto` | Kosten / Speed / Tool-Calling optimieren |
+| Automatische Fallbacks | Provider-Ausfall → `ai-os-fallback` |
+| `:free` (DEV) / `:floor` (PROD) | Kostenoptimierung |
 | Privacy-Settings | Provider ohne No-Training-Policy blockiert |
 
-**Kosten:** ~5–7 % Overhead auf Cloud-Guthaben-Aufladung (5,5 % Karte). Token-Preise 1:1. Ollama: €0.
+**Kosten:** ~5–7 % Overhead auf Cloud-Guthaben-Aufladung (5,5 % Karte). Token-Preise 1:1. Ollama: €0. `:free`-Modelle auf DEV = €0 Cloud (Rate-Limits beachten).
 
 ### LiteLLM-Konfiguration
 
@@ -3147,31 +3185,51 @@ premium    →  OpenRouter Top-Modelle (Qualitätsspitzen)
 model_list:
   - model_name: ai-os-sovereign
     litellm_params:
-      model: openai/qwen3.6-64k
-      api_base: http://${OLLAMA_HOST}:11434/v1
+      model: openai/qwen3.6-64k:latest
+      api_base: os.environ/OLLAMA_API_BASE   # http://${OLLAMA_HOST}:${OLLAMA_PORT}/v1
       api_key: dummy
 
   - model_name: ai-os-balanced
     litellm_params:
-      model: openrouter/google/gemini-2.5-flash-lite:floor
+      model: openrouter/nvidia/nemotron-3-super-120b-a12b:free
       api_key: os.environ/OPENROUTER_API_KEY
 
   - model_name: ai-os-premium
     litellm_params:
-      model: openrouter/anthropic/claude-sonnet-4
+      model: openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
       api_key: os.environ/OPENROUTER_API_KEY
+
+  - model_name: ai-os-coding
+    litellm_params:
+      model: openrouter/poolside/laguna-m.1:free
+      api_key: os.environ/OPENROUTER_API_KEY
+
+  - model_name: ai-os-fallback
+    litellm_params:
+      model: openrouter/openrouter/free
+      api_key: os.environ/OPENROUTER_API_KEY
+
+litellm_settings:
+  fallbacks:
+    - ai-os-balanced: ["ai-os-fallback"]
+    - ai-os-premium: ["ai-os-fallback"]
+    - ai-os-coding: ["ai-os-fallback"]
 ```
 
 ```env
 OPENROUTER_API_KEY=sk-or-...
+OLLAMA_HOST=192.168.178.64
+OLLAMA_PORT=11434
 DEFAULT_COMPUTE_MODE=sovereign
+AIOS_COMPUTE_MODE_PATH=/opt/ai-os/memory/state/compute-mode.json
 ```
 
 ### DSGVO
 
-- `balanced`/`premium`: Daten verlassen das LAN → Guardrails + Anonymizer vor Cloud-Call
+- `balanced`/`premium`/`coding`: Daten verlassen das LAN → Guardrails + Anonymizer vor Cloud-Call
 - LangFuse: Traces bleiben lokal in der VM
 - OpenRouter: Prompts standardmäßig nicht geloggt
+- Sovereign: Ollama LAN — kein Cloud-Outbound
 
 ---
 

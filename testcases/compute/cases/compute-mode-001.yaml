@@ -1,0 +1,13 @@
+id: compute-mode-001
+name: GET liefert alle vier Modi
+category: mode_api
+endpoint: orchestrator
+method: GET
+path: /v1/compute/mode
+expect:
+  http_status: 200
+  modes_include:
+    - sovereign
+    - balanced
+    - premium
+    - coding

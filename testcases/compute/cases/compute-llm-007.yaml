@@ -1,0 +1,15 @@
+id: compute-llm-007
+name: Nach Override bleibt persistierter Modus sovereign
+category: mode_api
+endpoint: orchestrator
+method: GET
+path: /v1/compute/mode
+setup:
+  path: /v1/compute/mode
+  method: POST
+  body:
+    mode: sovereign
+expect:
+  http_status: 200
+  active_mode: sovereign
+  active_model: ai-os-sovereign

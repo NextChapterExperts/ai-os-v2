@@ -2,18 +2,32 @@ model_list:
   - model_name: ai-os-sovereign
     litellm_params:
       model: openai/qwen3.6-64k:latest
-      api_base: http://host.docker.internal:11434/v1
+      api_base: os.environ/OLLAMA_API_BASE
       api_key: dummy
 
   - model_name: ai-os-balanced
     litellm_params:
-      model: openrouter/google/gemini-2.5-flash-lite:floor
+      model: openrouter/nvidia/nemotron-3-super-120b-a12b:free
       api_key: os.environ/OPENROUTER_API_KEY
 
   - model_name: ai-os-premium
     litellm_params:
-      model: openrouter/anthropic/claude-sonnet-4
+      model: openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+      api_key: os.environ/OPENROUTER_API_KEY
+
+  - model_name: ai-os-coding
+    litellm_params:
+      model: openrouter/poolside/laguna-m.1:free
+      api_key: os.environ/OPENROUTER_API_KEY
+
+  - model_name: ai-os-fallback
+    litellm_params:
+      model: openrouter/openrouter/free
       api_key: os.environ/OPENROUTER_API_KEY
 
 litellm_settings:
   drop_params: true
+  fallbacks:
+    - ai-os-balanced: ["ai-os-fallback"]
+    - ai-os-premium: ["ai-os-fallback"]
+    - ai-os-coding: ["ai-os-fallback"]

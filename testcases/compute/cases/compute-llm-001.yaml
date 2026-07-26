@@ -1,0 +1,26 @@
+id: compute-llm-001
+name: sovereign — Chat routet zu ai-os-sovereign
+category: llm_inference
+endpoint: orchestrator
+method: POST
+path: /v1/chat/completions
+setup:
+  path: /v1/compute/mode
+  method: POST
+  body:
+    mode: sovereign
+body:
+  messages:
+    - role: user
+      content: "Antworte mit genau einem Wort: OK"
+  max_tokens: 15
+  persist: false
+  tenant_id: nextchapter
+expect:
+  http_status: 200
+  compute_mode: sovereign
+  model: ai-os-sovereign
+  source_in:
+    - ollama-direct
+    - litellm
+  has_content_or_raw: true

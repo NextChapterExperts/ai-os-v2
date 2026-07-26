@@ -40,13 +40,14 @@ async def run(
     for a in mail.get("actions", [])[:5]:
         bullets.append(f"Mail: **{a.get('subject')}** — {a.get('action')}")
 
-    # Kurz-Memory nur als Hintergrund, nicht ausschweifend
+    # Kurz-Memory nur als Hintergrund — immer lokal (sovereign), unabhängig vom UI-Modus
     mem = await memory_ask.run(
         context_bundle,
         tenant_id,
         {
             **params,
             "query": "Was war heute werkstattseitig relevant? Nur Stichworte.",
+            "compute_mode": "sovereign",
         },
     )
 
@@ -55,14 +56,21 @@ async def run(
             "Keine offenen Engagements oder Termine im Seed.\n\n"
             f"Werkstatt-Gedächtnis: {mem.get('answer', '—')}"
         )
+        model = mem.get("model") or "orchestrator+rules"
     else:
         body = "\n".join(f"• {b}" for b in bullets[:8])
         mail_note = mail.get("status_note", "")
+        mem_note = str(mem.get("answer") or "").strip()
+        if mem_note and mem_note not in {"Keine Antwort.", "—"}:
+            mem_note = f"\n\nGedächtnis: {mem_note}"
+        else:
+            mem_note = ""
         answer = (
             f"Offene Schleifen heute:\n{body}\n\n"
-            f"{mail_note}\n"
+            f"{mail_note}{mem_note}\n"
             "Details oder Mail-Triage: einfach nachfragen."
         ).strip()
+        model = mem.get("model") or "orchestrator+rules"
 
     sources = [
         {
@@ -83,7 +91,7 @@ async def run(
         "answer": answer,
         "mode": "daily_open_loops",
         "detail": False,
-        "model": "orchestrator+rules",
+        "model": model,
         "sources": sources[:12],
         "sourceCount": len(sources),
         "mail_stub": mail.get("status"),

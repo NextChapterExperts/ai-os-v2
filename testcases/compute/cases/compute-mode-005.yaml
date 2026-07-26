@@ -1,0 +1,10 @@
+id: compute-mode-005
+name: Ungültiger Modus → 400
+category: mode_api
+endpoint: orchestrator
+method: POST
+path: /v1/compute/mode
+body:
+  mode: does-not-exist
+expect:
+  http_status: 400

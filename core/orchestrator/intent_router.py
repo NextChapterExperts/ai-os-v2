@@ -26,6 +26,9 @@ def route_intent(raw: str, params: dict[str, Any] | None = None) -> str:
             "todo",
             "aufgaben",
             "was steht an",
+            "was steht heute",
+            "steht heute an",
+            "heute an",
             "heute machen",
             "noch machen",
         )

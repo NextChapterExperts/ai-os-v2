@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 import os
+from datetime import UTC, datetime
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -37,10 +39,50 @@ def load_compute_config() -> dict[str, Any]:
     }
 
 
+def read_active_mode() -> str | None:
+    if not MODE_STATE_PATH.is_file():
+        return None
+    try:
+        data = json.loads(MODE_STATE_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    active = data.get("mode") or data.get("active_mode")
+    return str(active).strip() if active else None
+
+
+def set_active_mode(mode: str) -> str:
+    cfg = load_compute_config()
+    modes = cfg.get("modes") or {}
+    chosen = mode.strip()
+    if chosen not in modes:
+        raise ValueError(f"unknown compute mode: {chosen}")
+    MODE_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    MODE_STATE_PATH.write_text(
+        json.dumps(
+            {
+                "mode": chosen,
+                "updated_at": datetime.now(UTC).isoformat(),
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return chosen
+
+
 def get_mode(mode: str | None = None) -> str:
     cfg = load_compute_config()
-    chosen = (mode or DEFAULT_COMPUTE_MODE or cfg.get("default_mode") or "sovereign").strip()
     modes = cfg.get("modes") or {}
+    if mode is not None and str(mode).strip():
+        chosen = str(mode).strip()
+    else:
+        chosen = (
+            read_active_mode()
+            or DEFAULT_COMPUTE_MODE
+            or cfg.get("default_mode")
+            or "sovereign"
+        )
     if chosen not in modes:
         return cfg.get("default_mode") or "sovereign"
     return chosen
@@ -60,7 +102,10 @@ def ollama_chat_url() -> str:
 
 def list_compute_modes() -> list[dict[str, Any]]:
     cfg = load_compute_config()
-    default = get_mode(None)
+    active = get_mode(None)
+    config_default = (
+        DEFAULT_COMPUTE_MODE or cfg.get("default_mode") or "sovereign"
+    )
     out = []
     for key, meta in (cfg.get("modes") or {}).items():
         out.append(
@@ -69,7 +114,38 @@ def list_compute_modes() -> list[dict[str, Any]]:
                 "default_model": meta.get("default_model"),
                 "label": meta.get("label", key),
                 "description": meta.get("description", ""),
-                "is_default": key == default,
+                "is_active": key == active,
+                "is_config_default": key == config_default,
             }
         )
     return out
+
+
+def compute_mode_snapshot() -> dict[str, Any]:
+    active_mode = get_mode(None)
+    cfg = load_compute_config()
+    config_default = (
+        DEFAULT_COMPUTE_MODE or cfg.get("default_mode") or "sovereign"
+    )
+    modes_cfg = cfg.get("modes") or {}
+    meta = modes_cfg.get(active_mode) or {}
+    return {
+        "active_mode": active_mode,
+        "active_model": model_for_mode(active_mode),
+        "active_label": meta.get("label", active_mode),
+        "active_description": meta.get("description", ""),
+        "config_default_mode": config_default,
+        "updated_at": None
+        if not MODE_STATE_PATH.is_file()
+        else _mode_state_updated_at(),
+        "modes": list_compute_modes(),
+    }
+
+
+def _mode_state_updated_at() -> str | None:
+    try:
+        data = json.loads(MODE_STATE_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    updated = data.get("updated_at")
+    return str(updated) if updated else None

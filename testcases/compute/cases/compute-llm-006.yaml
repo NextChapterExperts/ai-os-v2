@@ -1,0 +1,26 @@
+id: compute-llm-006
+name: model-Override schlägt compute_mode
+category: llm_inference
+endpoint: orchestrator
+method: POST
+path: /v1/chat/completions
+setup:
+  path: /v1/compute/mode
+  method: POST
+  body:
+    mode: sovereign
+body:
+  messages:
+    - role: user
+      content: "Antworte mit genau einem Wort: OK"
+  model: ai-os-coding
+  max_tokens: 15
+  persist: false
+  tenant_id: nextchapter
+expect:
+  http_status: 200
+  compute_mode: sovereign
+  model: ai-os-coding
+  source_in:
+    - litellm
+  has_content_or_raw: true
