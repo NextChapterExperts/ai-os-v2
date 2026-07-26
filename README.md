@@ -83,6 +83,8 @@ Ein Agent, der keinen typisierten Datenprodukt-Output liefert, keine MCP-Adapter
 | [docs/13-IST-STAND.md](docs/13-IST-STAND.md) | **Ist-Stand** — was heute läuft vs. Roadmap-Ziel |
 | [docs/14-KONTEXT.md](docs/14-KONTEXT.md) | **Kontext Lagebild→LLM** — Retrieval, Prompt, Context Bundle |
 | [docs/15-MEETINGS.md](docs/15-MEETINGS.md) | **Meeting-Inbox** — manuelle Erfassung in der Console |
+| **[docs/16-VERKAUFSPITCH.md](docs/16-VERKAUFSPITCH.md)** | **Enterprise Verkaufspitch** — Kunden-Lösungen, ROI & Lizenzierung |
+| **[docs/overview.canvas](docs/overview.canvas)** | **Obsidian Visual Canvas** — Interaktive Wissenslandkarte aller Dokus |
 | [docs/ref/](docs/ref/) | Referenz-Dokumente aus v1 |
 
 ---

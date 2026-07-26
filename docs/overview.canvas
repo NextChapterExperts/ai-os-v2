@@ -1,0 +1,250 @@
+{
+  "nodes": [
+    {
+      "id": "node-agents",
+      "type": "file",
+      "file": "AGENTS.md",
+      "x": -600,
+      "y": -400,
+      "width": 320,
+      "height": 200,
+      "color": "1"
+    },
+    {
+      "id": "node-readme",
+      "type": "file",
+      "file": "README.md",
+      "x": -200,
+      "y": -400,
+      "width": 340,
+      "height": 200,
+      "color": "2"
+    },
+    {
+      "id": "node-roadmap",
+      "type": "file",
+      "file": "ROADMAP.md",
+      "x": 220,
+      "y": -400,
+      "width": 340,
+      "height": 200,
+      "color": "3"
+    },
+    {
+      "id": "node-architektur",
+      "type": "file",
+      "file": "docs/01-ARCHITEKTUR.md",
+      "x": -600,
+      "y": -120,
+      "width": 320,
+      "height": 180,
+      "color": "4"
+    },
+    {
+      "id": "node-vm",
+      "type": "file",
+      "file": "docs/11-PLATFORM-VM.md",
+      "x": -240,
+      "y": -120,
+      "width": 320,
+      "height": 180,
+      "color": "4"
+    },
+    {
+      "id": "node-leitprinzipien",
+      "type": "file",
+      "file": "docs/12-LEITPRINZIPIEN.md",
+      "x": 120,
+      "y": -120,
+      "width": 320,
+      "height": 180,
+      "color": "4"
+    },
+    {
+      "id": "node-company-brain",
+      "type": "file",
+      "file": "docs/09-COMPANY-BRAIN.md",
+      "x": -600,
+      "y": 140,
+      "width": 320,
+      "height": 180,
+      "color": "5"
+    },
+    {
+      "id": "node-memory-einfach",
+      "type": "file",
+      "file": "docs/10-MEMORY-EINFACH.md",
+      "x": -240,
+      "y": 140,
+      "width": 320,
+      "height": 180,
+      "color": "5"
+    },
+    {
+      "id": "node-kontext",
+      "type": "file",
+      "file": "docs/14-KONTEXT.md",
+      "x": 120,
+      "y": 140,
+      "width": 320,
+      "height": 180,
+      "color": "5"
+    },
+    {
+      "id": "node-datenprodukte",
+      "type": "file",
+      "file": "docs/03-DATENPRODUKTE.md",
+      "x": 480,
+      "y": 140,
+      "width": 320,
+      "height": 180,
+      "color": "5"
+    },
+    {
+      "id": "node-agent-sdk",
+      "type": "file",
+      "file": "docs/02-AGENT-SDK.md",
+      "x": -600,
+      "y": 400,
+      "width": 320,
+      "height": 180,
+      "color": "6"
+    },
+    {
+      "id": "node-console-ia",
+      "type": "file",
+      "file": "docs/05-CONSOLE-IA.md",
+      "x": -240,
+      "y": 400,
+      "width": 320,
+      "height": 180,
+      "color": "6"
+    },
+    {
+      "id": "node-meetings",
+      "type": "file",
+      "file": "docs/15-MEETINGS.md",
+      "x": 120,
+      "y": 400,
+      "width": 320,
+      "height": 180,
+      "color": "6"
+    },
+    {
+      "id": "node-deployment",
+      "type": "file",
+      "file": "docs/04-DEPLOYMENT.md",
+      "x": -600,
+      "y": 660,
+      "width": 320,
+      "height": 180,
+      "color": "1"
+    },
+    {
+      "id": "node-ist-stand",
+      "type": "file",
+      "file": "docs/13-IST-STAND.md",
+      "x": -240,
+      "y": 660,
+      "width": 320,
+      "height": 180,
+      "color": "1"
+    },
+    {
+      "id": "node-verkaufspitch",
+      "type": "file",
+      "file": "docs/16-VERKAUFSPITCH.md",
+      "x": 120,
+      "y": 660,
+      "width": 340,
+      "height": 200,
+      "color": "2"
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-1",
+      "fromNode": "node-readme",
+      "fromSide": "bottom",
+      "toNode": "node-vm",
+      "toSide": "top"
+    },
+    {
+      "id": "edge-2",
+      "fromNode": "node-readme",
+      "fromSide": "left",
+      "toNode": "node-agents",
+      "toSide": "right"
+    },
+    {
+      "id": "edge-3",
+      "fromNode": "node-readme",
+      "fromSide": "right",
+      "toNode": "node-roadmap",
+      "toSide": "left"
+    },
+    {
+      "id": "edge-4",
+      "fromNode": "node-architektur",
+      "fromSide": "bottom",
+      "toNode": "node-company-brain",
+      "toSide": "top"
+    },
+    {
+      "id": "edge-5",
+      "fromNode": "node-vm",
+      "fromSide": "bottom",
+      "toNode": "node-memory-einfach",
+      "toSide": "top"
+    },
+    {
+      "id": "edge-6",
+      "fromNode": "node-company-brain",
+      "fromSide": "right",
+      "toNode": "node-memory-einfach",
+      "toSide": "left"
+    },
+    {
+      "id": "edge-7",
+      "fromNode": "node-memory-einfach",
+      "fromSide": "right",
+      "toNode": "node-kontext",
+      "toSide": "left"
+    },
+    {
+      "id": "edge-8",
+      "fromNode": "node-kontext",
+      "fromSide": "right",
+      "toNode": "node-datenprodukte",
+      "toSide": "left"
+    },
+    {
+      "id": "edge-9",
+      "fromNode": "node-memory-einfach",
+      "fromSide": "bottom",
+      "toNode": "node-console-ia",
+      "toSide": "top"
+    },
+    {
+      "id": "edge-10",
+      "fromNode": "node-agent-sdk",
+      "fromSide": "right",
+      "toNode": "node-console-ia",
+      "toSide": "left"
+    },
+    {
+      "id": "edge-11",
+      "fromNode": "node-console-ia",
+      "fromSide": "bottom",
+      "toNode": "node-ist-stand",
+      "toSide": "top"
+    },
+    {
+      "id": "edge-12",
+      "fromNode": "node-ist-stand",
+      "fromSide": "right",
+      "toNode": "node-verkaufspitch",
+      "toSide": "left"
+    }
+  ]
+}
