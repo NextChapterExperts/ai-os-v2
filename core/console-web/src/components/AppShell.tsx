@@ -6,7 +6,6 @@ import { UserSelector } from "@/components/UserSelector";
 
 const NAV = [
   { href: "/", label: "Lagebild" },
-  { href: "/virki", label: "🏰 VIRKI Produkt" },
   { href: "/meetings", label: "Meetings" },
   { href: "/search", label: "Suche" },
   { href: "/workflows", label: "Workflows" },
