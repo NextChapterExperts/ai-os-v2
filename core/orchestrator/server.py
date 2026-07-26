@@ -388,10 +388,12 @@ class ChatImportRequest(BaseModel):
 @app.post("/v1/chat-import")
 async def post_chat_import(req: ChatImportRequest) -> dict[str, Any]:
     """Phase 1b — externe Chats (Antigravity, Gemini, …) ins Gedächtnis."""
+    import asyncio
     from .chat_import import import_transcript
 
     try:
-        return import_transcript(
+        return await asyncio.to_thread(
+            import_transcript,
             req.transcript,
             tenant_id=req.tenant_id,
             project_id=req.project_id,

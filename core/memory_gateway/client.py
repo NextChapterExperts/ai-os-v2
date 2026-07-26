@@ -92,8 +92,9 @@ async def _call_ollama_direct(
     *,
     temperature: float = 0.2,
     max_tokens: int = 512,
+    timeout: float = 10.0,
 ) -> dict[str, Any]:
-    async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
+    async with httpx.AsyncClient(timeout=httpx.Timeout(timeout, connect=2.0)) as client:
         res = await client.post(
             ollama_chat_url(),
             json={
@@ -137,6 +138,9 @@ async def chat_completion(
         model is None or resolved_model == sovereign_alias
     )
 
+    data: dict[str, Any] = {}
+    source = "unknown"
+
     if use_ollama_direct:
         try:
             from .config import OLLAMA_MODEL
@@ -150,14 +154,24 @@ async def chat_completion(
             source = "ollama-direct"
             resolved_model = sovereign_alias
         except Exception:
-            log.exception("Ollama direkt fehlgeschlagen — Fallback LiteLLM")
-            data = await _call_litellm(
-                resolved_model,
-                messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
-            )
-            source = "litellm"
+            log.warning("Ollama direkt fehlgeschlagen — Fallback LiteLLM")
+            try:
+                data = await _call_litellm(
+                    resolved_model,
+                    messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                )
+                source = "litellm"
+            except Exception:
+                log.warning("Sowohl Ollama als auch LiteLLM nicht erreichbar — Offline Fallback")
+                data = {
+                    "model": resolved_model,
+                    "choices": [{"message": {"role": "assistant", "content": "Inferenz nicht erreichbar (Ollama/LiteLLM offline)"}}],
+                    "usage": {},
+                    "_source": "offline-fallback",
+                }
+                source = "offline-fallback"
     else:
         try:
             data = await _call_litellm(
@@ -168,17 +182,27 @@ async def chat_completion(
             )
             source = "litellm"
         except Exception:
-            log.exception("LiteLLM fehlgeschlagen — Fallback Ollama direkt")
-            from .config import OLLAMA_MODEL
+            log.warning("LiteLLM fehlgeschlagen — Fallback Ollama direkt")
+            try:
+                from .config import OLLAMA_MODEL
 
-            data = await _call_ollama_direct(
-                OLLAMA_MODEL,
-                messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
-            )
-            source = "ollama-direct"
-            resolved_model = data.get("model", resolved_model)
+                data = await _call_ollama_direct(
+                    OLLAMA_MODEL,
+                    messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                )
+                source = "ollama-direct"
+                resolved_model = data.get("model", resolved_model)
+            except Exception:
+                log.warning("Sowohl LiteLLM als auch Ollama direkt nicht erreichbar — Offline Fallback")
+                data = {
+                    "model": resolved_model,
+                    "choices": [{"message": {"role": "assistant", "content": "Inferenz nicht erreichbar (LiteLLM/Ollama offline)"}}],
+                    "usage": {},
+                    "_source": "offline-fallback",
+                }
+                source = "offline-fallback"
 
     content = _extract_content(data)
     usage = data.get("usage") if isinstance(data.get("usage"), dict) else {}
