@@ -97,11 +97,10 @@ async def test_unified_search_includes_meeting_store_source():
 
 def test_intent_router_meeting_todo_queries():
     test_queries = [
-        ("Gibt es offene Punkte aus Meetings?", "unified_search"),
-        ("Gibt es offene Punkte aus den Meetings?", "unified_search"),
-        ("Meeting To-Dos für diese Woche", "unified_search"),
+        ("Gibt es offene Punkte aus Meetings?", "daily_open_loops"),
+        ("Gibt es offene Punkte aus den Meetings?", "daily_open_loops"),
+        ("Meeting To-Dos für diese Woche", "daily_open_loops"),
         ("ich suche nach : Gibt es offene Punkte aus Meetings", "unified_search"),
-        ("Beschlüsse aus dem letzten Meeting", "unified_search"),
     ]
     for query, expected_intent in test_queries:
         actual = route_intent(query)

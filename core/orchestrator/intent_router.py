@@ -16,12 +16,12 @@ def route_intent(raw: str, params: dict[str, Any] | None = None) -> str:
     if text in {"ping", "health"}:
         return "ping"
 
-    # 1. Explicit search commands take precedence over general open-loop keywords
+    # 1. Explicit search commands take precedence over open-loop keywords
     if any(
         k in lower
         for k in (
+            "ich suche nach",
             "suche nach",
-            "ich suche",
             "durchsuche",
             "finde dateien",
             "haben wir schon mal",
@@ -31,7 +31,7 @@ def route_intent(raw: str, params: dict[str, Any] | None = None) -> str:
     ):
         return "unified_search"
 
-    # 2. Specific meeting queries take precedence over generic daily open loops
+    # 2. Meeting & Open Loop Summary queries route to daily_open_loops (synthesized summary)
     if any(
         k in lower
         for k in (
@@ -41,10 +41,9 @@ def route_intent(raw: str, params: dict[str, Any] | None = None) -> str:
             "meeting todo",
             "meeting to-do",
             "meeting notizen",
-            "beschlüsse",
         )
     ):
-        return "unified_search"
+        return "daily_open_loops"
 
     # 3. Standard Prompt Catalog — Daily Focus & Open Loops
     if any(

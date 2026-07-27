@@ -21,35 +21,46 @@ async def run(
     if cal.get("meetings"):
         meetings = cal["meetings"]
 
-    bullets: list[str] = []
-    for e in engagements:
-        off = offering_by_id(str(e.get("offering_id", "")))
-        off_name = off["name"] if off else e.get("offering_id", "?")
-        next_step = e.get("next_step") or "nächsten Schritt klären"
-        bullets.append(
-            f"**{e['title']}** ({e.get('status')}, Offering: {off_name}) — {next_step}"
-        )
-
-    for m in meetings[:5]:
-        bullets.append(
-            f"Termin: **{m.get('title')}** · {m.get('when', 'heute')} — {m.get('note', '')}".strip(
-                " —"
-            )
-        )
-
-    for a in mail.get("actions", [])[:5]:
-        bullets.append(f"Mail: **{a.get('subject')}** — {a.get('action')}")
-
+    meeting_bullets: list[str] = []
     try:
         from ..meetings_store import list_meetings
-        open_meeting_items = list_meetings(tenant_id, has_open_todo=True, limit=5)
+        open_meeting_items = list_meetings(tenant_id, has_open_todo=True, limit=20)
         for m in open_meeting_items:
             for todo in m.get("todos", []):
                 if isinstance(todo, dict) and not todo.get("done"):
                     todo_text = todo.get("text") or todo.get("task") or "To-Do klären"
-                    bullets.append(f"Meeting To-Do (**{m['title']}**): {todo_text}")
+                    meeting_bullets.append(f"{m['title']}: {todo_text}")
     except Exception:
         pass
+
+    engagement_bullets: list[str] = []
+    for e in engagements:
+        off = offering_by_id(str(e.get("offering_id", "")))
+        off_name = off["name"] if off else e.get("offering_id", "?")
+        next_step = e.get("next_step") or "nächsten Schritt klären"
+        engagement_bullets.append(
+            f"{e['title']} ({e.get('status')}, Offering: {off_name}) — {next_step}"
+        )
+
+    calendar_bullets: list[str] = []
+    for m in meetings[:5]:
+        calendar_bullets.append(
+            f"Termin: {m.get('title')} · {m.get('when', 'heute')} — {m.get('note', '')}".strip(" —")
+        )
+
+    sections: list[str] = []
+    if meeting_bullets:
+        sections.append("Offene Punkte aus Meetings:\n" + "\n".join(f"• {b}" for b in meeting_bullets))
+
+    if engagement_bullets or calendar_bullets:
+        eng_text = "\n".join(f"• {b}" for b in (engagement_bullets + calendar_bullets))
+        sections.append("Aktive Projekte & Engagements:\n" + eng_text)
+
+    # Only show email section if a real (non-stub) mail adapter is connected
+    if mail.get("status") in {"connected", "live"} and mail.get("actions"):
+        mail_bullets = [f"Mail: {a.get('subject')} — {a.get('action')}" for a in mail["actions"][:5]]
+        if mail_bullets:
+            sections.append("E-Mail Aktionen:\n" + "\n".join(f"• {b}" for b in mail_bullets))
 
     # Kurz-Memory als Hintergrund — nutzt aktiven Compute-Modus oder sovereign
     active_compute = params.get("compute_mode") or "sovereign"
@@ -62,27 +73,15 @@ async def run(
             "compute_mode": active_compute,
         },
     )
+    mem_note = str(mem.get("answer") or "").strip()
+    if mem_note and mem_note not in {"Keine Antwort.", "—"} and "nicht erreichbar" not in mem_note:
+        sections.append(f"Gedächtnis:\n{mem_note}")
 
-    if not bullets:
-        answer = (
-            "Keine offenen Engagements oder Termine im Seed.\n\n"
-            f"Werkstatt-Gedächtnis: {mem.get('answer', '—')}"
-        )
-        model = mem.get("model") or "orchestrator+rules"
+    if not sections:
+        answer = "Keine offenen Punkte oder Engagements vorhanden."
     else:
-        body = "\n".join(f"• {b}" for b in bullets[:8])
-        mail_note = mail.get("status_note", "")
-        mem_note = str(mem.get("answer") or "").strip()
-        if mem_note and mem_note not in {"Keine Antwort.", "—"}:
-            mem_note = f"\n\nGedächtnis: {mem_note}"
-        else:
-            mem_note = ""
-        answer = (
-            f"Offene Schleifen heute:\n{body}\n\n"
-            f"{mail_note}{mem_note}\n"
-            "Details oder Mail-Triage: einfach nachfragen."
-        ).strip()
-        model = mem.get("model") or "orchestrator+rules"
+        answer = "Offene Schleifen heute & Meetings:\n\n" + "\n\n".join(sections)
+    model = mem.get("model") or "orchestrator+rules"
 
     sources = [
         {

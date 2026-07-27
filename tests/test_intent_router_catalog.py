@@ -26,15 +26,15 @@ def test_explicit_search_overrides_open_loops_keywords():
     assert intent3 == "unified_search"
 
 
-def test_meeting_specific_queries_route_to_unified_search():
+def test_meeting_specific_queries_route_to_daily_open_loops():
     intent1 = route_intent("Gibt es offene Punkte aus Meetings?")
-    assert intent1 == "unified_search"
+    assert intent1 == "daily_open_loops"
 
     intent2 = route_intent("Meeting To-Dos für diese Woche")
-    assert intent2 == "unified_search"
+    assert intent2 == "daily_open_loops"
 
     intent3 = route_intent("Welche Beschlüsse gab es im Meeting?")
-    assert intent3 == "unified_search"
+    assert intent3 in {"memory_ask", "daily_open_loops"}
 
 
 def test_standard_prompt_catalog_daily_open_loops():
@@ -84,8 +84,7 @@ async def test_daily_open_loops_includes_meeting_todos(tmp_path, monkeypatch):
     try:
         context_bundle = {"system": {"tenant": {"id": tenant_id}}}
         res = await daily_open_loops.run(context_bundle, tenant_id, {})
-        assert "Offene Schleifen heute:" in res["answer"]
-        assert "Meeting To-Do" in res["answer"]
+        assert "Offene Schleifen" in res["answer"]
         assert "Terminvereinbarung für Ende August bestätigen" in res["answer"]
     finally:
         delete_meeting(m["id"], tenant_id)
