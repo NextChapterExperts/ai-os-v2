@@ -43,6 +43,18 @@ type AskResponse = {
   stats?: Stats;
 };
 
+const STANDARD_PROMPTS = [
+  { label: "— Standard-Abfrage wählen —", value: "" },
+  { label: "Was ist noch offen?", value: "Was ist noch offen?" },
+  { label: "Was steht noch aus?", value: "Was steht noch aus?" },
+  { label: "Was liegt an?", value: "Was liegt an?" },
+  { label: "Was müsste gemacht werden?", value: "Was müsste gemacht werden?" },
+  { label: "Was sind wichtige Punkte für heute?", value: "Was sind wichtige Punkte für heute?" },
+  { label: "Wie ist der Stand zu welchem Projekt?", value: "Wie ist der Stand zu welchem Projekt?" },
+  { label: "Gibt es offene Punkte aus Meetings?", value: "Gibt es offene Punkte aus Meetings?" },
+  { label: "ich suche nach : Agenda", value: "ich suche nach : Agenda" },
+] as const;
+
 export function MemorySearch({
   autofocus = false,
   compact = false,
@@ -133,6 +145,29 @@ export function MemorySearch({
           {pending ? "Orchestriere…" : "Fragen"}
         </button>
       </form>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <span className="muted text-xs">Standard-Abfragen:</span>
+        <select
+          aria-label="Standard-Abfrage wählen"
+          className="bg-card text-ink border border-line rounded-lg px-2.5 py-1.5 text-xs font-sans focus:outline-none focus:border-signal transition-colors cursor-pointer"
+          onChange={(e) => {
+            const val = e.target.value;
+            if (val) {
+              setQ(val);
+              router.replace(`/?q=${encodeURIComponent(val)}`);
+              run(val);
+            }
+          }}
+          defaultValue=""
+        >
+          {STANDARD_PROMPTS.map((p) => (
+            <option key={p.label} value={p.value} className="bg-card text-ink">
+              {p.label}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {stats ? (
         <p className="muted mono mt-3 mb-0 text-xs">

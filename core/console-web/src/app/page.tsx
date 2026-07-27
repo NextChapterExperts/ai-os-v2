@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import Link from "next/link";
 import { checkPlatformHealth } from "@/lib/platform-health";
 import { memoryStats } from "@/lib/memory";
 import { StatusDot } from "@/components/StatusDot";
@@ -41,17 +40,6 @@ export default async function LagebildPage() {
               Tenant <span className="mono text-ink">nextchapter</span> · {online}/{total}{" "}
               Services · {mem.chunks} Memory-Chunks
             </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Link href="/platform" className="btn-ghost">
-              Plattform
-            </Link>
-            <Link href="/workflows" className="btn-ghost">
-              Workflows
-            </Link>
-            <Link href="/portfolio" className="btn-ghost">
-              Projekte
-            </Link>
           </div>
         </div>
 
