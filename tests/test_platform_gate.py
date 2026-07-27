@@ -66,7 +66,17 @@ def test_platform_gate_4_compute_mode_contract():
     res = client.get("/v1/compute/mode")
     assert res.status_code == 200
     data = res.json()
-    assert "active_mode" in data or "modes" in data
+    assert "active_mode" in data
+    assert "modes" in data
+    mode_ids = {m.get("id") for m in data.get("modes", [])}
+    expected_modes = {"sovereign", "balanced", "premium", "coding"}
+    assert expected_modes.issubset(mode_ids), f"Missing compute modes: {expected_modes - mode_ids}"
+
+    # Test mode switching for all modes
+    for mode in ["balanced", "premium", "coding", "sovereign"]:
+        switch_res = client.post("/v1/compute/mode", json={"mode": mode})
+        assert switch_res.status_code == 200
+        assert switch_res.json().get("active_mode") == mode
 
 
 def test_platform_gate_5_pii_redaction_contract():

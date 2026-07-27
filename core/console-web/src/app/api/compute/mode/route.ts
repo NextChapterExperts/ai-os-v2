@@ -42,6 +42,22 @@ export async function GET() {
             is_active: false,
             is_config_default: false,
           },
+          {
+            id: "premium",
+            default_model: "ai-os-premium",
+            label: "Frontier (Free)",
+            description: "Nemotron Ultra 550B — OpenRouter :free, 1M Context, Tools",
+            is_active: false,
+            is_config_default: false,
+          },
+          {
+            id: "coding",
+            default_model: "ai-os-coding",
+            label: "Coding (Free)",
+            description: "Poolside Laguna M.1 — OpenRouter :free, agentic coding",
+            is_active: false,
+            is_config_default: false,
+          },
         ],
         error:
           err instanceof Error
