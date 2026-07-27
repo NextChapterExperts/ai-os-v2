@@ -90,7 +90,7 @@ const PHASES: PhaseGate[] = [
 ];
 
 const OTHER_PROJECTS = [
-  { name: "ai-sap-videos", date: "Ende Aug. 2026", scope: "3 Videos anschauen / Skripte", tag: "Content" },
+  { name: "ai-sap-videos", date: "Ende Aug. 2026", scope: "Wissensaufbau & SAP AI Enablement (Lernen)", tag: "W-Unterstützung" },
   { name: "redrays-btp", date: "Anfang Sept. 2026", scope: "Alignment BTP Security Scanner", tag: "Security" },
   { name: "lizenz-simulation", date: "Oktober 2026", scope: "BTP Lizenz- & Kosten-Simulator", tag: "Tooling" },
   { name: "website-nce", date: "Continuous", scope: "VIRKI Landingpage & Prototyp", tag: "Web" },
@@ -142,7 +142,7 @@ export function DailyFocusPanel() {
               Priorität 1 · Höchste Dringlichkeit
             </span>
             <span className="text-xs font-mono text-indigo-400 tracking-wide uppercase">
-              waqam-project
+              studentenprojekt
             </span>
           </div>
 
@@ -358,7 +358,7 @@ export function DailyFocusPanel() {
               <span className="truncate">{activePhase.deliverableFile}</span>
             </div>
             <p className="text-[11px] text-slate-400 leading-normal">
-              Liegt im Repository <span className="font-mono text-slate-300">/home/peter/Projekte/active/waqam-project/</span>
+              Liegt im Repository <span className="font-mono text-slate-300">/home/peter/Projekte/active/studentenprojekt/</span>
             </p>
           </div>
         </div>

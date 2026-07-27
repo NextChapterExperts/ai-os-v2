@@ -33,11 +33,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="shell-bg">
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-6 px-5 pt-5 pb-2 sm:px-8">
-        <Link href="/" className="brand-mark text-xl text-ink no-underline sm:text-2xl">
-          AI-OS
+      <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-5 pt-5 pb-2 sm:px-8">
+        <Link href="/" className="brand-mark no-underline flex items-center group">
+          <span className="font-mystic text-2xl sm:text-3xl font-extrabold tracking-[0.16em] text-ink uppercase group-hover:text-signal transition-colors">
+            VIRKI
+          </span>
         </Link>
-        <nav className="flex flex-wrap items-center gap-5 text-sm sm:gap-7 sm:text-base">
+        <nav className="flex flex-wrap items-center gap-4 text-sm sm:gap-6 sm:text-base">
           {NAV.map((item) => {
             const active = bestMatch.len > 0 && item.href === bestMatch.href;
             return (
@@ -54,9 +56,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
         <div className="flex items-center gap-3 text-right text-xs text-ink-soft">
           <UserSelector />
-          <div className="hidden sm:block">
+          <div className="hidden lg:block">
             <div className="mono">tenant · nextchapter</div>
-            <div className="mono">proj · 1100-AI-OS-V2</div>
+            <div className="mono">proj · VIRKI-OS</div>
           </div>
         </div>
       </header>

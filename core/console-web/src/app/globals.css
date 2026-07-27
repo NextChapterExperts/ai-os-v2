@@ -35,6 +35,10 @@
   font-family: var(--font-display), "Bricolage Grotesque", sans-serif;
 }
 
+.font-mystic {
+  font-family: var(--font-mystic), "Cinzel", Georgia, serif;
+}
+
 * {
   box-sizing: border-box;
 }

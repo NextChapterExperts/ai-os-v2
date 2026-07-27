@@ -3,6 +3,20 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { type ProjectSummary } from "@/lib/portfolio-db";
+import { GitPushButton } from "@/components/GitPushButton";
+
+function getViewerUrl(uri: string) {
+  if (!uri) return "#";
+  if (uri.startsWith("http://") || uri.startsWith("https://")) return uri;
+  const cleanPath = uri.replace("file://", "");
+  return `/api/view-file?path=${encodeURIComponent(cleanPath)}`;
+}
+
+function getOpenLocalUrl(uri: string) {
+  if (!uri) return "#";
+  const cleanPath = uri.replace("file://", "");
+  return `/api/open-local?path=${encodeURIComponent(cleanPath)}`;
+}
 
 export default function PortfolioPage() {
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
@@ -45,7 +59,8 @@ export default function PortfolioPage() {
             Dynamisch aus der AI-OS Datenbank geladen · Direkte Verlinkung zu allen Dokumenten & Artefakten
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-3">
+          <GitPushButton />
           <Link href="/" className="btn-ghost">
             ← Zurück zum Lagebild
           </Link>
@@ -127,19 +142,30 @@ export default function PortfolioPage() {
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {prio1Project.documents.map((doc) => (
-                    <a
-                      key={doc.fileUri}
-                      href={doc.fileUri}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-ghost text-xs font-mono py-1 px-2.5 flex items-center gap-1.5 hover:border-signal"
-                    >
-                      <svg className="w-3.5 h-3.5 text-signal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                      </svg>
-                      <span>{doc.label}</span>
-                      <span className="muted text-[10px]">({doc.fileName})</span>
-                    </a>
+                    <div key={doc.fileUri} className="inline-flex items-center rounded border border-line bg-paper text-xs font-mono overflow-hidden">
+                      <a
+                        href={getViewerUrl(doc.fileUri)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="py-1 px-2.5 flex items-center gap-1.5 text-signal hover:bg-paper-2 transition-colors"
+                        title="Im Browser-Viewer anzeigen"
+                      >
+                        <svg className="w-3.5 h-3.5 text-signal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                        <span>{doc.label}</span>
+                        <span className="muted text-[10px]">({doc.fileName})</span>
+                      </a>
+                      <a
+                        href={getOpenLocalUrl(doc.fileUri)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="py-1 px-1.5 text-ink-soft border-l border-line hover:bg-paper-2 hover:text-ink"
+                        title="Direkt im System / Editor öffnen"
+                      >
+                        💻
+                      </a>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -163,14 +189,25 @@ export default function PortfolioPage() {
                           {m.status === "done" ? "✓ Erledigt" : m.status === "in_progress" ? "In Arbeit" : "Geplant"}
                         </span>
                         {m.fileLink && (
-                          <a
-                            href={m.fileLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mono text-xs text-signal underline hover:text-ink"
-                          >
-                            Öffnen →
-                          </a>
+                          <div className="inline-flex items-center gap-2">
+                            <a
+                              href={getViewerUrl(m.fileLink)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mono text-xs text-signal underline hover:text-ink"
+                            >
+                              Öffnen →
+                            </a>
+                            <a
+                              href={getOpenLocalUrl(m.fileLink)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mono text-xs text-ink-soft hover:text-ink"
+                              title="Im Editor/System öffnen"
+                            >
+                              💻
+                            </a>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -232,18 +269,29 @@ export default function PortfolioPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="mono text-xs text-ink-soft font-semibold">Dokumente:</span>
                       {proj.documents.map((doc) => (
-                        <a
-                          key={doc.fileUri}
-                          href={doc.fileUri}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mono text-xs text-signal hover:underline flex items-center gap-1 bg-paper px-2 py-0.5 border border-line"
-                        >
-                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                          <span>{doc.label}</span>
-                        </a>
+                        <div key={doc.fileUri} className="inline-flex items-center rounded border border-line bg-paper text-xs font-mono overflow-hidden">
+                          <a
+                            href={getViewerUrl(doc.fileUri)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="py-0.5 px-2 flex items-center gap-1 text-signal hover:underline"
+                            title="Im Browser-Viewer anzeigen"
+                          >
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                            <span>{doc.label}</span>
+                          </a>
+                          <a
+                            href={getOpenLocalUrl(doc.fileUri)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="py-0.5 px-1 text-ink-soft border-l border-line hover:bg-paper-2 hover:text-ink"
+                            title="Direkt im System / Editor öffnen"
+                          >
+                            💻
+                          </a>
+                        </div>
                       ))}
                     </div>
 

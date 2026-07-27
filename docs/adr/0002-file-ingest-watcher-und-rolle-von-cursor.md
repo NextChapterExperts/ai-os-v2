@@ -55,7 +55,7 @@ bis Fach-Agenten (Phase 4) stehen:
 `/home/peter/Projekte/` ist jetzt ein eigenes Git-Repo (getrennt von
 `1100-AI-OS-V2/`), das `active/`, `ops/` und die Obsidian-Vault-Dateien
 versioniert. Projekte mit eigenem Git-Repo
-(`sap-consultant-package`, `waqam-doku`, `waqamboard`) werden bewusst
+(`sap-consultant-package`, `waqam/waqam-doku`, `waqam/waqamboard`) werden bewusst
 **nicht** als eingebettetes Repo mitgezogen (`.gitignore`) — sie haben
 ihre eigene Historie. `archive/` ist vorerst ausgeschlossen (u. a.
 Altlasten/Secrets in `archive/ai-os-v1`).
