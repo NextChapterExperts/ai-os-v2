@@ -13,4 +13,4 @@ body:
 expect:
   http_status: 200
   result_intent: daily_open_loops
-  answer_contains: Offene Schleifen heute
+  answer_contains: Tagesübersicht

@@ -50,17 +50,29 @@ async def run(
 
     sections: list[str] = []
     if meeting_bullets:
-        sections.append("Offene Punkte aus Meetings:\n" + "\n".join(f"• {b}" for b in meeting_bullets))
+        sections.append(
+            "**Offene Aufgaben aus Meetings** ([Meetings öffnen](/meetings)):\n"
+            + "\n".join(f"• {b}" for b in meeting_bullets)
+        )
 
-    if engagement_bullets or calendar_bullets:
-        eng_text = "\n".join(f"• {b}" for b in (engagement_bullets + calendar_bullets))
-        sections.append("Aktive Projekte & Engagements:\n" + eng_text)
+    if engagement_bullets:
+        sections.append(
+            "**Aktive Projekte & Engagements** ([Projekte öffnen](/portfolio)):\n"
+            + "\n".join(f"• {b}" for b in engagement_bullets)
+        )
+
+    # Only show calendar section if a real (non-stub/seed) calendar adapter is connected
+    if cal.get("status") in {"connected", "live"} and calendar_bullets:
+        sections.append(
+            "**Heutige Termine:**\n"
+            + "\n".join(f"• {b}" for b in calendar_bullets)
+        )
 
     # Only show email section if a real (non-stub) mail adapter is connected
     if mail.get("status") in {"connected", "live"} and mail.get("actions"):
         mail_bullets = [f"Mail: {a.get('subject')} — {a.get('action')}" for a in mail["actions"][:5]]
         if mail_bullets:
-            sections.append("E-Mail Aktionen:\n" + "\n".join(f"• {b}" for b in mail_bullets))
+            sections.append("**E-Mail Aktionen:**\n" + "\n".join(f"• {b}" for b in mail_bullets))
 
     # Kurz-Memory als Hintergrund — nutzt aktiven Compute-Modus oder sovereign
     active_compute = params.get("compute_mode") or "sovereign"
@@ -75,12 +87,15 @@ async def run(
     )
     mem_note = str(mem.get("answer") or "").strip()
     if mem_note and mem_note not in {"Keine Antwort.", "—"} and "nicht erreichbar" not in mem_note:
-        sections.append(f"Gedächtnis:\n{mem_note}")
+        sections.append(f"**Gedächtnis & Notizen:**\n{mem_note}")
+
+    nav_footer = "\n\n📌 **Direkt-Absprung:**\n👉 [Meetings-Übersicht öffnen](/meetings)\n👉 [Projekt-Portfolio öffnen](/portfolio)"
+    header = "Tagesübersicht — Offene Punkte, Termine & Projekte:"
 
     if not sections:
-        answer = "Keine offenen Punkte oder Engagements vorhanden."
+        answer = f"{header}\n\nKeine aktuellen offenen Punkte oder Engagements vorhanden.{nav_footer}"
     else:
-        answer = "Offene Schleifen heute & Meetings:\n\n" + "\n\n".join(sections)
+        answer = f"{header}\n\n" + "\n\n".join(sections) + nav_footer
     model = mem.get("model") or "orchestrator+rules"
 
     sources = [

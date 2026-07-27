@@ -55,6 +55,52 @@ const STANDARD_PROMPTS = [
   { label: "ich suche nach : Agenda", value: "ich suche nach : Agenda" },
 ] as const;
 
+function renderFormattedAnswer(text: string) {
+  const lines = text.split("\n");
+  return lines.map((line, lineIdx) => {
+    const tokens: React.ReactNode[] = [];
+    let lastIdx = 0;
+    const regex = /\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*/g;
+    let match: RegExpExecArray | null;
+
+    while ((match = regex.exec(line)) !== null) {
+      if (match.index > lastIdx) {
+        tokens.push(line.slice(lastIdx, match.index));
+      }
+      if (match[1] !== undefined && match[2] !== undefined) {
+        const label = match[1];
+        const href = match[2];
+        tokens.push(
+          <Link
+            key={`${lineIdx}-${match.index}`}
+            href={href}
+            className="text-signal hover:text-signal-bright underline font-semibold transition-colors"
+          >
+            {label}
+          </Link>
+        );
+      } else if (match[3] !== undefined) {
+        tokens.push(
+          <strong key={`${lineIdx}-${match.index}`} className="font-semibold text-ink">
+            {match[3]}
+          </strong>
+        );
+      }
+      lastIdx = regex.lastIndex;
+    }
+
+    if (lastIdx < line.length) {
+      tokens.push(line.slice(lastIdx));
+    }
+
+    return (
+      <div key={lineIdx} className={line.trim() === "" ? "h-2" : ""}>
+        {tokens}
+      </div>
+    );
+  });
+}
+
 export function MemorySearch({
   autofocus = false,
   compact = false,
@@ -184,7 +230,7 @@ export function MemorySearch({
       {data?.kind === "ask" && data.answer ? (
         <article className="answer-panel mt-6 rise">
           <h2 className="section-title">Zusammenfassung</h2>
-          <div className="answer-body">{data.answer}</div>
+          <div className="answer-body">{renderFormattedAnswer(data.answer)}</div>
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <p className="mono muted m-0 text-xs">
               {data.model} · {sourceCount} Quellen

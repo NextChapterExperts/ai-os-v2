@@ -84,8 +84,11 @@ async def test_daily_open_loops_includes_meeting_todos(tmp_path, monkeypatch):
     try:
         context_bundle = {"system": {"tenant": {"id": tenant_id}}}
         res = await daily_open_loops.run(context_bundle, tenant_id, {})
-        assert "Offene Schleifen" in res["answer"]
+        assert "Tagesübersicht" in res["answer"]
+        assert "Offene Aufgaben aus Meetings" in res["answer"]
         assert "Terminvereinbarung für Ende August bestätigen" in res["answer"]
+        assert "[Meetings öffnen](/meetings)" in res["answer"]
+        assert "[Projekt-Portfolio öffnen](/portfolio)" in res["answer"]
     finally:
         delete_meeting(m["id"], tenant_id)
 
@@ -118,4 +121,16 @@ async def test_unified_search_finds_meeting_todos():
         assert "Blog Simulator" in hits[0]["snippet"]
     finally:
         delete_meeting(m["id"], tenant_id)
+
+
+@pytest.mark.asyncio
+async def test_daily_open_loops_formatting_and_navigation_links():
+    tenant_id = "test-formatting-tenant"
+    context_bundle = {"system": {"tenant": {"id": tenant_id}}}
+    res = await daily_open_loops.run(context_bundle, tenant_id, {})
+    assert "Tagesübersicht — Offene Punkte, Termine & Projekte:" in res["answer"]
+    assert "📌 **Direkt-Absprung:**" in res["answer"]
+    assert "[Meetings-Übersicht öffnen](/meetings)" in res["answer"]
+    assert "[Projekt-Portfolio öffnen](/portfolio)" in res["answer"]
+
 
