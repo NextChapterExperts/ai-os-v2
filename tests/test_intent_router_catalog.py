@@ -88,7 +88,7 @@ async def test_daily_open_loops_includes_meeting_todos(tmp_path, monkeypatch):
         assert "Offene Aufgaben aus Meetings" in res["answer"]
         assert "Terminvereinbarung für Ende August bestätigen" in res["answer"]
         assert "[Meetings öffnen](/meetings)" in res["answer"]
-        assert "[Projekt-Portfolio öffnen](/portfolio)" in res["answer"]
+        assert "[Projekte öffnen](/portfolio)" in res["answer"]
     finally:
         delete_meeting(m["id"], tenant_id)
 
@@ -126,11 +126,25 @@ async def test_unified_search_finds_meeting_todos():
 @pytest.mark.asyncio
 async def test_daily_open_loops_formatting_and_navigation_links():
     tenant_id = "test-formatting-tenant"
-    context_bundle = {"system": {"tenant": {"id": tenant_id}}}
-    res = await daily_open_loops.run(context_bundle, tenant_id, {})
-    assert "Tagesübersicht — Offene Punkte, Termine & Projekte:" in res["answer"]
-    assert "📌 **Direkt-Absprung:**" in res["answer"]
-    assert "[Meetings-Übersicht öffnen](/meetings)" in res["answer"]
-    assert "[Projekt-Portfolio öffnen](/portfolio)" in res["answer"]
+    meeting_data = {
+        "title": "Sprint Sync",
+        "held_at": "2026-08-25T10:00:00Z",
+        "participants": "Peter",
+        "summary": "Checkin",
+        "todos": [{"task": "Handlungsschritt klären", "done": False}],
+    }
+    m = create_meeting(tenant_id, meeting_data)
+    try:
+        context_bundle = {"system": {"tenant": {"id": tenant_id}}}
+        res = await daily_open_loops.run(context_bundle, tenant_id, {})
+        assert "Tagesübersicht — Offene Punkte, Termine & Projekte:" in res["answer"]
+        assert "📌 **Direkt-Absprung:**" not in res["answer"]
+        assert "[Meetings öffnen](/meetings)" in res["answer"]
+        assert "[Projekte öffnen](/portfolio)" in res["answer"]
+        assert "📋" not in res["answer"]
+        assert "🚀" not in res["answer"]
+        assert "📅" not in res["answer"]
+    finally:
+        delete_meeting(m["id"], tenant_id)
 
 

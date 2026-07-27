@@ -146,6 +146,11 @@ export function MemorySearch({
           return;
         }
         setData(json);
+        if (json.answer && typeof window !== "undefined") {
+          try {
+            sessionStorage.setItem("aios_last_summary", JSON.stringify({ q: query, data: json }));
+          } catch (e) {}
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Dispatch fehlgeschlagen");
       }
@@ -153,8 +158,22 @@ export function MemorySearch({
   }, []);
 
   useEffect(() => {
-    if (initial) run(initial);
-    else {
+    if (initial) {
+      run(initial);
+    } else {
+      if (typeof window !== "undefined") {
+        try {
+          const saved = sessionStorage.getItem("aios_last_summary");
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed && parsed.data && parsed.data.answer) {
+              setQ(parsed.q || "");
+              setData(parsed.data);
+              return;
+            }
+          }
+        } catch (e) {}
+      }
       fetch("/api/memory/stats", { cache: "no-store" })
         .then((r) => r.json())
         .then((stats) => setData({ kind: "empty", query: "", stats }))

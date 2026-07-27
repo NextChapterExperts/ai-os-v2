@@ -89,13 +89,12 @@ async def run(
     if mem_note and mem_note not in {"Keine Antwort.", "—"} and "nicht erreichbar" not in mem_note:
         sections.append(f"**Gedächtnis & Notizen:**\n{mem_note}")
 
-    nav_footer = "\n\n📌 **Direkt-Absprung:**\n👉 [Meetings-Übersicht öffnen](/meetings)\n👉 [Projekt-Portfolio öffnen](/portfolio)"
     header = "Tagesübersicht — Offene Punkte, Termine & Projekte:"
 
     if not sections:
-        answer = f"{header}\n\nKeine aktuellen offenen Punkte oder Engagements vorhanden.{nav_footer}"
+        answer = f"{header}\n\nKeine aktuellen offenen Punkte oder Engagements vorhanden."
     else:
-        answer = f"{header}\n\n" + "\n\n".join(sections) + nav_footer
+        answer = f"{header}\n\n" + "\n\n".join(sections)
     model = mem.get("model") or "orchestrator+rules"
 
     sources = [
