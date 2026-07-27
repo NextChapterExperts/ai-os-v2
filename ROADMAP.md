@@ -3,7 +3,7 @@
 **Für:** LLMs, Entwickler, die das System von Grund auf bauen  
 **Zweck:** Vollständige technische Spezifikation — ausreichend detailliert um ohne zusätzlichen Kontext zu starten  
 **Basis:** AI-OS v1 (../1000-AI-OS) — eingefroren Juli 2026  
-**Stand:** Juli 2026 (aktualisiert 2026-07-27 — VIRKI UI Branding, Git Push Automation & Multi-Repo Sync, Document Viewers, WAQAM & Studentenprojekt Restrukturierung, Projekt Zorro)  
+**Stand:** Juli 2026 (aktualisiert 2026-07-27 — Standard Prompt Catalog & Refined Intent Router, VIRKI UI Branding, Git Push Automation & Multi-Repo Sync, Document Viewers, WAQAM & Studentenprojekt Restrukturierung, Projekt Zorro)  
 **Modus:** **Eine Implementierung** — keine Alternativen in dieser Roadmap. Jede Entscheidung ist final.  
 **Detail-Spec Company Brain:** [docs/09-COMPANY-BRAIN.md](docs/09-COMPANY-BRAIN.md) · **Memory einfach:** [docs/10-MEMORY-EINFACH.md](docs/10-MEMORY-EINFACH.md) · **Kontext Lagebild→LLM:** [docs/14-KONTEXT.md](docs/14-KONTEXT.md)  
 **Erstes Lizenzprodukt (VM):** [docs/11-PLATFORM-VM.md](docs/11-PLATFORM-VM.md)  

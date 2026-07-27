@@ -40,6 +40,17 @@ async def run(
     for a in mail.get("actions", [])[:5]:
         bullets.append(f"Mail: **{a.get('subject')}** — {a.get('action')}")
 
+    try:
+        from ..meetings_store import list_meetings
+        open_meeting_items = list_meetings(tenant_id, has_open_todo=True, limit=5)
+        for m in open_meeting_items:
+            for todo in m.get("todos", []):
+                if isinstance(todo, dict) and not todo.get("done"):
+                    todo_text = todo.get("text") or todo.get("task") or "To-Do klären"
+                    bullets.append(f"Meeting To-Do (**{m['title']}**): {todo_text}")
+    except Exception:
+        pass
+
     # Kurz-Memory nur als Hintergrund — immer lokal (sovereign), unabhängig vom UI-Modus
     mem = await memory_ask.run(
         context_bundle,

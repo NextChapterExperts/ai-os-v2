@@ -16,38 +16,62 @@ def route_intent(raw: str, params: dict[str, Any] | None = None) -> str:
     if text in {"ping", "health"}:
         return "ping"
 
+    # 1. Explicit search commands take precedence over general open-loop keywords
     if any(
         k in lower
         for k in (
+            "suche nach",
+            "ich suche",
+            "durchsuche",
+            "finde dateien",
+            "haben wir schon mal",
+            "schon mal daran gearbeitet",
+            "in welchem projekt",
+        )
+    ):
+        return "unified_search"
+
+    # 2. Specific meeting queries take precedence over generic daily open loops
+    if any(
+        k in lower
+        for k in (
+            "punkte aus meeting",
+            "punkte aus den meeting",
+            "punkte aus besprechung",
+            "meeting todo",
+            "meeting to-do",
+            "meeting notizen",
+            "beschlüsse",
+        )
+    ):
+        return "unified_search"
+
+    # 3. Standard Prompt Catalog — Daily Focus & Open Loops
+    if any(
+        k in lower
+        for k in (
+            "was ist noch offen",
+            "was steht noch aus",
+            "was liegt an",
+            "was müsste gemacht werden",
+            "wichtige punkte für heute",
             "heute noch",
             "muss ich",
             "open loop",
-            "offen",
-            "todo",
-            "aufgaben",
             "was steht an",
             "was steht heute",
             "steht heute an",
             "heute an",
             "heute machen",
             "noch machen",
+            "offen",
+            "todo",
+            "aufgaben",
         )
     ):
         return "daily_open_loops"
 
-    if any(
-        k in lower
-        for k in (
-            "haben wir schon mal",
-            "schon mal daran gearbeitet",
-            "durchsuche",
-            "suche nach",
-            "finde dateien",
-            "in welchem projekt",
-        )
-    ):
-        return "unified_search"
-
+    # 4. Standard Prompt Catalog — Project Status & Summaries
     if any(
         k in lower
         for k in (
@@ -60,6 +84,8 @@ def route_intent(raw: str, params: dict[str, Any] | None = None) -> str:
             "stand im",
             "stand des",
             "projektstand",
+            "wie ist der stand",
+            "status von",
             "fortschritt",
             "1100-ai-os",
             "ai-os-v2",
@@ -74,3 +100,4 @@ def route_intent(raw: str, params: dict[str, Any] | None = None) -> str:
         return "memory_ask"
 
     return "memory_ask"
+
