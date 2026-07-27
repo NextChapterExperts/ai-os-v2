@@ -51,14 +51,15 @@ async def run(
     except Exception:
         pass
 
-    # Kurz-Memory nur als Hintergrund — immer lokal (sovereign), unabhängig vom UI-Modus
+    # Kurz-Memory als Hintergrund — nutzt aktiven Compute-Modus oder sovereign
+    active_compute = params.get("compute_mode") or "sovereign"
     mem = await memory_ask.run(
         context_bundle,
         tenant_id,
         {
             **params,
             "query": "Was war heute werkstattseitig relevant? Nur Stichworte.",
-            "compute_mode": "sovereign",
+            "compute_mode": active_compute,
         },
     )
 
