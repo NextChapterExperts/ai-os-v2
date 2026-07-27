@@ -202,11 +202,11 @@ def list_meetings(
         if q:
             like = f"%{q.strip()}%"
             sql += (
-                " AND (title LIKE ? OR participants LIKE ? OR summary LIKE ? OR tags LIKE ?"
+                " AND (title LIKE ? OR participants LIKE ? OR summary LIKE ? OR tags LIKE ? OR todos LIKE ?"
                 " OR id IN (SELECT meeting_id FROM meeting_attachments"
                 " WHERE tenant_id = ? AND filename LIKE ?))"
             )
-            params.extend([like, like, like, like, tenant_id, like])
+            params.extend([like, like, like, like, like, tenant_id, like])
         sql += " ORDER BY held_at DESC LIMIT ?"
         params.append(max(1, min(limit, 500)))
         rows = con.execute(sql, params).fetchall()
@@ -270,7 +270,39 @@ def create_meeting(tenant_id: str, data: dict[str, Any]) -> dict[str, Any]:
         con.commit()
     finally:
         con.close()
-    return get_meeting(meeting_id, tenant_id) or row
+    meeting = get_meeting(meeting_id, tenant_id) or row
+    _index_meeting_to_memory(meeting)
+    return meeting
+
+
+def _index_meeting_to_memory(meeting: dict[str, Any]) -> None:
+    try:
+        from .memory_store import append_working_chunk
+        todos_text = []
+        for t in meeting.get("todos") or []:
+            if isinstance(t, dict):
+                todos_text.append(f"To-Do ({'erledigt' if t.get('done') else 'offen'}): {t.get('text') or t.get('task') or ''}")
+            elif isinstance(t, str):
+                todos_text.append(f"To-Do: {t}")
+        todos_str = "\n".join(todos_text)
+        body = (
+            f"Meeting: {meeting.get('title', '')}\n"
+            f"Datum: {meeting.get('held_at', '')}\n"
+            f"Teilnehmer: {meeting.get('participants', '')}\n"
+            f"Zusammenfassung: {meeting.get('summary', '')}\n"
+            f"{todos_str}"
+        ).strip()
+        if body:
+            append_working_chunk(
+                project_id="default_project",
+                role="assistant",
+                body=body,
+                title=f"Meeting: {meeting.get('title', '')}",
+                source="meeting",
+                user_id="default_user",
+            )
+    except Exception:
+        pass
 
 
 def update_meeting(meeting_id: str, tenant_id: str, data: dict[str, Any]) -> dict[str, Any] | None:
@@ -319,7 +351,10 @@ def update_meeting(meeting_id: str, tenant_id: str, data: dict[str, Any]) -> dic
         con.commit()
     finally:
         con.close()
-    return get_meeting(meeting_id, tenant_id)
+    updated = get_meeting(meeting_id, tenant_id)
+    if updated:
+        _index_meeting_to_memory(updated)
+    return updated
 
 
 def delete_meeting(meeting_id: str, tenant_id: str) -> bool:

@@ -107,6 +107,41 @@ def _graph_hits(tenant_id: str, query: str, plan: SearchPlan) -> list[dict[str, 
     return results
 
 
+def _meeting_hits(tenant_id: str, query: str, limit: int = 5) -> list[dict[str, Any]]:
+    try:
+        from ..meetings_store import list_meetings
+        meetings = list_meetings(tenant_id, q=query, limit=limit)
+        results = []
+        for m in meetings:
+            todos_str = ""
+            if m.get("todos"):
+                todo_items = []
+                for t in m["todos"]:
+                    if isinstance(t, dict):
+                        todo_items.append(t.get("text") or t.get("task") or "")
+                    elif isinstance(t, str):
+                        todo_items.append(t)
+                if todo_items:
+                    todos_str = " | To-Dos: " + "; ".join(todo_items)
+            snippet = f"{m.get('summary', '')}{todos_str}".strip()[:280] or f"Meeting am {m.get('held_at', '')}"
+            results.append(
+                {
+                    "id": m["id"],
+                    "score": 0.95,
+                    "source_type": "meeting",
+                    "title": f"Meeting: {m['title']}",
+                    "snippet": snippet,
+                    "project_slug": None,
+                    "source_path": f"meetings/{m['id']}",
+                    "collection": "meetings.db",
+                }
+            )
+        return results
+    except Exception:
+        log.exception("Suche in Meeting Store fehlgeschlagen")
+        return []
+
+
 async def run(
     context_bundle: dict[str, Any],
     tenant_id: str,
@@ -125,6 +160,7 @@ async def run(
             "rawFileCount": 0,
             "graphCount": 0,
             "episodicCount": 0,
+            "meetingCount": 0,
             "plan": None,
             "tenant_id": tenant_id,
         }
@@ -140,6 +176,8 @@ async def run(
         episodic_limit = 0
     episodic_hits = search_episodic(tenant_id, query, limit=episodic_limit, user_id=user_id) if episodic_limit else []
 
+    meeting_hits = _meeting_hits(tenant_id, query, limit=limit)
+
     curated: list[dict[str, Any]] = []
     raw_files: list[dict[str, Any]] = []
     if plan.use_l1:
@@ -151,7 +189,7 @@ async def run(
         raw_files = _search_collection(client, vector, RAW_FILES_COLLECTION, "raw-file", l1_limit)
 
     combined = sorted(
-        graph_hits + curated + raw_files + episodic_hits, key=lambda r: r["score"], reverse=True
+        graph_hits + curated + raw_files + episodic_hits + meeting_hits, key=lambda r: r["score"], reverse=True
     )
 
     return {

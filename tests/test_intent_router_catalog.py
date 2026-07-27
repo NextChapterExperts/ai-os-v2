@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
+import os
+import sys
 import pytest
+
+REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, REPO)
+
 from core.orchestrator.intent_router import route_intent
 from core.orchestrator.handlers import daily_open_loops
 from core.orchestrator.meetings_store import create_meeting, delete_meeting
@@ -83,3 +89,34 @@ async def test_daily_open_loops_includes_meeting_todos(tmp_path, monkeypatch):
         assert "Terminvereinbarung für Ende August bestätigen" in res["answer"]
     finally:
         delete_meeting(m["id"], tenant_id)
+
+
+@pytest.mark.asyncio
+async def test_unified_search_finds_meeting_todos():
+    tenant_id = "test-search-todo-tenant"
+    meeting_data = {
+        "title": "Austausch mit SAP BAIP Abteilung",
+        "held_at": "2026-08-25T10:00:00Z",
+        "participants": "Peter",
+        "summary": "Diskussion zu Simulatoren",
+        "todos": [
+            {
+                "text": "Termin erstellen für Ende August um das gesamte Projekt vorzustellen - Blog Simulator , Workflowsimulator  etc.",
+                "done": False,
+            }
+        ],
+    }
+    m = create_meeting(tenant_id, meeting_data)
+    try:
+        from core.orchestrator.handlers import unified_search
+
+        # Search by keyword in To-Do text
+        res = await unified_search.run({}, tenant_id, {"query": "Blog Simulator"})
+        assert res["sourceCount"] > 0
+        hits = [s for s in res["sources"] if s.get("source_type") == "meeting"]
+        assert len(hits) > 0
+        assert "Austausch mit SAP BAIP Abteilung" in hits[0]["title"]
+        assert "Blog Simulator" in hits[0]["snippet"]
+    finally:
+        delete_meeting(m["id"], tenant_id)
+
