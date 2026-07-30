@@ -46,20 +46,20 @@ export const DynamicDataProductForm: React.FC<DynamicDataProductFormProps> = ({
         } else if (prop.enum && prop.enum.length > 0) {
           defaults[key] = prop.enum[0];
         } else if (prop.type === "number" || prop.type === "integer") {
-          defaults[key] = key.includes("qm") ? 100.0 : key.includes("stundensatz") ? 70.0 : 0;
+          defaults[key] = key.includes("qm") ? 120.0 : key.includes("stundensatz") ? 70.0 : 0;
         } else if (prop.type === "boolean") {
           defaults[key] = false;
         } else {
           defaults[key] = key.includes("kunden")
-            ? "Malerbetrieb Schulze"
+            ? "Malerbetrieb Schulze GmbH"
             : key.includes("titel") || key.includes("projekt")
-            ? "Fassadenanstrich"
+            ? "Fassadenanstrich & Gerüstbau"
             : "";
         }
       });
       setFormData(defaults);
     }
-  }, [schema]);
+  }, [schema, initialValues]);
 
   const handleChange = (key: string, value: any, type?: string) => {
     let parsedValue = value;
@@ -78,7 +78,7 @@ export const DynamicDataProductForm: React.FC<DynamicDataProductFormProps> = ({
 
   if (!schema || !schema.properties || Object.keys(schema.properties).length === 0) {
     return (
-      <div className="p-4 bg-slate-900/40 rounded-xl border border-slate-800 text-xs text-slate-400">
+      <div className="p-4 rounded-xl border border-[var(--line)] bg-[color-mix(in_oklab,white_50%,transparent)] text-xs muted">
         Keine Eingabefelder im Schema definiert.
       </div>
     );
@@ -89,16 +89,16 @@ export const DynamicDataProductForm: React.FC<DynamicDataProductFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-4">
+      <div className="flex items-center justify-between border-b border-[var(--line)] pb-3 mb-4">
         <div>
-          <h4 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
-            <span className="text-emerald-400">📝</span> {schema.title || "Workflow Eingabe"}
+          <h4 className="text-sm font-bold text-[var(--ink)] flex items-center gap-2 m-0">
+            <span className="text-[var(--signal)]">📝</span> {schema.title || "Datenerfassung"}
           </h4>
           {schema.description && (
-            <p className="text-xs text-slate-400 mt-0.5">{schema.description}</p>
+            <p className="text-xs muted mt-0.5 m-0">{schema.description}</p>
           )}
         </div>
-        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-800/50">
+        <span className="badge" data-variant="graph">
           JSON Schema Form
         </span>
       </div>
@@ -118,22 +118,22 @@ export const DynamicDataProductForm: React.FC<DynamicDataProductFormProps> = ({
                   : ""
               }`}
             >
-              <label className="block text-xs font-medium text-slate-300 flex items-center justify-between">
+              <label className="block text-xs font-semibold text-[var(--ink)] flex items-center justify-between">
                 <span>
                   {label}
-                  {isRequired && <span className="text-rose-400 ml-1">*</span>}
+                  {isRequired && <span className="text-[var(--danger)] ml-1">*</span>}
                 </span>
-                <span className="text-[10px] font-mono text-slate-500 uppercase">{rawType}</span>
+                <span className="mono text-[10px] muted uppercase">{rawType}</span>
               </label>
 
               {prop.enum ? (
                 <select
                   value={formData[key] || ""}
                   onChange={(e) => handleChange(key, e.target.value, rawType)}
-                  className="w-full bg-slate-950/80 border border-slate-700/80 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+                  className="w-full bg-[color-mix(in_oklab,white_85%,transparent)] border border-[var(--line)] text-[var(--ink)] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[var(--signal)] transition-colors cursor-pointer"
                 >
                   {prop.enum.map((opt) => (
-                    <option key={opt} value={opt} className="bg-slate-900 text-slate-200">
+                    <option key={opt} value={opt} className="bg-[var(--paper)] text-[var(--ink)]">
                       {opt}
                     </option>
                   ))}
@@ -144,7 +144,7 @@ export const DynamicDataProductForm: React.FC<DynamicDataProductFormProps> = ({
                     type="button"
                     onClick={() => handleChange(key, !formData[key], "boolean")}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      formData[key] ? "bg-emerald-500" : "bg-slate-800"
+                      formData[key] ? "bg-[var(--signal)]" : "bg-[color-mix(in_oklab,var(--ink)_20%,transparent)]"
                     }`}
                   >
                     <span
@@ -153,7 +153,7 @@ export const DynamicDataProductForm: React.FC<DynamicDataProductFormProps> = ({
                       }`}
                     />
                   </button>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs muted">
                     {formData[key] ? "Ja / Aktiv" : "Nein / Inaktiv"}
                   </span>
                 </div>
@@ -164,12 +164,12 @@ export const DynamicDataProductForm: React.FC<DynamicDataProductFormProps> = ({
                   value={formData[key] !== undefined ? formData[key] : ""}
                   placeholder={prop.description || `Eingabe für ${label}`}
                   onChange={(e) => handleChange(key, e.target.value, rawType)}
-                  className="w-full bg-slate-950/80 border border-slate-700/80 rounded-lg px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
+                  className="w-full bg-[color-mix(in_oklab,white_85%,transparent)] border border-[var(--line)] text-[var(--ink)] rounded-lg px-3 py-2 text-xs placeholder-[var(--ink-soft)] focus:outline-none focus:border-[var(--signal)] transition-colors"
                   required={isRequired}
                 />
               )}
               {prop.description && (
-                <p className="text-[10px] text-slate-500">{prop.description}</p>
+                <p className="text-[10px] muted m-0">{prop.description}</p>
               )}
             </div>
           );
@@ -180,17 +180,17 @@ export const DynamicDataProductForm: React.FC<DynamicDataProductFormProps> = ({
         <button
           type="submit"
           disabled={loading}
-          className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-semibold text-xs shadow-lg shadow-emerald-950/50 flex items-center gap-2 transition-all disabled:opacity-50"
+          className="btn-primary rounded-lg text-xs font-bold"
         >
           {loading ? (
             <>
               <span className="animate-spin">⏳</span>
-              <span>Führe Workflow aus...</span>
+              <span>Erstelle Datenprodukt...</span>
             </>
           ) : (
             <>
               <span>⚡</span>
-              <span>Workflow Ausführen</span>
+              <span>Agenten ausführen & Angebot erstellen</span>
             </>
           )}
         </button>

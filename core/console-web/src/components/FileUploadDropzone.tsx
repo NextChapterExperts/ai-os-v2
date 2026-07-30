@@ -74,22 +74,19 @@ export const FileUploadDropzone: React.FC<FileUploadDropzoneProps> = ({ onUpload
   };
 
   return (
-    <div className="w-full bg-slate-900/70 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 shadow-xl">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+    <div className="w-full border border-[var(--line)] bg-[color-mix(in_oklab,white_65%,transparent)] rounded-2xl p-6 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div>
-          <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
-            <span className="text-emerald-400">📄</span> Dokument-Upload & Ingestion Pipeline
+          <h3 className="section-title text-base font-bold text-[var(--ink)] flex items-center gap-2 m-0">
+            <span className="text-[var(--signal)]">📄</span> Dokument-Upload & Ingestion Pipeline
           </h3>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs muted mt-1 m-0">
             Automatische Text- & PDF-Extraktion, SQLite FTS-Indizierung und OrgKnowledgeAsset-Commit in den Knowledge Graph.
           </p>
         </div>
         <div className="flex items-center gap-2">
           {["PDF", "MD", "TXT", "CSV"].map((ext) => (
-            <span
-              key={ext}
-              className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700"
-            >
+            <span key={ext} className="badge" data-variant="curated">
               {ext}
             </span>
           ))}
@@ -104,8 +101,8 @@ export const FileUploadDropzone: React.FC<FileUploadDropzoneProps> = ({ onUpload
         onClick={() => fileInputRef.current?.click()}
         className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 ${
           dragActive
-            ? "border-emerald-400 bg-emerald-950/30 scale-[1.01]"
-            : "border-slate-700/80 hover:border-emerald-500/60 bg-slate-950/60 hover:bg-slate-950/80"
+            ? "border-[var(--signal)] bg-[color-mix(in_oklab,var(--signal)_12%,white)] scale-[1.01]"
+            : "border-[var(--line)] hover:border-[var(--signal)] bg-white hover:bg-[color-mix(in_oklab,white_90%,transparent)]"
         }`}
       >
         <input
@@ -116,33 +113,33 @@ export const FileUploadDropzone: React.FC<FileUploadDropzoneProps> = ({ onUpload
           onChange={(e) => e.target.files && handleFiles(e.target.files)}
         />
         {uploading ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-3 text-slate-200">
+          <div className="flex flex-col items-center justify-center gap-2 py-3 text-[var(--ink)]">
             <span className="animate-spin text-2xl">⏳</span>
             <span className="text-sm font-medium">Verarbeite & indiziere Dokument...</span>
-            <span className="text-xs text-slate-500 font-mono">FTS Indexing & Knowledge Graph Commit</span>
+            <span className="text-xs mono muted">FTS Indexing & Knowledge Graph Commit</span>
           </div>
         ) : (
           <div className="space-y-2">
             <div className="text-3xl">📥</div>
-            <div className="text-sm font-medium text-slate-200">
-              Datei hierher ziehen oder <span className="text-emerald-400 underline font-semibold">durchsuchen</span>
+            <div className="text-sm font-semibold text-[var(--ink)]">
+              Datei hierher ziehen oder <span className="text-[var(--signal)] underline">durchsuchen</span>
             </div>
-            <div className="text-xs text-slate-500">PDF, Markdown, Plaintext, CSV (automatische Deduplizierung via SHA256)</div>
+            <div className="text-xs muted">PDF, Markdown, Plaintext, CSV (automatische Deduplizierung via SHA256)</div>
           </div>
         )}
       </div>
 
       {statusMsg && (
         <div
-          className={`mt-4 p-4 rounded-xl text-xs font-mono transition-all ${
+          className={`mt-4 p-4 rounded-xl text-xs mono transition-all border ${
             statusMsg.type === "success"
-              ? "bg-emerald-950/70 text-emerald-300 border border-emerald-800/80"
-              : "bg-rose-950/70 text-rose-300 border border-rose-800/80"
+              ? "bg-[color-mix(in_oklab,var(--signal)_10%,white)] text-[var(--signal)] border-[var(--signal)]"
+              : "bg-[color-mix(in_oklab,var(--danger)_10%,white)] text-[var(--danger)] border-[var(--danger)]"
           }`}
         >
           <div>{statusMsg.text}</div>
           {statusMsg.details && (
-            <div className="mt-2 pt-2 border-t border-emerald-800/50 flex flex-wrap items-center justify-between text-[11px] text-emerald-400/90">
+            <div className="mt-2 pt-2 border-t border-[var(--line)] flex flex-wrap items-center justify-between text-[11px]">
               <span>Path: {statusMsg.details.path}</span>
               <span>Hash: {statusMsg.details.hash?.slice(0, 16)}...</span>
             </div>
