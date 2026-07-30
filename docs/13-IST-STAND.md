@@ -9,6 +9,7 @@
 ## Kurzfazit
 
 Auf der **NCE DEV-VM** läuft ein **gehärtetes Phase-0/1/2-Fundament** für das KI-Betriebssystem:
+- **Verkaufspitch & Pitch Deck ([docs/17-PITCH-DECK.md](17-PITCH-DECK.md)):** Management Summary & 6 Kern-Alleinstellungsmerkmale für den Vertrieb der souveränen Mandanten-Plattform.
 - **Automatisierte Git Multi-Repo Sync Engine (`active/git-push-active.sh`):** Verwaltet 9 aktive private Git-Repositories auf GitHub unter `NextChapterExperts`. Ignoriert strikt lokale Ordner (`projekt-zorro`, `steuer-2025`, `steuer-2026`).
 - **VIRKI Console Web UI Overhaul (`core/console-web`):** Mystisches `Cinzel`-Branding, interaktiver Git-Push-Button (`GitPushButton`) auf der Projekte-Seite und Next.js API-Route `/api/git-push`.
 - **Integrierter Dokumenten-Viewer & System-Opener:** APIs `/api/view-file` und `/api/open-local` erlauben das direkte Lesen und Öffnen von lokalen Markdown-, Canvas- und Projektdateien aus der Web-UI heraus.
