@@ -148,3 +148,14 @@ async def test_daily_open_loops_formatting_and_navigation_links():
         delete_meeting(m["id"], tenant_id)
 
 
+def test_handwerk_angebot_intent_routing():
+    prompts = [
+        "Erstelle ein Handwerker Angebot",
+        "Handwerk Angebot erstellen",
+        "erstelle angebot für Schulze",
+    ]
+    for prompt in prompts:
+        intent = route_intent(prompt)
+        assert intent == "handwerk_angebot", f"Failed for prompt: '{prompt}' (got {intent})"
+
+

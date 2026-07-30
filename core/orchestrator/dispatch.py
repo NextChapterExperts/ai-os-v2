@@ -21,6 +21,22 @@ async def dispatch(
             "sourceCount": 0,
         }
 
+    if intent == "handwerk_angebot":
+        from core.workflow_engine.generic_runner import execute_registered_workflow
+        res = await execute_registered_workflow("handwerk-angebot", tenant_id, {
+            "kunden_name": params.get("kunden_name") or "Malerbetrieb Schulze",
+            "projekt_titel": params.get("projekt_titel") or "Fassadenanstrich",
+            "umfang_qm": float(params.get("umfang_qm") or 100.0),
+            "stundensatz": float(params.get("stundensatz") or 70.0),
+        })
+        return {
+            "answer": res["result"]["angebot_text"],
+            "kind": "workflow",
+            "workflow_result": res,
+            "sources": [],
+            "sourceCount": 0,
+        }
+
     if intent == "daily_open_loops":
         return await daily_open_loops.run(context_bundle, tenant_id, params)
 

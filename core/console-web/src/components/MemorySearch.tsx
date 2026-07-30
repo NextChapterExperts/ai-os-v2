@@ -52,6 +52,7 @@ const STANDARD_PROMPTS = [
   { label: "Was sind wichtige Punkte für heute?", value: "Was sind wichtige Punkte für heute?" },
   { label: "Wie ist der Stand zu welchem Projekt?", value: "Wie ist der Stand zu welchem Projekt?" },
   { label: "Gibt es offene Punkte aus Meetings?", value: "Gibt es offene Punkte aus Meetings?" },
+  { label: "Workflow: Handwerker-Angebot erstellen", value: "Erstelle ein Handwerker Angebot" },
   { label: "ich suche nach : Agenda", value: "ich suche nach : Agenda" },
 ] as const;
 

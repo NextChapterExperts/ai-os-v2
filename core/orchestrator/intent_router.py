@@ -16,6 +16,10 @@ def route_intent(raw: str, params: dict[str, Any] | None = None) -> str:
     if text in {"ping", "health"}:
         return "ping"
 
+    # 0. Workflow triggers
+    if any(k in lower for k in ("angebot ersteller", "angebot erstellen", "handwerk angebot", "handwerker angebot", "erstelle angebot", "erstelle ein angebot")):
+        return "handwerk_angebot"
+
     # 1. Explicit search commands take precedence over open-loop keywords
     if any(
         k in lower
