@@ -20,18 +20,24 @@ interface JsonSchema {
 
 interface DynamicDataProductFormProps {
   schema: JsonSchema;
+  initialValues?: Record<string, any> | null;
   onSubmit: (data: Record<string, any>) => void;
   loading?: boolean;
 }
 
 export const DynamicDataProductForm: React.FC<DynamicDataProductFormProps> = ({
   schema,
+  initialValues,
   onSubmit,
   loading = false,
 }) => {
   const [formData, setFormData] = useState<Record<string, any>>({});
 
   useEffect(() => {
+    if (initialValues && Object.keys(initialValues).length > 0) {
+      setFormData(initialValues);
+      return;
+    }
     if (schema?.properties) {
       const defaults: Record<string, any> = {};
       Object.entries(schema.properties).forEach(([key, prop]) => {
