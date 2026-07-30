@@ -100,7 +100,10 @@ Inference-Default: Ollama LAN (`OLLAMA_HOST` / `OLLAMA_DEFAULT_MODEL` in `.env`)
 - MCP Mail/Calendar: deterministische Stubs, keine echten IMAP/CalDAV-Calls
 - Meeting-Teilnehmer (`/v1/meetings/participants/*`): Orchestrator-Bridge — **Übergang** bis **comms-manager-agent** (Phase 4, MCP-only); siehe [ROADMAP §9.4](../ROADMAP.md#94-kommunikationsmanager-agent-comms-manager-agent)
 - Context Bundle: Slice-Struktur vorhanden; Retrieval/Graph/Skills noch Notes
-- Console `/workflows`: UI „geplant“, kein Scheduler/LangGraph
+- SDK Package (`sdk/`): `AgentBase`, `DataProduct`, `TenantContext`, `MCPAdapter`, `SkillHook`, `cli` gemäß P8/P15/P6 (Contract & Tooling für Fach- & Platform-Agenten)
+- Workflow Engine & Generic Workflows (`core/workflow_engine/generic_runner.py`): Registrierung und Ausführung deterministischer Code-Workflows (`handwerk-angebot`)
+- DataProduct Schema Export APIs (`/v1/dataproduct/schema/*`, `/v1/workflows/registry`, `/v1/workflow/execute`)
+- Console `/workflows` Cockpit (`core/console-web/src/app/workflows/page.tsx`): Dynamisches `DynamicDataProductForm` & `DataProductViewer` (generische Eingabe-Formulare & Datenprodukt-Visualisierung aus JSON-Schemata)
 - Letta in Compose: läuft mit SQLite-Volume; **L2 Archival angebunden** (`letta_client.py`, Agent pro Tenant, Ollama-Embeddings via LAN-IP)
 - Appliance `image-build.sh` / cloud-init: Scaffold, kein produktionsreifes Image
 - `deploy/core.yml`: Orchestrator optional unter Profile `core-docker`; Console/Capture/MCP nicht als Compose-Services
@@ -109,7 +112,7 @@ Inference-Default: Ollama LAN (`OLLAMA_HOST` / `OLLAMA_DEFAULT_MODEL` in `.env`)
 
 ## Noch geplant (im Repo fehlend oder nur spezifiziert)
 
-- `sdk/`, `tests/`, `platform-agents/`, `agents/`
+- `platform-agents/`, `agents/`
 - `deploy/platform-agents.yml`, `deploy/agents/*`, `deploy/chat-capture.yml`
 - Services: console-api `:8093`, search `:8094` (dediziert, aktuell Teil des Orchestrators), skill `:8095`, scheduler `:8096`
 - Memory Gateway Persist-Hook ✅ — LangGraph, `POST /v1/compute/mode`, Auto-Router/CAG offen

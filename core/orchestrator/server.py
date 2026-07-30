@@ -705,3 +705,54 @@ async def post_workflow_resume(req: ResumeWorkflowRequest) -> dict[str, Any]:
     from core.workflow_engine.engine import resume_workflow
 
     return resume_workflow(req.thread_id, req.input_data, req.checkpoint_id)
+
+
+class WorkflowExecuteRequest(BaseModel):
+    workflow_id: str
+    tenant_id: str = "nextchapter"
+    payload: dict[str, Any] = Field(default_factory=dict)
+
+
+@app.get("/v1/workflows/registry")
+async def get_workflows_registry() -> dict[str, Any]:
+    """Gibt die Liste aller registrierten Workflows inklusive JSON-Schemata zurück."""
+    import core.workflow_engine.sample_workflows  # Ensures sample workflows are registered
+    from core.workflow_engine.generic_runner import get_workflow_registry
+
+    registry = get_workflow_registry()
+    result = {}
+    for wf_id, wf in registry.items():
+        result[wf_id] = {
+            "workflow_id": wf.workflow_id,
+            "name": wf.name,
+            "description": wf.description,
+            "input_schema": wf.input_schema.model_json_schema(),
+            "output_schema": wf.output_schema.model_json_schema(),
+        }
+    return {"workflows": result, "count": len(result)}
+
+
+@app.get("/v1/dataproduct/schema/{node_type}")
+async def get_dataproduct_schema(node_type: str) -> dict[str, Any]:
+    """Gibt das JSON-Schema eines DataProducts für die Console-UI zurück."""
+    from .schema_registry import get_schema_by_node_type
+
+    schema = get_schema_by_node_type(node_type)
+    if schema is None:
+        raise HTTPException(status_code=404, detail=f"Unbekanntes DataProduct Schema: {node_type}")
+    return {"node_type": node_type, "schema": schema}
+
+
+@app.post("/v1/workflow/execute")
+async def post_workflow_execute(req: WorkflowExecuteRequest) -> dict[str, Any]:
+    """Führt einen registrierten deterministischen Workflow aus."""
+    import core.workflow_engine.sample_workflows  # Ensures sample workflows are registered
+    from core.workflow_engine.generic_runner import execute_registered_workflow
+
+    try:
+        return await execute_registered_workflow(req.workflow_id, req.tenant_id, req.payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+

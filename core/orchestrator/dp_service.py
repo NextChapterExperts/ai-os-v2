@@ -39,10 +39,16 @@ class DPCommitError(Exception):
 
 def _node_type_and_external_id(dp: DataProduct) -> tuple[str, str]:
     cls = type(dp)
-    if cls not in NODE_TYPE_BY_CLASS:
-        raise DPCommitError(f"Unbekannter DataProduct-Typ: {cls.__name__}")
-    node_type, id_field = NODE_TYPE_BY_CLASS[cls]
-    return node_type, getattr(dp, id_field)
+    if cls in NODE_TYPE_BY_CLASS:
+        node_type, id_field = NODE_TYPE_BY_CLASS[cls]
+        return node_type, getattr(dp, id_field)
+    
+    # Fallback für SDK/Custom DataProducts
+    node_type = getattr(cls, "node_type", f"custom:{cls.__name__}")
+    id_val = getattr(dp, "dp_id", getattr(dp, "id", None))
+    if id_val is None:
+        raise DPCommitError(f"Unbekannter DataProduct-Typ ohne ID: {cls.__name__}")
+    return node_type, str(id_val)
 
 
 def _ingest_recommended(dp: DataProduct) -> bool:
@@ -100,7 +106,8 @@ def commit_dataproduct(dp: DataProduct, dry_run: bool = False) -> dict[str, Any]
     )
 
     k_path_str: str | None = getattr(dp, "path", None)
-    if "K" in type(dp).storage_target and k_path_str:
+    storage_target = getattr(dp, "storage_target", ["G"])
+    if "K" in storage_target and k_path_str:
         if resolve_k_path(k_path_str) is None:
             payload["_k_path_unresolved"] = True
 
