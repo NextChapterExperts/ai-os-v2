@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { DynamicDataProductForm } from "@/components/DynamicDataProductForm";
 import { DataProductViewer } from "@/components/DataProductViewer";
+import { FileUploadDropzone } from "@/components/FileUploadDropzone";
 
 interface WorkflowItem {
   workflow_id: str;
@@ -80,6 +81,10 @@ export default function WorkflowsPage() {
         <Link href="/platform" className="btn-ghost text-sm">
           Zur Plattform
         </Link>
+      </div>
+
+      <div className="mb-10">
+        <FileUploadDropzone />
       </div>
 
       {loading ? (

@@ -460,6 +460,33 @@ async def get_capture_stats() -> dict[str, Any]:
     return stats
 
 
+@app.post("/v1/ingest/upload")
+async def upload_file_ingest(
+    file: UploadFile = File(...),
+    tenant_id: str = "nextchapter",
+    project_id: str | None = None,
+    user_id: str = "default_user",
+) -> dict[str, Any]:
+    """Universal Ingest Endpoint für PDF, Markdown, Text & Dokumente."""
+    from core.orchestrator.handlers.file_ingest_service import ingest_file_bytes
+
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="Leere Datei hochgeladen")
+
+    try:
+        res = ingest_file_bytes(
+            filename=file.filename or "upload.txt",
+            content=content,
+            tenant_id=tenant_id,
+            project_id=project_id,
+            user_id=user_id,
+        )
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 class ChatCompletionRequest(BaseModel):
     messages: list[dict[str, Any]]
     tenant_id: str = "nextchapter"

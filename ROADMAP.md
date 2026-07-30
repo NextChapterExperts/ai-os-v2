@@ -3,7 +3,7 @@
 **Für:** LLMs, Entwickler, die das System von Grund auf bauen  
 **Zweck:** Vollständige technische Spezifikation — ausreichend detailliert um ohne zusätzlichen Kontext zu starten  
 **Basis:** AI-OS v1 (../1000-AI-OS) — eingefroren Juli 2026  
-**Stand:** Juli 2026 (aktualisiert 2026-07-30 — Agent SDK Contract Framework, Deterministic Generic Workflow Engine, DataProduct Schema Export APIs & Dynamic Console UI Form/Result Renderers, Compute Mode Fallback & Service Health Regression Suite, Daily Open Loops Formatting Cleanup & Navigation Context Preservation, Daily Open Loops Clarity & Direct Navigation Links, Synthesized Meeting Summary Restoration, Regression Test Suite for Meeting Search & Dispatch, Orchestrator Live Reload & Compute Mode Fallback, Meeting To-Do Search Integration, Wyrd-Key & Odin Legend Popover, Lagebild UI Cleanup & Prompt Dropdown, Standard Prompt Catalog & Refined Intent Router, VIRKI UI Branding, Git Push Automation & Multi-Repo Sync, Document Viewers, WAQAM & Studentenprojekt Restrukturierung, Projekt Zorro)  
+**Stand:** Juli 2026 (aktualisiert 2026-07-30 — Universal File Upload Ingest Service & Drag-Drop UI, Appliance VM Packaging Automation & Cloud-Init Bootstrap, Agent SDK Contract Framework, Deterministic Generic Workflow Engine, DataProduct Schema Export APIs & Dynamic Console UI Form/Result Renderers, Compute Mode Fallback & Service Health Regression Suite, Daily Open Loops Formatting Cleanup & Navigation Context Preservation, Daily Open Loops Clarity & Direct Navigation Links, Synthesized Meeting Summary Restoration, Regression Test Suite for Meeting Search & Dispatch, Orchestrator Live Reload & Compute Mode Fallback, Meeting To-Do Search Integration, Wyrd-Key & Odin Legend Popover, Lagebild UI Cleanup & Prompt Dropdown, Standard Prompt Catalog & Refined Intent Router, VIRKI UI Branding, Git Push Automation & Multi-Repo Sync, Document Viewers, WAQAM & Studentenprojekt Restrukturierung, Projekt Zorro)  
 **Modus:** **Eine Implementierung** — keine Alternativen in dieser Roadmap. Jede Entscheidung ist final.  
 **Detail-Spec Company Brain:** [docs/09-COMPANY-BRAIN.md](docs/09-COMPANY-BRAIN.md) · **Memory einfach:** [docs/10-MEMORY-EINFACH.md](docs/10-MEMORY-EINFACH.md) · **Kontext Lagebild→LLM:** [docs/14-KONTEXT.md](docs/14-KONTEXT.md)  
 **Erstes Lizenzprodukt (VM):** [docs/11-PLATFORM-VM.md](docs/11-PLATFORM-VM.md)  
@@ -3231,6 +3231,15 @@ AIOS_COMPUTE_MODE_PATH=/opt/ai-os/memory/state/compute-mode.json
 - LangFuse: Traces bleiben lokal in der VM
 - OpenRouter: Prompts standardmäßig nicht geloggt
 - Sovereign: Ollama LAN — kein Cloud-Outbound
+
+---
+
+## Stand & Changelog (2026-07-30 — File Ingest, VM Appliance & Agent SDK)
+
+- **Universal File Ingestion Pipeline**: REST-Endpoint `POST /v1/ingest/upload` & `file_ingest_service.py` verarbeiten PDF, Markdown, TXT & CSV-Dateien, indizieren FTS-Chunks in SQLite `memory.db` und committen `OrgKnowledgeAsset` DataProducts in den Knowledge Graph (siehe [docs/15-FILE-INGESTION.md](docs/15-FILE-INGESTION.md)).
+- **Console Web Drag & Drop UI**: Interaktive `FileUploadDropzone.tsx` Komponente und `/api/ingest/upload` API-Proxy in der Next.js Console unter `/workflows`.
+- **Appliance VM Packaging Automation**: Skript `appliance/image-build.sh`, `appliance/cloud-init.yaml` & Mandanten-VM Onboarding Skript `appliance/init-tenant-vm.sh` für die automatisierte Erstellung schlüsselfertiger Kunden-VMs (siehe [docs/16-VM-PACKAGING.md](docs/16-VM-PACKAGING.md)).
+- **Agent SDK & Generic Workflows**: `sdk/` Framework für Fach- & Platform-Agenten (`AgentBase`, `DataProduct`, `TenantContext`, `MCPAdapter`, `SkillHook`) sowie deterministische Workflow Engine (`generic_runner.py`).
 
 ---
 

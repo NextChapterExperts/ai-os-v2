@@ -1,0 +1,73 @@
+#cloud-config
+# AI-OS v2 — Production Cloud-Init Config für Tenant Platform-VM Appliance (P19)
+
+hostname: ai-os-appliance
+manage_etc_hosts: true
+
+users:
+  - name: aios
+    groups: [sudo, docker]
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    lock_passwd: false
+
+package_update: true
+package_upgrade: true
+packages:
+  - curl
+  - ca-certificates
+  - git
+  - openssh-server
+  - sqlite3
+  - python3-pip
+  - python3-venv
+
+write_files:
+  - path: /etc/systemd/system/aios-orchestrator.service
+    permissions: '0644'
+    content: |
+      [Unit]
+      Description=AI-OS Core Orchestrator Service
+      After=network.target docker.service
+      Requires=docker.service
+
+      [Service]
+      Type=simple
+      User=aios
+      WorkingDirectory=/opt/ai-os
+      ExecStart=/usr/bin/bash /opt/ai-os/core/orchestrator/run.sh
+      Restart=always
+      RestartSec=5
+
+      [Install]
+      WantedBy=multi-user.target
+
+  - path: /etc/systemd/system/aios-mcp-gateway.service
+    permissions: '0644'
+    content: |
+      [Unit]
+      Description=AI-OS MCP Gateway Service
+      After=network.target aios-orchestrator.service
+
+      [Service]
+      Type=simple
+      User=aios
+      WorkingDirectory=/opt/ai-os
+      ExecStart=/usr/bin/bash /opt/ai-os/core/mcp_gateway/run.sh
+      Restart=always
+      RestartSec=5
+
+      [Install]
+      WantedBy=multi-user.target
+
+runcmd:
+  - curl -fsSL https://get.docker.com | sh
+  - usermod -aG docker aios
+  - mkdir -p /opt/ai-os/{memory/state,ingest/inbox/documents,logs,config}
+  - chown -R aios:aios /opt/ai-os
+  - systemctl daemon-reload
+  - systemctl enable docker
+  - systemctl enable aios-orchestrator.service
+  - systemctl enable aios-mcp-gateway.service
+
+final_message: "AI-OS Platform-VM Appliance initialized successfully."
