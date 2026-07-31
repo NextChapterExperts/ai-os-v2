@@ -1,168 +1,94 @@
 # VIRKI AI-OS v2 — Das Souveräne KI-Betriebssystem für Unternehmen
 
-> **Das Master Verkaufspitch- & Positionierungs-Dokument**  
-> *Eine schlüsselfertige Appliance · Vollständige Daten-Souveränität · Deterministische Workflows · Maximale Kostenkontrolle*
+> **Souverän. Deterministisch. Mandantenfähig.**  
+> *Volle Kontrolle über Ihre Unternehmensdaten · Strukturierte Firmenidentität · Verlässliche Geschäftsprozesse*
 
 ---
 
-## 🎯 1. Management Summary & Elevator Pitch
+## 🏛️ 1. Die VIRKI Brand-Story (Kurz erklärt)
 
-**VIRKI AI-OS v2** ist das erste schlüsselfertige KI-Betriebssystem für mittelständische Unternehmen, Handwerk, Kanzleien und Experten-Organisationen, das **vollständige Datensouveränität** mit **deterministischen Arbeitsabläufen** vereint.
+Der Name **VIRKI** entstammt der altnordischen Mythologie und steht für eine **geschützte Festung**. Das System basiert auf drei klaren Säulen:
 
-Während herkömmliche KI-Systeme sensible Betriebsdaten in US-Clouds hochladen und unvorhersehbare Ergebnisse liefern, läuft VIRKI auf Wunsch **zu 100% lokal im eigenen Firmennetzwerk (On-Premise / Private Cloud)**. Business-Prozesse werden nicht vagen Prompts überlassen, sondern als **deterministische Code-Workflows** mit automatisch generierten Datenprodukten und UIs ausgeführt.
-
-```text
-Der Pitch in 3 Sätzen:
-1. "VIRKI ist Ihr privates KI-Betriebssystem, das 100% lokal in Ihrem Betrieb läuft — kein Cloud-Zwang, keine Datenweitergabe."
-2. "Ihre Firmen-Daten (Angebote, Verträge, E-Mails) werden automatisch in einem zentralen Unternehmens-Gedächtnis verknüpft."
-3. "Ihre Mitarbeiter nutzen spezialisierte Fachagenten, deren Benutzeroberflächen sich exakt an Ihre Geschäftsprozesse anpassen — verlässlich, rechtssicher und blitzschnell."
-```
+* 🏰 **VIRKI (Die Festung):** Ihre isolierte, sichere KI-Umgebung, die wahlweise zu 100% in Ihrem eigenen Firmennetzwerk (On-Premise / Private Cloud) betrieben wird.
+* 🦅 **MUNINN (Das Gedächtnis):** Der Rabe des Gedächtnisses. Erfasst kontinuierlich Ihre Unternehmensdokumente, Richtlinien, E-Mails und E-Mail-Notizen und baut ein zentrales Firmenhirn (*Company Brain*) auf.
+* 🦅 **HUGINN (Der Gedanke):** Der Rabe des Gedankens. Führt verlässliche, deterministische Geschäftsprozesse aus und steuert die spezialisierten Fachagenten.
 
 ---
 
-## ⚠️ 2. Die 4 Hauptprobleme bei Commercial Cloud-KI
+## 🎯 2. Der Kern-Pitch (Executive Summary)
 
-Unternehmen stehen heute vor vier massiven Hürden bei der Nutzung moderner Künstlicher Intelligenz:
+**VIRKI AI-OS v2** ist kein generischer Chatbot, sondern ein **schlüsselfertiges KI-Betriebssystem** für den Mittelstand, Handwerksbetriebe und Kanzleien.
 
-```
-┌───────────────────────────────────────────────────────────────────────────┐
-│                    DIE 4 HAUPTPROBLEME BEI COMMERCIAL AI                   │
-├───────────────────────────────────────────────────────────────────────────┤
-│ 1. EXZESSIVE KOSTEN      LLM-Token-Kosten skalieren unberechenbar       │
-│ 2. DATENSCHUTZ & DSGVO   Schatten-KI überträgt Betriebsgeheimnisse        │
-│ 3. SILO-CHATBOTS         Kein verlässliches Unternehmens-Gedächtnis      │
-│ 4. PROBABILISTISCH       Halluzinationen & unberechenbare Agenten-Loops    │
-└───────────────────────────────────────────────────────────────────────────┘
-```
+Im Gegensatz zu öffentlichen Cloud-KIs, die vertrauliche Betriebsdaten in externe Server hochladen und unvorhersehbare Ergebnisse liefern, bietet VIRKI:
 
-1. **Exzessive Token- & Abo-Kosten:** Pro-Seat-Monatsabos und steigende API-Kosten skalieren unlinear mit der Nutzung.
-2. **Datenschutz- & DSGVO-Risiko:** Mitarbeiter nutzen Schatten-KI und laden vertrauliche Kunden- & Finanzdaten in US-Clouds hoch.
-3. **Wissens-Silos:** Chatbots behalten ihr Wissen in isolierten Sessions; ein zentraler Wissensaufbau im Unternehmen findet nicht statt.
-4. **Agenten-Amok & Halluzinationen:** Reinkit-Agenten geraten in unkontrollierbare Schleifen und erzeugen fehlerhafte Dokumente ohne Audit-Trail.
+1. **100% Datensouveränität:** Ihre Daten bleiben in Ihrer Hand und verlassen auf Wunsch niemals das Firmennetzwerk.
+2. **Strukturierte Firmenidentität:** Bevor Agenten arbeiten, werden Ihre betrieblichen Grundlagen (Kalkulationsregeln, Stundensätze, AGBs, Richtlinien) im Unternehmensgedächtnis hinterlegt.
+3. **Verlässliche Prozess-Ausführung:** Geschäftskritische Aufgaben (z. B. Angebotserstellung) laufen als deterministische Code-Workflows ab — ohne Halluzinationen oder verdeckte Rechenfehler.
 
 ---
 
-## 🚀 3. Die 6 Kern-Alleinstellungsmerkmale (Value Propositions)
+## 🧱 3. Der realistische Ablauf: Von der Firmenidentität zum Fachagenten
+
+Ein KI-Agent kann nur so gut arbeiten wie das Wissen, auf das er zugreift. Bei VIRKI erfolgt die Nutzung in zwei klaren Phasen:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ 1. 100% SOUVERÄN & LOKAL (Air-Gapped Cloud-Unabhängigkeit)                 │
-│    Betrieb wahlweise zu 100% lokal im eigenen LAN (Ollama, SQLite, Qdrant).│
-│    Keine Daten verlassen das Unternehmen. DSGVO & Betriebsgeheimnis-safe. │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                      │
-                                      ▼
+│ SCHRITT 1: AUFBAU DER DIGITALEN FIRMENIDENTITÄT                             │
+│                                                                             │
+│ • Hinterlegung der Betriebsparameter (Stundensätze, Gemeinkostenaufschlag).│
+│ • Ingestion von AGBs, Gewährleistungsrichtlinien & Angebotsvorlagen.       │
+│ • Speicherung aller Vorgaben im zentralen Knowledge Graph (Company Brain). │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │
+                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ 2. FLEXIBLE HYBRID-RECHENMODI (Sovereign vs. Premium)                       │
-│    - Sovereign: 0% Cloud-Outbound (Ollama LAN)                             │
-│    - Balanced / Premium / Coding: Cloud-Power mit automatischer PII-       │
-│      Anonymisierung (IBAN, E-Mails, Telefonnummern werden lokal gefiltert).│
-└─────────────────────────────────────────────────────────────────────────────┘
-                                      │
-                                      ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ 3. AUTOMATISCHES UNTERNEHMENS-GEDÄCHTNIS (3-Ebenen Flywheel)               │
-│    Alle Chats, E-Mails, Dokumente & Meetings fließen in ein episches        │
-│    Gedächtnis (L1 Working, L2 Archival, L3 Core Memory) und bauen           │
-│    automatisch einen Knowledge Graph (Postgres) auf.                        │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                      │
-                                      ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ 4. DETERMINISTISCHE WORKFLOWS STATT AGENTEN-CHAOS                          │
-│    Geschäftskritische Abläufe (Angebote, Verträge, Abrechnungen) laufen als│
-│    exakte Code-Workflows ab — 100% verlässlich, auditierbar & reproduzierbar.│
-└─────────────────────────────────────────────────────────────────────────────┘
-                                      │
-                                      ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ 5. UNIVERSELLE DATAPRODUCT-ARCHITEKTUR & AUTOMATISCHE UI                   │
-│    Fachagenten kommunizieren über strukturierte Verträge (DataProducts).    │
-│    Das System erzeugt Eingabe- und Ausgabe-Formulare **automatisch**       │
-│    aus dem Datenschema. Keine teuren Individual-UIs pro Kunde erforderlich. │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                      │
-                                      ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ 6. SCHLÜSSELFERTIGE MANDANTEN-APPLIANCE (VM-Packaging)                      │
-│    Neue Kunden erhalten eine isolierte, schlüsselfertige VM (QCOW2 Image,   │
-│    Cloud-Init). Onboarding & Mandanten-Setup in unter 2 Minuten.            │
+│ SCHRITT 2: AUSFÜHRUNG DURCH SPEZIALISIERTE FACHAGENTEN                      │
+│                                                                             │
+│ • Der Fachagent greift strikt auf die geprüfte Firmenidentität zu.          │
+│ • Eingabe- und Ausgabe-Formulare generieren sich automatisch (DataProducts). │
+│ • Ergebnis: Präzise, rechtssichere und nachvollziehbare Dokumente.          │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 💼 4. Zielgruppen & Branchen-Use-Cases
+## 🚀 4. Die 5 zentralen Säulen von VIRKI
 
-### 1. Handwerk & Bauhauptgewerbe
-* **Herausforderung:** Komplexe Angebote, Stundensätze, Materialaufschläge & rechtliche Rahmenbedingungen.
-* **VIRKI Lösung:** Das System nutzt im Firmen-Memory abgelegte Betriebsprofile (Stundensätze, AGBs, Vorlagen pro Gewerk) und generiert rechtssichere Kundenangebote in Sekunden.
+### 1. 🛡️ Vollständige Datensouveränität (On-Premise & Private Cloud)
+Betreiben Sie VIRKI direkt in Ihrem Firmennetzwerk. Keine unfreiwillige Datenweitergabe an Drittanbieter, volle DSGVO-Konformität und Schutz Ihres Betriebsgeheimnisses.
 
-### 2. Kanzleien, Steuerberater & Wirtschaftsprüfer
-* **Herausforderung:** Höchste Vertraulichkeitsanforderungen (DSGVO, Berufsgeheimnis).
-* **VIRKI Lösung:** `Sovereign Mode` garantiert, dass Mandantendaten niemals das Kanzleinetzwerk verlassen. Der Knowledge Graph verknüpft Fristen, Beschlüsse & Gutachten.
+### 2. 🧠 Zentrales Unternehmensgedächtnis (Company Brain)
+Verknüpft Chats, Dokumente, E-Mails und Meetings in einem strukturierten Knowledge Graph. Wissen geht bei Mitarbeiterwechseln nicht mehr verloren.
 
-### 3. Mittelständische Fertigung & IT-Dienstleister
-* **Herausforderung:** Wissensverlust bei Mitarbeiterwechsel & unstrukturierte Projekt-Kommunikation.
-* **VIRKI Lösung:** Automatischer Chat- & Dokumenten-Ingest baut ein zentrales Unternehmens-Brain auf.
+### 3. ⚙️ Deterministische Prozesssicherheit
+Geschäftsprozesse laufen nach mathematisch und logisch definierten Regeln ab. Das Ergebnis ist auditierbar, reproduzierbar und frei von KI-Halluzinationen.
 
----
+### 4. 🔒 Datenschutz-Gateway mit lokaler PII-Anonymisierung
+Sollten für hochkomplexe Aufgaben externe Cloud-Modelle hinzugeschaltet werden, maskiert das integrierte Gateway sensible Daten (Namen, IBANs, Adressen) vor der Übertragung automatisch.
 
-## ⚔️ 5. Lösungsmatrix: Die 10 Realitätsfallen vs. VIRKI
-
-| # | Realitätsfalle | Das reale Risiko im Unternehmen | Die VIRKI Lösung |
-|---|---|---|---|
-| 1 | **Failing Silently** | KI bucht stumm falsch im ERP; Schaden erst spät sichtbar. | **HUGINN Envelope:** Pydantic Schema-Validierung + HITL-Freigabe. |
-| 2 | **Context- & RAG-Drift** | Vektorsuche liefert veraltete Verträge (Ähnlichkeit $\neq$ Relevanz). | **MUNINN GraphRAG:** Präzise Suche im Knowledge Graph (`org:*`). |
-| 3 | **Reasoning Loops** | Agent scheitert und wiederholt API-Calls 40x (Kosten-Explosion). | **HUGINN State-Machine:** LangGraph Checkpointing & Circuit Breaker. |
-| 4 | **Privacy-Verletzung (PII)** | Kundennamen & IBANs fließen unbemerkt an US-Cloud-LLMs. | **VIRKI Privacy-Gateway:** PII wird lokal maskiert & re-enriched. |
-| 5 | **Model- & Prompt-Drift** | Modell-Update in Cloud bricht JSON-Format unbemerkt. | **MUNINN Evaluation:** Golden-Dataset Regressionstests. |
-| 6 | **Berechtigungs-Chaos** | Agent hat zu weite Rechte und bucht ohne Freigabe im ERP. | **VIRKI Isolation:** Granulare `user_id`- & Sichtbarkeits-Level. |
-| 7 | **GoBD / SOX Lineage** | Prüfer fragt „Warum wurde gebucht?“; System schweigt. | **MUNINN Krypto-Audit-Trail:** Prompt-Hash, RAG-Quellen & Modellversion. |
-| 8 | **Transaktions-Rollback** | Schritt 1 & 2 committed, Schritt 3 timed out. | **HUGINN Sagas:** Automatische Kompensationstransaktionen. |
-| 9 | **Latenz-SLA** | Cloud-LLM braucht 8 Sek., Scanner braucht 200 ms. | **VIRKI Fast-Path:** Synchroner Fast-Path (<100 ms) + Ollama LAN. |
-| 10 | **API-Ausfall / Failover** | Cloud-API 4 Std. down am Monatsende. | **VIRKI Resilient Failover:** Automatischer Wechsel auf lokale Modelle. |
+### 5. 🎨 Automatisch generierte Benutzeroberflächen (DataProducts)
+Fachagenten kommunizieren über definierte Datenverträge. Die Benutzeroberfläche zur Erfassung und Anzeige generiert sich automatisch — ohne teure Individual-Softwareentwicklung.
 
 ---
 
-## 📊 6. Vergleichstabelle & ROI-Kalkulation
+## 🛠️ 5. Praxis-Beispiel: Angebotserstellung im Handwerk
 
-| Feature | Standard Cloud-KI (z.B. ChatGPT Enterprise) | VIRKI AI-OS v2 |
+1. **Vorbereitung (Firmenidentität):** Im Betriebsprofil sind Stundensätze, Materialaufschläge, AGBs und Gewerk-Standards hinterlegt.
+2. **Projekterfassung:** Der Anwender gibt die Projektdaten (z. B. Umfang, Kundename, Gewerk) in das automatisch erzeugte Formular ein.
+3. **Kalkulation:** Der Angebots-Agent berechnet auf Basis der hinterlegten Betriebsdaten das Angebot und erzeugt ein strukturiertes, auditierbares Datenprodukt (`AngebotOutput`).
+
+---
+
+## 📊 6. Vergleich: VIRKI AI-OS v2 vs. Standard Cloud-KI
+
+| Kriterium | Standard Cloud-KI (z.B. ChatGPT Enterprise) | VIRKI AI-OS v2 |
 | :--- | :--- | :--- |
-| **Datenspeicherung** | US-Cloud Server | **100% On-Premise / Lokales LAN** |
-| **DSGVO / Datenschutz** | Auftragsverarbeitung via US-Provider | **Volle Souveränität & Anonymizer lokal** |
+| **Datenspeicherung** | US-Cloud-Server | **100% On-Premise / Lokales LAN** |
+| **Betriebsgrundlagen** | Verblasst im laufenden Chat | **Strukturierte Firmenidentität (Company Brain)** |
 | **Prozess-Zuverlässigkeit** | Probabilistisch (Halluzinationsrisiko) | **Deterministische Code-Workflows** |
-| **Unternehmens-Wissen** | Statisches RAG / Dokumenten-Upload | **Dynamischer Knowledge Graph + 3-Ebenen Memory** |
-| **Kostenstruktur** | Monatliche User-Abos (per Seat Scaling) | **Schlüsselfertige VM-Appliance / Flatrate** |
-| **Benutzeroberflächen** | Generischer Chatbot | **Automatisch generierte DataProduct UIs** |
-
-### ROI-Beispielrechnung:
-Ein Unternehmen mit 50 Mitarbeitern spart durch den Einsatz der lokalen VIRKI-Appliance für Routinefragen und interne Recherchen **bis zu 35.000 € pro Jahr** an externen API- und Token-Kosten.
+| **Datenschutz / DSGVO** | Vertrauen in AGBs Dritter | **Lokale PII-Anonymisierung & Souveränität** |
+| **Benutzeroberfläche** | Generischer Chatbot | **Automatisch generierte Formulare & Renderer** |
 
 ---
 
-## 📦 7. Lizenzierungs- & Paketmodell
-
-```text
-┌───────────────────────────────────────────────────────────────────────────┐
-│ PLATFORM-VM BASE APPLIANCE (Basis-Lizenz)                                 │
-│ - Vollständiger AI-OS v2 Kernel (Orchestrator, Memory, Search)            │
-│ - Company Brain (Knowledge Graph + Qdrant L1)                             │
-│ - PII Redactor & Model Gateway (Ollama + OpenRouter)                      │
-│ - Next.js Console Web App & Chat-Capture Engine                           │
-└─────────────────────────────────────┬─────────────────────────────────────┘
-                                      │
-                                      ▼
-┌───────────────────────────────────────────────────────────────────────────┐
-│ FACH-AGENTEN SKUs (Optionale Erweiterungspakete)                          │
-│                                                                           │
-│  [AIOS-PACK-HANDWERK]    Handwerker-Angebote & Kalkulations-Workflows    │
-│  [AIOS-PACK-RESEARCH]    Tiefenrecherche & Marktanalysen                 │
-│  [AIOS-PACK-EMAIL]       Automatische E-Mail-Triage & Vorformulierung    │
-│  [AIOS-PACK-COMMS]       Meeting-Dokumentation & Teilnehmer-Sync        │
-└───────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-*VIRKI AI-OS v2 — Die Zukunft der souveränen Unternehmens-KI.*
+*VIRKI AI-OS v2 — Die verlässliche Festung für Ihre Unternehmens-KI.*
