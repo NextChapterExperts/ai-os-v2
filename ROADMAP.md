@@ -3236,7 +3236,7 @@ AIOS_COMPUTE_MODE_PATH=/opt/ai-os/memory/state/compute-mode.json
 
 ## Stand & Changelog (2026-07-30 — File Ingest, VM Appliance & Agent SDK)
 
-- **Agenten Cockpit & Executive Pitch Deck**: Re-Branding der Workflows-Seite zu **Agenten Cockpit (`/agents`)**, VIRKI Paper-Design-Anpassung, statische Demo-Fallback-Simulation sowie umfassendes Sales Pitch Deck (siehe [docs/17-PITCH-DECK.md](docs/17-PITCH-DECK.md)).
+- **Agenten Cockpit & Konsolidierter Master-Verkaufspitch**: Re-Branding der Workflows-Seite zu **Agenten Cockpit (`/agents`)**, VIRKI Paper-Design-Anpassung, statische Demo-Fallback-Simulation sowie konsolidiertes Master Sales Pitch Dokument (siehe [docs/VERKAUFSPITCH.md](docs/VERKAUFSPITCH.md)).
 - **Universal File Ingestion Pipeline**: REST-Endpoint `POST /v1/ingest/upload` & `file_ingest_service.py` verarbeiten PDF, Markdown, TXT & CSV-Dateien, indizieren FTS-Chunks in SQLite `memory.db` und committen `OrgKnowledgeAsset` DataProducts in den Knowledge Graph (siehe [docs/15-FILE-INGESTION.md](docs/15-FILE-INGESTION.md)).
 - **Console Web Drag & Drop UI**: Interaktive `FileUploadDropzone.tsx` Komponente und `/api/ingest/upload` API-Proxy in der Next.js Console unter `/workflows`.
 - **Appliance VM Packaging Automation**: Skript `appliance/image-build.sh`, `appliance/cloud-init.yaml` & Mandanten-VM Onboarding Skript `appliance/init-tenant-vm.sh` für die automatisierte Erstellung schlüsselfertiger Kunden-VMs (siehe [docs/16-VM-PACKAGING.md](docs/16-VM-PACKAGING.md)).
