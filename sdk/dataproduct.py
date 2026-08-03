@@ -35,5 +35,20 @@ class DataProduct(BaseModel):
 
     @classmethod
     def get_ui_schema(cls) -> dict[str, Any]:
-        """Exportiert das JSON-Schema für die dynamische Console-UI."""
-        return cls.model_json_schema()
+        """JSON-Schema für die Console-UI — ohne interne DataProduct-Felder."""
+        internal = {
+            "dp_id",
+            "schema_version",
+            "tenant_id",
+            "produced_by",
+            "produced_at",
+            "workflow_run_id",
+            "storage_target",
+            "ingest_recommended",
+        }
+        schema = cls.model_json_schema()
+        props = schema.get("properties") or {}
+        schema["properties"] = {k: v for k, v in props.items() if k not in internal}
+        if schema.get("required"):
+            schema["required"] = [r for r in schema["required"] if r not in internal]
+        return schema

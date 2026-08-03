@@ -1,0 +1,57 @@
+# MCP-Server-Allowlist (V2 — native Google-Adapter in core/mcp_gateway/adapters/)
+
+servers:
+  mail:
+    type: native
+    adapter: mail
+    caps:
+      max_calls_per_workflow: 20
+      max_calls_per_hour_per_tenant: 200
+    audit: true
+    allowed_tenants: all
+    tools:
+      - status
+      - get_recent
+      - get_by_id
+      - parse_headers
+      - list_open_actions
+      - preview_invoices
+      - run_invoices
+      - export_steuer
+
+  calendar:
+    type: native
+    adapter: calendar
+    caps:
+      max_calls_per_workflow: 10
+      max_calls_per_hour_per_tenant: 100
+    audit: true
+    allowed_tenants: all
+    tools:
+      - get_today
+      - list_today
+      - get_week
+      - list_events
+      - list_attendees
+      - get_event
+
+  drive:
+    type: native
+    adapter: drive
+    caps:
+      max_calls_per_workflow: 5
+      max_calls_per_hour_per_tenant: 30
+    audit: true
+    allowed_tenants: all
+    tools:
+      - list_sources
+      - poll_chats
+      - list_folder
+
+  # Externer Sidecar (Phase M2) — siehe deploy/core.yml
+  calendar_external:
+    type: external
+    image: ghcr.io/modelcontextprotocol/google-calendar:latest
+    env:
+      GOOGLE_CREDENTIALS: ${GOOGLE_CREDENTIALS_JSON}
+    note: "Optionaler Sidecar; native calendar-Adapter hat Vorrang solange secrets/google konfiguriert ist."

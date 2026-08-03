@@ -41,3 +41,22 @@ services:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
     profiles: ["chat-capture-docker"]
+
+  gemini-drive:
+    image: python:3.12-slim
+    working_dir: /app
+    command: ["python", "core/capture/gemini-drive-poller.py", "--json-lines", "--source-id", "gemini-workspace"]
+    volumes:
+      - ..:/app:ro
+      - /opt/ai-os/memory:/opt/ai-os/memory
+      - /opt/ai-os/secrets/google:/opt/ai-os/secrets/google:ro
+    environment:
+      PYTHONPATH: /app
+      AIOS_MEMORY_ROOT: /opt/ai-os/memory
+      GOOGLE_TOOLS_SECRETS: /opt/ai-os/secrets/google
+      AIOS_CHAT_SOURCES: /app/config/chat-sources.yaml
+      DEFAULT_TENANT: nextchapter
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    profiles: ["chat-capture-docker"]

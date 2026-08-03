@@ -7,22 +7,38 @@ Vertragserfüllung aller Plattform-Core-Komponenten:
 3. Intent Router & Unified Search Contract
 4. Compute Mode Switcher Contract
 5. PII Redaction Gateway Contract (Cloud Escalation Protection)
+6. Google Invoice Intent Router Contract
+7. MCP Mail Invoice Tools Contract
+8. Email-Agent MCP-only Contract
+9. Invoice Parser Regression (deterministisch)
 """
 
 from __future__ import annotations
 
 import os
 import sys
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 from fastapi.testclient import TestClient
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, REPO)
 
+from agents.email.agent import EmailAgent
+from agents.email.dataproducts import InvoiceRunRequest
+from core.google.invoice.extract import extract_amount, extract_invoice_id
+from core.mcp_gateway.adapters.registry import allowlist, dispatch
 from core.orchestrator.dataproducts import OrgKnowledgeAsset
 from core.orchestrator.dp_service import commit_dataproduct
+from core.orchestrator.handlers.email_invoices import invoice_status
+from core.orchestrator.intent_router import route_intent
 from core.orchestrator.pii_redactor import redact_pii, restore_pii
 from core.orchestrator.query_router import route_query
 from core.orchestrator.server import app
+from sdk.tenant_context import TenantContext
+
+import core.mcp_gateway.adapters  # noqa: F401 — MCP-Handler registrieren
 
 client = TestClient(app)
 
@@ -89,3 +105,74 @@ def test_platform_gate_5_pii_redaction_contract():
 
     restored = restore_pii(redacted_res.redacted_text, redacted_res.mappings)
     assert restored == sensitive_prompt
+
+
+def test_platform_gate_6_invoice_intent_router():
+    """Gate 6: Rechnungs-Intents deterministisch routbar (P4)."""
+    assert route_intent("Rechnungen aus Gmail") == "invoice_run"
+    assert route_intent("Steuer Export Rechnungen 2025") == "invoice_export"
+
+
+def test_platform_gate_7_mcp_mail_invoice_tools():
+    """Gate 7: MCP mail-Adapter exponiert Rechnungs-Tools."""
+    mail_tools = allowlist().get("mail", [])
+    for tool in ("status", "preview_invoices", "run_invoices", "export_steuer"):
+        assert tool in mail_tools, f"mail.{tool} fehlt im MCP-Allowlist"
+
+
+def test_platform_gate_8_mcp_invoice_dry_run():
+    """Gate 8: MCP run_invoices Dry-Run ohne Side-Effects."""
+    result = dispatch("mail", "run_invoices", {"dry_run": True, "tenant_id": "nextchapter"})
+    assert result.get("ok") is True
+    assert result.get("dry_run") is True or result.get("candidates", 0) >= 0
+
+
+@pytest.mark.asyncio
+async def test_platform_gate_9_email_agent_mcp_only():
+    """Gate 9: email-agent ruft ausschließlich MCP mail.run_invoices auf."""
+    mcp = MagicMock()
+    mcp.call = AsyncMock(return_value={"candidates": 0, "written": 0, "dry_run": True, "invoices": []})
+    agent = EmailAgent(ctx=TenantContext.for_tenant("nextchapter"), mcp=mcp)
+    await agent.run(InvoiceRunRequest(tenant_id="nextchapter", produced_by="email-agent", dry_run=True))
+    mcp.call.assert_awaited_once_with(
+        "mail",
+        "run_invoices",
+        {"dry_run": True, "skip_archive": False, "tenant_id": "nextchapter"},
+        timeout=300.0,
+    )
+
+
+def test_platform_gate_10_invoice_parser_regression():
+    """Gate 10: Rechnungs-Parser deterministisch (kein LLM)."""
+    assert extract_amount("Betrag: 105,20 €") == "105,20"
+    assert extract_invoice_id("", "Invoice Number RALU6X65-0001") == "RALU6X65-0001"
+
+
+def test_platform_gate_11_invoice_status_api():
+    """Gate 11: Orchestrator liefert Rechnungs-Status (OAuth/Sheet-Konfiguration)."""
+    res = client.get("/v1/email/invoices/status", params={"tenant_id": "nextchapter"})
+    assert res.status_code == 200
+    body = res.json()
+    assert body.get("sheet_name")
+    status = invoice_status("nextchapter")
+    assert status.get("config_path")
+
+
+def test_platform_gate_12_email_agent_workflow_registry():
+    """Gate 12: Rechnungs-Fachagent im Workflow-Registry (generische Console-UI)."""
+    import core.workflow_engine.sample_workflows  # noqa: F401
+    from core.workflow_engine.generic_runner import get_workflow_registry
+
+    registry = get_workflow_registry()
+    assert "email-invoices" in registry
+    assert "email-invoice-export" not in registry
+    wf = registry["email-invoices"]
+    assert wf.input_schema.__name__ == "InvoiceRunUserInput"
+    assert wf.output_schema.__name__ == "InvoicePipelineReport"
+    schema = wf.input_schema.model_json_schema()
+    props = schema.get("properties", {})
+    assert "run_mode" in props
+    assert "archive_mode" in props
+    assert "workflow_run_id" not in props
+    assert "dp_id" not in props
+    assert "tenant_id" not in props

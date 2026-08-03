@@ -1,0 +1,23 @@
+# Chat Capture — externe Quellen (Phase 1b)
+# Drive-Ordner per ID (bevorzugt) oder Name. OAuth über secrets/google/token.json
+
+version: "0.2"
+
+sources:
+  - id: gemini-workspace
+    source: gemini
+    account_id: workspace
+    account_email: peter.alexander@nextchapterexperts.de
+    mode: drive_poll
+    token_name: token.json
+    drive_folder_id: "1LF9kSigHeZV1wbNn-OiX0EHm9icztN-q"
+    drive_folder_name: "Gemini Artefacts"
+    private: false
+
+  - id: gemini-privat
+    source: gemini
+    account_id: privat
+    account_email: petalexander@googlemail.com
+    mode: browser_backfill
+    chrome_profile: "~/.config/google-chrome/Default"
+    private: true

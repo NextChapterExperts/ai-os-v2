@@ -55,3 +55,5 @@ register_workflow(
     output_schema=AngebotOutput,
     handler=handle_angebot_workflow,
 )
+
+from . import email_workflows  # noqa: E402, F401 — registriert Email-Fachagenten

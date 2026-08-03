@@ -460,6 +460,43 @@ async def get_capture_stats() -> dict[str, Any]:
     return stats
 
 
+class InvoiceRunBody(BaseModel):
+    tenant_id: str = "nextchapter"
+    dry_run: bool = True
+    skip_archive: bool = False
+
+
+@app.get("/v1/email/invoices/status")
+async def get_email_invoice_status(tenant_id: str = "nextchapter") -> dict[str, Any]:
+    """Google OAuth + Rechnungs-Konfiguration."""
+    from .handlers.email_invoices import invoice_status
+
+    return invoice_status(tenant_id)
+
+
+@app.post("/v1/email/invoices/preview")
+async def post_email_invoice_preview(tenant_id: str = "nextchapter") -> dict[str, Any]:
+    """Gmail-Rechnungs-Kandidaten (Read-only, kann dauern)."""
+    from .handlers.email_invoices import invoice_preview
+
+    result = invoice_preview(tenant_id)
+    if not result.get("ok"):
+        raise HTTPException(502, result.get("message") or "preview failed")
+    return result
+
+
+@app.post("/v1/email/invoices/run")
+async def post_email_invoice_run(body: InvoiceRunBody) -> dict[str, Any]:
+    """Rechnungs-Pipeline über email-agent."""
+    from .handlers.email_invoices import invoice_run
+
+    return await invoice_run(
+        body.tenant_id,
+        dry_run=body.dry_run,
+        skip_archive=body.skip_archive,
+    )
+
+
 @app.post("/v1/ingest/upload")
 async def upload_file_ingest(
     file: UploadFile = File(...),
@@ -749,11 +786,16 @@ async def get_workflows_registry() -> dict[str, Any]:
     registry = get_workflow_registry()
     result = {}
     for wf_id, wf in registry.items():
+        input_schema = (
+            wf.input_schema.get_ui_schema()
+            if hasattr(wf.input_schema, "get_ui_schema")
+            else wf.input_schema.model_json_schema()
+        )
         result[wf_id] = {
             "workflow_id": wf.workflow_id,
             "name": wf.name,
             "description": wf.description,
-            "input_schema": wf.input_schema.model_json_schema(),
+            "input_schema": input_schema,
             "output_schema": wf.output_schema.model_json_schema(),
         }
     return {"workflows": result, "count": len(result)}

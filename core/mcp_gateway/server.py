@@ -1,4 +1,4 @@
-"""MCP Gateway skeleton — Allowlist + stubs for mail/calendar (P5)."""
+"""MCP Gateway — Allowlist + native Google-Adapter (mail, calendar, drive)."""
 
 from __future__ import annotations
 
@@ -7,19 +7,21 @@ from typing import Any
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-app = FastAPI(title="AI-OS MCP Gateway", version="2.0.0-skeleton")
+# Adapter registrieren (Side-Effect)
+import core.mcp_gateway.adapters  # noqa: F401
 
-ALLOWLIST = {
-    "mail": ["list_open_actions"],
-    "calendar": ["list_today"],
-}
+from core.mcp_gateway.adapters.registry import allowlist, dispatch
+
+app = FastAPI(title="AI-OS MCP Gateway", version="2.0.0")
 
 
 class MCPCallRequest(BaseModel):
-    server: str
-    tool: str
+    server: str = Field(..., alias="server_id")
+    tool: str = Field(..., alias="tool_name")
     arguments: dict[str, Any] = Field(default_factory=dict)
     tenant_id: str = "nextchapter"
+
+    model_config = {"populate_by_name": True}
 
 
 @app.get("/health")
@@ -29,32 +31,33 @@ async def health() -> dict[str, str]:
 
 @app.get("/v1/servers")
 async def list_servers() -> dict[str, Any]:
-    return {
-        "servers": [
-            {"id": "mail", "status": "stub", "tools": ALLOWLIST["mail"]},
-            {"id": "calendar", "status": "stub", "tools": ALLOWLIST["calendar"]},
-        ]
-    }
+    registered = allowlist()
+    servers = []
+    for server_id, tools in registered.items():
+        from core.google import auth as google_auth
+
+        status = "connected" if google_auth.secrets_configured() else "stub"
+        if server_id not in ("mail", "calendar", "drive"):
+            status = "stub"
+        servers.append({"id": server_id, "status": status, "tools": tools})
+    return {"servers": servers}
 
 
 @app.post("/v1/call")
 async def call_tool(req: MCPCallRequest) -> dict[str, Any]:
-    allowed = ALLOWLIST.get(req.server)
+    registered = allowlist()
+    allowed = registered.get(req.server)
     if not allowed:
         raise HTTPException(404, f"MCP server not allowlisted: {req.server}")
     if req.tool not in allowed:
         raise HTTPException(403, f"Tool not allowlisted: {req.server}.{req.tool}")
 
-    if req.server == "mail" and req.tool == "list_open_actions":
-        from core.orchestrator.mcp_clients import mail_stub
-
-        result = await mail_stub.list_open_actions(req.tenant_id)
-    elif req.server == "calendar" and req.tool == "list_today":
-        from core.orchestrator.mcp_clients import calendar_stub
-
-        result = await calendar_stub.list_today(req.tenant_id)
-    else:
-        raise HTTPException(501, "Not implemented")
+    args = dict(req.arguments)
+    args.setdefault("tenant_id", req.tenant_id)
+    result = dispatch(req.server, req.tool, args)
+    if not result.get("ok"):
+        code = 501 if result.get("error") == "unknown_tool" else 502
+        raise HTTPException(code, result.get("message") or result.get("error"))
 
     return {
         "status": "ok",

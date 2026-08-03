@@ -1,6 +1,6 @@
 # AI-OS v2 — Ist-Stand
 
-**Stand:** 2026-07-27 (Git Multi-Repo Sync Engine ✅ + VIRKI Console-Web Overhaul ✅ + Git Push API `/api/git-push` ✅ + Document Viewer `/api/view-file` & Local Opener `/api/open-local` ✅ + WAQAM/Studentenprojekt Restructuring ✅) · **Repo:** [NextChapterExperts/ai-os-v2](https://github.com/NextChapterExperts/ai-os-v2)  
+**Stand:** 2026-08-03 (Email-Fachagent Gmail-Rechnungen ✅ · Google-Plattformkern ✅ · Release-Tag-Mechanismus ✅; zuvor 2026-07-27 Git Multi-Repo Sync Engine ✅ + VIRKI Console-Web Overhaul ✅ + Git Push API `/api/git-push` ✅ + Document Viewer `/api/view-file` & Local Opener `/api/open-local` ✅ + WAQAM/Studentenprojekt Restructuring ✅) · **Repo:** [NextChapterExperts/ai-os-v2](https://github.com/NextChapterExperts/ai-os-v2)  
 **Zweck:** Was heute **wirklich läuft** vs. was in Roadmap/Architektur als **Ziel** spezifiziert ist.  
 **Ziel-Spec bleibt:** [ROADMAP.md](../ROADMAP.md) · [01-ARCHITEKTUR.md](01-ARCHITEKTUR.md) · [14-KONTEXT.md](14-KONTEXT.md) — dieses Dokument überschreibt die Vision nicht, sondern den Fortschritt.
 
@@ -18,6 +18,9 @@ Auf der **NCE DEV-VM** läuft ein **gehärtetes Phase-0/1/2-Fundament** für das
 - **Automatisierte Platform-Gate Suite (`tests/test_platform_gate.py`):** Prüft vor jedem Fach-Agenten-Deployment 5 Sicherheits- & Vertragsschranken (P10).
 - **PII-Redaction-Gateway (`core/orchestrator/pii_redactor.py`):** Maskiert E-Mails, Telefonnummern, IP-Adressen und IBANs vor Cloud-Escalations und stellt sie nach der Antwort verlustfrei wieder her (P12/P15).
 - **Asynchrone 6-Slice Context Bundle Engine (`context_resolution.py`):** Löst L0 Schema, L1 Search, G Graph, L2/L3 Memory, SK Skill und State parallel unter 50ms mit TTL-Caching auf (P1/P13).
+- **Email-Fachagent Gmail-Rechnungen (`agents/email/`):** MCP-only Pipeline Gmail → Sheet → Drive; Console `/agents` mit generischem DataProduct-Formular; PDF/OCR-Extraktion; Backfill-Skript; Release-Tag `roadmap/2026-08-03-p4-email-invoices` — [docs/21-EMAIL-AGENT-RECHNUNGEN.md](21-EMAIL-AGENT-RECHNUNGEN.md).
+- **Google-Plattformkern (`core/google/`):** OAuth (Scope-Fix), Gmail/Calendar/Drive-Clients, MCP-Adapter mail/calendar/drive.
+- **Release-Tags:** Annotierte Tags `roadmap/YYYY-MM-DD-<phase>-<slug>` mit Register in ROADMAP §24 — [docs/22-RELEASE-TAGS.md](22-RELEASE-TAGS.md).
 - **LangGraph Checkpointing & Resume (`core/workflow_engine/`):** Zustandsspeicherung in Postgres `workflow_checkpoints` (mit SQLite-Fallback) sowie Endpoints `/v1/workflow/checkpoint/{thread_id}` und `/v1/workflow/resume` (P7).
 
 ---
@@ -31,7 +34,7 @@ Auf der **NCE DEV-VM** läuft ein **gehärtetes Phase-0/1/2-Fundament** für das
 | **1b** | Chat Capture | **weitgehend erledigt** (Cursor ✅; Antigravity-Poller ✅; Gemini-Inbox ✅; Console `/platform/capture` ✅) |
 | **2** | Platform-Agenten + Platform-Gate | **weitgehend erledigt** (Platform-Gate Suite `tests/test_platform_gate.py` ✅; Company-Brain-DP-Commit + KG für `org:*` steht; PII Redactor ✅; LangGraph Checkpointing ✅) |
 | **3** | Agent-SDK | **bereit zur Anbindung** |
-| **4** | Fach-Agenten | **freigegeben** (Platform-Gate grün) |
+| **4** | Fach-Agenten | **in Arbeit** — Email-Agent ✅ (`roadmap/2026-08-03-p4-email-invoices`); weitere Agenten ⏳ |
 | **5** | Console vollständig | **Skeleton** (3 Routen) |
 | **6** | Multi-Tenant Runtime + GraphRAG | **in Vorbereitung** |
 

@@ -42,9 +42,9 @@
                                      │
                                      ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│ 6. ROADMAP STAND UPDATEN & GIT CHECK-IN                                 │
-│    - Status/Stand in ROADMAP.md mit den Änderungen aktualisieren.       │
-│    - Code, Tests & Dokumente ins GitHub-Repository einchecken & pushen. │
+│ 6. ROADMAP · TAG · DOKU · GIT CHECK-IN                                  │
+│    - ROADMAP abhaken + Release-Tag setzen (§24) + Fachagent-Doku.         │
+│    - Code, Tests & Dokumente committen, taggen & pushen.                  │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -75,11 +75,14 @@
   ```
 - **Bedingung:** Der Schritt gilt erst als bestanden, wenn alle Tests grün sind (`0 Failed`).
 
-### Schritt 6: Roadmap updaten & GitHub-Repository aktualisieren
-- Der Agent aktualisiert den Bereich **Stand / Changelog** in [ROADMAP.md](ROADMAP.md).
-- Abschließend werden alle Änderungen committet und zu GitHub gepusht:
+### Schritt 6: Roadmap updaten, Release-Tag setzen & GitHub-Repository aktualisieren
+- Der Agent aktualisiert den Bereich **Stand / Changelog** in [ROADMAP.md](ROADMAP.md) und hakt erledigte Punkte ab.
+- **Release-Tag (Pflicht bei Meilenstein-Abschluss):** Format `roadmap/YYYY-MM-DD-<phase>-<slug>` — siehe [docs/22-RELEASE-TAGS.md](docs/22-RELEASE-TAGS.md) und ROADMAP §24. Tag im Release-Register eintragen und in den betroffenen Roadmap-Abschnitten referenzieren.
+- Fachagent-/Feature-Doku in `docs/` ergänzen (detektivisch, nicht oberflächlich).
+- Abschließend werden alle Änderungen committet, getaggt und zu GitHub gepusht:
   ```bash
   git add .
   git commit -m "..."
-  git push origin main
+  git tag -a roadmap/YYYY-MM-DD-p4-slug -m "Roadmap §X.Y: Kurzbeschreibung"
+  git push origin main --tags
   ```

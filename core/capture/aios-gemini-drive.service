@@ -1,0 +1,17 @@
+[Unit]
+Description=AI-OS Gemini Drive Capture (Phase 1b)
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/ai-os
+Environment=PYTHONPATH=/opt/ai-os
+Environment=ORCHESTRATOR_URL=http://127.0.0.1:8091
+Environment=AIOS_MEMORY_ROOT=/opt/ai-os/memory
+Environment=GOOGLE_TOOLS_SECRETS=/opt/ai-os/secrets/google
+ExecStart=/opt/ai-os/.venv/bin/python core/capture/gemini-drive-poller.py --json-lines --source-id gemini-workspace
+Restart=on-failure
+RestartSec=120
+
+[Install]
+WantedBy=default.target

@@ -27,21 +27,29 @@ class MCPAdapter:
         self.tenant_id = tenant_id
         self.agent_id = agent_id
 
-    async def call(self, server: str, tool: str, arguments: dict[str, Any] | None = None) -> dict[str, Any]:
+    async def call(
+        self,
+        server: str,
+        tool: str,
+        arguments: dict[str, Any] | None = None,
+        *,
+        timeout: float = 120.0,
+    ) -> dict[str, Any]:
         """
         Ruft ein Tool auf einem MCP-Server über das MCP-Gateway auf.
         """
         arguments = arguments or {}
         payload = {
-            "server_id": server,
-            "tool_name": tool,
+            "server": server,
+            "tool": tool,
             "arguments": arguments,
+            "tenant_id": self.tenant_id,
         }
         headers = {
             "X-Tenant-ID": self.tenant_id,
             "X-Agent-ID": self.agent_id,
         }
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with httpx.AsyncClient(timeout=timeout) as client:
             try:
                 res = await client.post(f"{self.gateway_url}/v1/call", json=payload, headers=headers)
                 if res.status_code == 403:

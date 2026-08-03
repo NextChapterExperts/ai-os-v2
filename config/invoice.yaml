@@ -1,0 +1,55 @@
+# Rechnungs-Pipeline — Tenant-Default (nextchapter)
+# Override: customers/<id>/config/invoice.yaml
+
+spreadsheet_id: "1pE4zOZlf2vZsbfAjKTEOhC8BGAE6gg7C4ck-ULQIZqQ"
+sheet_name: "Übersicht"
+data_start_row: 3
+
+# Spalten A–L (L = Drive-Link, neu)
+columns:
+  - tool_posten          # A
+  - zweck                # B
+  - betrag_eur           # C
+  - intervall            # D
+  - vertragsbeginn       # E
+  - naechste_verlaengerung  # F
+  - kuendigungsfrist     # G
+  - letzter_kuendigungstag  # H (Formel)
+  - zahlungsmethode      # I
+  - rechnungs_nr         # J — Dedup-Key
+  - status               # K
+  - anhang_drive         # L — URL oder Pfad
+
+drive:
+  root_folder_name: "Rechnungen"
+  # root_folder_id: ""   # optional — sonst Suche/Erstellung per Name
+  path_template: "{year}/{month:02d}"
+  filename_template: "{vendor}_{invoice_id}_{date}.pdf"
+  mime_types:
+    - application/pdf
+
+gmail:
+  full_inbox_scan: false
+  # Steuerjahr 2025 ff. — ohne date_before, weil dieses Postfach erst ab 2026 befüllt ist
+  date_after: "2025/01/01"
+  skip_processed: true
+  reprocess_if_pdfs_remain: true   # R-Verarbeitet erneut, wenn PDFs in .eml-Anhängen
+  processed_label: "R-Verarbeitet"
+  dedup_by_column: J
+  queries:
+    - >-
+      subject:(Rechnung OR Invoice OR receipt OR Beleg OR Quittung OR
+      Zahlung OR payment OR billing OR Abrechnung OR Bestellbestätigung)
+      OR Bestellnummer OR Rechnungsnummer
+    - >-
+      from:(payments-noreply@google.com OR abo@info.service-hmg.com OR
+      billing OR invoice OR stripe.com OR paypal.com OR anthropic.com OR
+      paddle.com OR ionos.de OR vodafone.de OR finanzen.net)
+    - "has:attachment filename:pdf"
+    - 'subject:"Rechnungen aus Bezahldienste"'
+
+pipeline:
+  default_status: "Prüfen"
+  label_after_run: true
+  pdf_text_extraction: true
+  pdf_ocr_fallback: true   # gescannte PDFs — benötigt: pip install pypdf pdf2image pytesseract + Tesseract

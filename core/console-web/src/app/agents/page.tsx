@@ -60,6 +60,26 @@ const SAMPLE_PREFILLS: Record<string, Record<string, any>> = {
   },
 };
 
+const AGENT_ACTION_LABELS: Record<string, { submit: string; loading: string }> = {
+  "handwerk-angebot": {
+    submit: "Angebot erstellen",
+    loading: "Angebot wird berechnet…",
+  },
+  "email-invoices": {
+    submit: "Rechnungen extrahieren",
+    loading: "Gmail wird gescannt…",
+  },
+};
+
+const EMAIL_INVOICE_AGENT_IDS = new Set(["email-invoices"]);
+
+type InvoiceResources = {
+  sheet_url?: string;
+  sheet_name?: string;
+  drive_root?: string;
+  drive_folder_url?: string;
+};
+
 export default function AgentsPage() {
   const [agents, setAgents] = useState<Record<string, AgentItem>>({
     "handwerk-angebot": SAMPLE_HANDWERK_AGENT,
@@ -73,10 +93,33 @@ export default function AgentsPage() {
   const [overrideFormData, setOverrideFormData] = useState<Record<string, any> | null>(
     SAMPLE_PREFILLS["handwerk-angebot"]
   );
+  const [invoiceResources, setInvoiceResources] = useState<InvoiceResources | null>(null);
 
   useEffect(() => {
     fetchAgents();
   }, []);
+
+  useEffect(() => {
+    if (!EMAIL_INVOICE_AGENT_IDS.has(selectedAgentId)) {
+      setInvoiceResources(null);
+      return;
+    }
+    let cancelled = false;
+    fetch("/api/agents/invoice-resources", { cache: "no-store" })
+      .then(async (res) => {
+        if (!res.ok) return null;
+        return (await res.json()) as InvoiceResources;
+      })
+      .then((data) => {
+        if (!cancelled && data) setInvoiceResources(data);
+      })
+      .catch(() => {
+        if (!cancelled) setInvoiceResources(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedAgentId]);
 
   const fetchAgents = async () => {
     setLoading(true);
@@ -111,20 +154,25 @@ export default function AgentsPage() {
         }),
       });
       const data = await res.json();
+      const outputDp = data.output_dp || data.result;
+      const completed = res.ok && (data.status === "completed" || data.ok) && outputDp;
 
-      if (res.ok && data.ok) {
-        setLastResult(data);
-        const dp = data.result || data.output_dp;
+      if (completed) {
+        setLastResult({ ok: true, output_dp: outputDp });
         const agentName = agents[selectedAgentId]?.name || selectedAgentId;
         setHistory((prev) => [
           {
             time: new Date().toLocaleTimeString("de-DE"),
             name: agentName,
-            dp: dp,
+            dp: outputDp,
           },
           ...prev.slice(0, 4),
         ]);
-      } else {
+      } else if (!res.ok || data.detail || data.error) {
+        setLastResult({
+          error: data.detail || data.error || `HTTP ${res.status}`,
+        });
+      } else if (selectedAgentId === "handwerk-angebot") {
         // Fallback simulation for local UI demonstration if Orchestrator port 8091 is offline
         const qm = Number(formData.umfang_qm || 120.0);
         const rate = Number(formData.stundensatz || 70.0);
@@ -141,7 +189,7 @@ export default function AgentsPage() {
           angebot_text: `Angebot für ${formData.kunden_name || "Malerbetrieb Schulze GmbH"}:\nProjekt: ${formData.projekt_titel || "Fassadenanstrich & Gerüstbau"} (${qm} qm)\nGesamtpreis netto: ${netto.toFixed(2)} EUR | brutto: ${brutto.toFixed(2)} EUR`,
           status: "COMMITTED_TO_KNOWLEDGE_GRAPH",
         };
-        setLastResult({ ok: true, result: simulatedDp });
+        setLastResult({ ok: true, output_dp: simulatedDp });
       }
     } catch (e) {
       console.error("Error executing agent workflow", e);
@@ -151,13 +199,20 @@ export default function AgentsPage() {
   };
 
   const handleLoadSample = () => {
-    const sample = SAMPLE_PREFILLS["handwerk-angebot"];
+    const sample = SAMPLE_PREFILLS[selectedAgentId];
+    if (!sample) return;
     setOverrideFormData(sample);
     handleExecute(sample);
   };
 
   const selectedAgent = selectedAgentId ? agents[selectedAgentId] : SAMPLE_HANDWERK_AGENT;
   const agentCount = Object.keys(agents).length;
+  const hasSamplePrefill = Boolean(SAMPLE_PREFILLS[selectedAgentId]);
+  const actionLabels = AGENT_ACTION_LABELS[selectedAgentId] ?? {
+    submit: "Agent ausführen",
+    loading: "Agent läuft…",
+  };
+  const isEmailInvoiceAgent = EMAIL_INVOICE_AGENT_IDS.has(selectedAgentId);
 
   return (
     <section className="rise pt-6 pb-16 max-w-6xl mx-auto">
@@ -228,9 +283,7 @@ export default function AgentsPage() {
                     onClick={() => {
                       setSelectedAgentId(ag.workflow_id);
                       setLastResult(null);
-                      if (SAMPLE_PREFILLS[ag.workflow_id]) {
-                        setOverrideFormData(SAMPLE_PREFILLS[ag.workflow_id]);
-                      }
+                      setOverrideFormData(SAMPLE_PREFILLS[ag.workflow_id] ?? null);
                     }}
                     className={`w-full text-left p-4 rounded-xl border transition-all ${
                       isSelected
@@ -303,15 +356,40 @@ export default function AgentsPage() {
                     <span>🛠️</span> {selectedAgent.name}
                   </h2>
                   <p className="text-xs muted mt-1 leading-relaxed m-0">{selectedAgent.description}</p>
+                  {isEmailInvoiceAgent && (invoiceResources?.sheet_url || invoiceResources?.drive_folder_url) ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {invoiceResources.sheet_url ? (
+                        <a
+                          href={invoiceResources.sheet_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn-ghost text-xs"
+                        >
+                          Google Sheet ({invoiceResources.sheet_name || "Übersicht"})
+                        </a>
+                      ) : null}
+                      {invoiceResources.drive_folder_url ? (
+                        <a
+                          href={invoiceResources.drive_folder_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn-ghost text-xs"
+                        >
+                          Drive-Ordner ({invoiceResources.drive_root || "Rechnungen"})
+                        </a>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
 
-                {/* Prominent Sample Test Button */}
-                <button
-                  onClick={handleLoadSample}
-                  className="btn-ghost text-xs font-bold text-[var(--signal)] border-[var(--signal)]"
-                >
-                  ⚡ Sample-Angebot laden & ausführen
-                </button>
+                {hasSamplePrefill ? (
+                  <button
+                    onClick={handleLoadSample}
+                    className="btn-ghost text-xs font-bold text-[var(--signal)] border-[var(--signal)]"
+                  >
+                    ⚡ Sample laden & ausführen
+                  </button>
+                ) : null}
               </div>
 
               <div className="pt-2">
@@ -320,6 +398,8 @@ export default function AgentsPage() {
                   initialValues={overrideFormData}
                   onSubmit={handleExecute}
                   loading={executing}
+                  submitLabel={actionLabels.submit}
+                  loadingLabel={actionLabels.loading}
                 />
               </div>
             </div>
@@ -336,10 +416,34 @@ export default function AgentsPage() {
                     ❌ Ausführungsfehler: {lastResult.error}
                   </div>
                 ) : (
-                  <DataProductViewer
-                    dataProduct={lastResult.result || lastResult.output_dp}
-                    title={`${selectedAgent.name} — Angebot Output`}
-                  />
+                  <>
+                    <DataProductViewer
+                      dataProduct={lastResult.output_dp || lastResult.result}
+                      title={`${selectedAgent.name} — Output`}
+                    />
+                    {isEmailInvoiceAgent && lastResult.output_dp?.sheet_url ? (
+                      <div className="flex flex-wrap gap-2">
+                        <a
+                          href={lastResult.output_dp.sheet_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn-ghost text-xs"
+                        >
+                          Google Sheet öffnen
+                        </a>
+                        {invoiceResources?.drive_folder_url ? (
+                          <a
+                            href={invoiceResources.drive_folder_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="btn-ghost text-xs"
+                          >
+                            Drive-Ordner öffnen
+                          </a>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </>
                 )}
               </div>
             )}

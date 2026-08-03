@@ -3,7 +3,7 @@
 **Für:** LLMs, Entwickler, die das System von Grund auf bauen  
 **Zweck:** Vollständige technische Spezifikation — ausreichend detailliert um ohne zusätzlichen Kontext zu starten  
 **Basis:** AI-OS v1 (../1000-AI-OS) — eingefroren Juli 2026  
-**Stand:** Juli 2026 (aktualisiert 2026-07-30 — Universal File Upload Ingest Service & Drag-Drop UI, Appliance VM Packaging Automation & Cloud-Init Bootstrap, Agent SDK Contract Framework, Deterministic Generic Workflow Engine, DataProduct Schema Export APIs & Dynamic Console UI Form/Result Renderers, Compute Mode Fallback & Service Health Regression Suite, Daily Open Loops Formatting Cleanup & Navigation Context Preservation, Daily Open Loops Clarity & Direct Navigation Links, Synthesized Meeting Summary Restoration, Regression Test Suite for Meeting Search & Dispatch, Orchestrator Live Reload & Compute Mode Fallback, Meeting To-Do Search Integration, Wyrd-Key & Odin Legend Popover, Lagebild UI Cleanup & Prompt Dropdown, Standard Prompt Catalog & Refined Intent Router, VIRKI UI Branding, Git Push Automation & Multi-Repo Sync, Document Viewers, WAQAM & Studentenprojekt Restrukturierung, Projekt Zorro)  
+**Stand:** August 2026 (aktualisiert 2026-08-03 — Email-Fachagent & Release-Tags; zuvor 2026-07-30 — Universal File Upload Ingest Service & Drag-Drop UI, Appliance VM Packaging Automation & Cloud-Init Bootstrap, Agent SDK Contract Framework, Deterministic Generic Workflow Engine, DataProduct Schema Export APIs & Dynamic Console UI Form/Result Renderers, Compute Mode Fallback & Service Health Regression Suite, Daily Open Loops Formatting Cleanup & Navigation Context Preservation, Daily Open Loops Clarity & Direct Navigation Links, Synthesized Meeting Summary Restoration, Regression Test Suite for Meeting Search & Dispatch, Orchestrator Live Reload & Compute Mode Fallback, Meeting To-Do Search Integration, Wyrd-Key & Odin Legend Popover, Lagebild UI Cleanup & Prompt Dropdown, Standard Prompt Catalog & Refined Intent Router, VIRKI UI Branding, Git Push Automation & Multi-Repo Sync, Document Viewers, WAQAM & Studentenprojekt Restrukturierung, Projekt Zorro)  
 **Modus:** **Eine Implementierung** — keine Alternativen in dieser Roadmap. Jede Entscheidung ist final.  
 **Detail-Spec Company Brain:** [docs/09-COMPANY-BRAIN.md](docs/09-COMPANY-BRAIN.md) · **Memory einfach:** [docs/10-MEMORY-EINFACH.md](docs/10-MEMORY-EINFACH.md) · **Kontext Lagebild→LLM:** [docs/14-KONTEXT.md](docs/14-KONTEXT.md)  
 **Erstes Lizenzprodukt (VM):** [docs/11-PLATFORM-VM.md](docs/11-PLATFORM-VM.md)  
@@ -70,6 +70,7 @@ Caddy · ntfy · Docling · Playwright-MCP
 21. [Produktions-Stack](#21-produktions-stack)
 22. [Festgelegter Technologie-Stack](#22-festgelegter-technologie-stack)
 23. [Inference: Ollama + OpenRouter](#23-inference-ollama--openrouter)
+24. [Release-Tags & Changelog-Register](#24-release-tags--changelog-register)
 
 ---
 
@@ -1921,10 +1922,26 @@ def human_review_node(state: BlogWorkflowState):
 
 ### 9.3 Email-Agent
 
+**Release-Tag:** `roadmap/2026-08-03-p4-email-invoices` · **Spec:** [docs/21-EMAIL-AGENT-RECHNUNGEN.md](docs/21-EMAIL-AGENT-RECHNUNGEN.md)
+
 Port von `packages/email-agent/` — wichtigste Funktionen:
-- Gmail-Integration via MCP (OAuth2-Scopes schützen — Bug aus v1 behoben)
-- Rechnungs-Extraktion als DataProduct
-- Steuer-Export als DataProduct
+- ✅ Gmail-Integration via MCP (OAuth2-Scopes — Refresh ohne `invalid_scope`, Bug aus v1 behoben)
+- ✅ Rechnungs-Extraktion als DataProduct (`InvoicePipelineReport`, PDF/OCR via pypdf + optional Tesseract)
+- ✅ Console Fachagenten-Cockpit `/agents` → **Gmail-Rechnungen extrahieren** (`email-invoices`)
+- ✅ Backfill-Skript `scripts/backfill-invoice-sheet-from-drive.py` (Drive-PDFs → Sheet A–L)
+- ⏳ Steuer-Export als DataProduct (Backend-Intent `invoice_export` — **kein** separater Console-Fachagent)
+
+**Implementierungsstand (2026-08-03):**
+
+| Baustein | Status |
+|----------|--------|
+| `agents/email/` — `EmailAgent` MCP-only | ✅ |
+| `core/google/` — OAuth, Gmail, Drive, `invoice/*` | ✅ |
+| MCP `mail` — `preview_invoices`, `run_invoices`, `export_steuer` | ✅ |
+| Workflow-Registry `email-invoices` | ✅ |
+| Console `DynamicDataProductForm` + `DataProductViewer` | ✅ |
+| Platform-Gate Gates 6–12 (Invoice-Stack) | ✅ |
+| Plattform-Tab `/platform/email` entfernt (nur Fachagent) | ✅ |
 
 ```python
 class InvoiceExport(DataProduct):
@@ -3231,6 +3248,35 @@ AIOS_COMPUTE_MODE_PATH=/opt/ai-os/memory/state/compute-mode.json
 - LangFuse: Traces bleiben lokal in der VM
 - OpenRouter: Prompts standardmäßig nicht geloggt
 - Sovereign: Ollama LAN — kein Cloud-Outbound
+
+---
+
+
+---
+
+## 24. Release-Tags & Changelog-Register
+
+**Spec:** [docs/22-RELEASE-TAGS.md](docs/22-RELEASE-TAGS.md) · **Workflow:** [AGENTS.md](AGENTS.md) Schritt 6
+
+Jeder abgeschlossene Roadmap-Meilenstein erhält einen **annotierten Git-Tag** im Format `roadmap/YYYY-MM-DD-<phase>-<slug>`. Der Tag **muss** in dieser Tabelle stehen und in den betroffenen Roadmap-Abschnitten referenziert werden.
+
+| Tag | Datum | Roadmap-Abschnitte | Beschreibung |
+|-----|-------|-------------------|--------------|
+| `roadmap/2026-08-03-p4-email-invoices` | 2026-08-03 | §9.3, §13 (mail MCP), §6b (Gemini-Drive Poller), Platform-Gate 6–12 | Google-Plattformkern (`core/google/`), Email-Fachagent, Console `/agents`, PDF/OCR-Extraktion, Backfill |
+
+```bash
+git tag -l 'roadmap/*'
+git show roadmap/2026-08-03-p4-email-invoices --stat
+```
+
+## Stand & Changelog (2026-08-03 — Email-Fachagent, Google-Plattform & Release-Tags)
+
+- **Release-Tag:** `roadmap/2026-08-03-p4-email-invoices` — siehe [§24 Release-Register](#24-release-tags--changelog-register) und [docs/22-RELEASE-TAGS.md](docs/22-RELEASE-TAGS.md).
+- **Email-Fachagent (§9.3):** `agents/email/` — Gmail-Rechnungen via MCP-only; Console `/agents` mit generischem DataProduct-Formular; Spec [docs/21-EMAIL-AGENT-RECHNUNGEN.md](docs/21-EMAIL-AGENT-RECHNUNGEN.md).
+- **Google-Plattformkern:** `core/google/` (OAuth, Gmail, Calendar, Drive), MCP-Adapter `mail`/`calendar`/`drive`, Rechnungs-Pipeline inkl. PDF/OCR.
+- **Backfill:** `scripts/backfill-invoice-sheet-from-drive.py` — historische Sheet-Zeilen aus Drive-PDFs nachziehen.
+- **Platform-Gate:** Gates 6–12 für Invoice-Stack in `tests/test_platform_gate.py`.
+- **UI-Bereinigung:** Kein `/platform/email`; Rechnungen nur unter Fachagenten-Cockpit.
 
 ---
 

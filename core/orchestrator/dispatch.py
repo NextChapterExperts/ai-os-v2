@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .handlers import daily_open_loops, mail_triage, memory_ask, unified_search
+from .handlers import daily_open_loops, invoice_pipeline, mail_triage, memory_ask, unified_search
 
 
 async def dispatch(
@@ -45,6 +45,12 @@ async def dispatch(
 
     if intent == "mail_triage":
         return await mail_triage.run(context_bundle, tenant_id, params)
+
+    if intent in ("invoice_run", "invoice_pipeline", "rechnungen"):
+        return await invoice_pipeline.run_invoice_pipeline(context_bundle, tenant_id, params)
+
+    if intent in ("invoice_export", "steuer_export", "export_steuer"):
+        return await invoice_pipeline.run_invoice_export(context_bundle, tenant_id, params)
 
     if intent == "unified_search":
         return await unified_search.run(context_bundle, tenant_id, params)

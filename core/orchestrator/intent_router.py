@@ -96,6 +96,11 @@ def route_intent(raw: str, params: dict[str, Any] | None = None) -> str:
     ):
         return "memory_ask"
 
+    if any(k in lower for k in ("rechnung", "invoice", "steuer export", "steuer-export")):
+        if any(k in lower for k in ("export", "steuer", "pdf")):
+            return "invoice_export"
+        return "invoice_run"
+
     # Default: treat free text as memory/orchestrator question
     if "?" in text or len(text.split()) >= 3:
         if any(k in lower for k in ("mail", "inbox", "e-mail", "email")):

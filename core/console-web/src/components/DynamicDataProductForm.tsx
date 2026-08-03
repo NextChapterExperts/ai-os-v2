@@ -9,6 +9,7 @@ interface JsonSchemaProperty {
   default?: any;
   enum?: string[];
   anyOf?: Array<{ type?: string }>;
+  "x-enum-labels"?: Record<string, string>;
 }
 
 interface JsonSchema {
@@ -18,11 +19,29 @@ interface JsonSchema {
   required?: string[];
 }
 
+/** Interne DataProduct-Felder — nicht in der Nutzer-UI anzeigen. */
+const HIDDEN_FIELDS = new Set([
+  "dp_id",
+  "schema_version",
+  "tenant_id",
+  "produced_by",
+  "produced_at",
+  "workflow_run_id",
+  "storage_target",
+  "ingest_recommended",
+]);
+
+function enumLabel(prop: JsonSchemaProperty, value: string): string {
+  return prop["x-enum-labels"]?.[value] ?? value;
+}
+
 interface DynamicDataProductFormProps {
   schema: JsonSchema;
   initialValues?: Record<string, any> | null;
   onSubmit: (data: Record<string, any>) => void;
   loading?: boolean;
+  submitLabel?: string;
+  loadingLabel?: string;
 }
 
 export const DynamicDataProductForm: React.FC<DynamicDataProductFormProps> = ({
@@ -30,6 +49,8 @@ export const DynamicDataProductForm: React.FC<DynamicDataProductFormProps> = ({
   initialValues,
   onSubmit,
   loading = false,
+  submitLabel = "Agent ausführen",
+  loadingLabel = "Agent läuft…",
 }) => {
   const [formData, setFormData] = useState<Record<string, any>>({});
 
@@ -41,6 +62,7 @@ export const DynamicDataProductForm: React.FC<DynamicDataProductFormProps> = ({
     if (schema?.properties) {
       const defaults: Record<string, any> = {};
       Object.entries(schema.properties).forEach(([key, prop]) => {
+        if (HIDDEN_FIELDS.has(key)) return;
         if (prop.default !== undefined) {
           defaults[key] = prop.default;
         } else if (prop.enum && prop.enum.length > 0) {
@@ -84,7 +106,9 @@ export const DynamicDataProductForm: React.FC<DynamicDataProductFormProps> = ({
     );
   }
 
-  const properties = Object.entries(schema.properties);
+  const properties = Object.entries(schema.properties).filter(
+    ([key]) => !HIDDEN_FIELDS.has(key),
+  );
   const requiredFields = new Set(schema.required || []);
 
   return (
@@ -134,7 +158,7 @@ export const DynamicDataProductForm: React.FC<DynamicDataProductFormProps> = ({
                 >
                   {prop.enum.map((opt) => (
                     <option key={opt} value={opt} className="bg-[var(--paper)] text-[var(--ink)]">
-                      {opt}
+                      {enumLabel(prop, opt)}
                     </option>
                   ))}
                 </select>
@@ -185,12 +209,12 @@ export const DynamicDataProductForm: React.FC<DynamicDataProductFormProps> = ({
           {loading ? (
             <>
               <span className="animate-spin">⏳</span>
-              <span>Erstelle Datenprodukt...</span>
+              <span>{loadingLabel}</span>
             </>
           ) : (
             <>
               <span>⚡</span>
-              <span>Agenten ausführen & Angebot erstellen</span>
+              <span>{submitLabel}</span>
             </>
           )}
         </button>
