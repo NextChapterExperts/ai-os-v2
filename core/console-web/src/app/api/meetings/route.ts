@@ -1,4 +1,8 @@
 import { NextResponse } from "next/server";
+import {
+  ensureAgentServices,
+  formatEnsureServicesError,
+} from "@/lib/ensure-agent-services";
 
 export const dynamic = "force-dynamic";
 
@@ -6,6 +10,15 @@ const ORCHESTRATOR_URL =
   process.env.ORCHESTRATOR_URL ?? "http://127.0.0.1:8091";
 
 export async function GET(req: Request) {
+  const ensure = await ensureAgentServices();
+  const ensureError = formatEnsureServicesError(ensure);
+  if (ensureError) {
+    return NextResponse.json(
+      { error: ensureError, services: ensure },
+      { status: 503 },
+    );
+  }
+
   const { searchParams } = new URL(req.url);
   const qs = searchParams.toString();
   const url = `${ORCHESTRATOR_URL}/v1/meetings${qs ? `?${qs}` : ""}`;

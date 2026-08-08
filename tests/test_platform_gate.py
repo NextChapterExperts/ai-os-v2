@@ -11,6 +11,7 @@ Vertragserfüllung aller Plattform-Core-Komponenten:
 7. MCP Mail Invoice Tools Contract
 8. Email-Agent MCP-only Contract
 9. Invoice Parser Regression (deterministisch)
+10. Meetings-Agent Workflow-Registry & MCP-Contract
 """
 
 from __future__ import annotations
@@ -176,3 +177,56 @@ def test_platform_gate_12_email_agent_workflow_registry():
     assert "workflow_run_id" not in props
     assert "dp_id" not in props
     assert "tenant_id" not in props
+
+
+def test_platform_gate_13_meetings_agent_workflow_registry():
+    """Gate 13: Meetings-Fachagent im Workflow-Registry (Agenten-Cockpit)."""
+    import core.workflow_engine.meetings_workflows  # noqa: F401
+    from core.workflow_engine.generic_runner import get_workflow_registry
+
+    registry = get_workflow_registry()
+    assert "meetings-agent" in registry
+    wf = registry["meetings-agent"]
+    assert wf.input_schema.__name__ == "MeetingsAgentUserInput"
+    assert wf.output_schema.__name__ == "MeetingsAgentReport"
+    schema = wf.input_schema.model_json_schema()
+    props = schema.get("properties", {})
+    assert props["meeting_id"].get("x-widget") == "meeting-picker"
+    assert props["meeting_id"].get("x-visible-when") == {"aufgabe": "zusammenfassung_speichern"}
+    assert "summary" in props
+    assert props["summary"].get("x-widget") == "textarea"
+
+
+def test_platform_gate_14_meetings_mcp_tools_allowlist():
+    """Gate 14: MCP meetings-Tools für Kalender-Sync und Company-Brain-Commit."""
+    tools = allowlist().get("meetings") or []
+    for required in ("sync_from_calendar", "commit_to_company_brain", "person_stats", "status"):
+        assert required in tools
+
+
+def test_platform_gate_15_meetings_workflow_execute_dry_run(tmp_path, monkeypatch):
+    """Gate 15: Workflow-Ausführung meetings-agent (Dry-Run) — kein Registry-Fehler."""
+    db = tmp_path / "meetings.db"
+    monkeypatch.setenv("AIOS_MEETINGS_DB", str(db))
+    monkeypatch.setenv("AIOS_MEETINGS_ATTACHMENTS_DIR", str(tmp_path / "att"))
+    monkeypatch.setattr(
+        "core.google.meetings.sync.google_auth.secrets_configured",
+        lambda: False,
+    )
+    res = client.post(
+        "/v1/workflow/execute",
+        json={
+            "workflow_id": "meetings-agent",
+            "tenant_id": "nextchapter",
+            "payload": {
+                "aufgabe": "termine_abrufen",
+                "run_mode": "dry_run",
+                "since_date": "2026-07-01",
+                "include_forecast": "yes",
+            },
+        },
+    )
+    assert res.status_code == 200, res.text
+    body = res.json()
+    assert body.get("status") == "completed"
+    assert body.get("workflow_id") == "meetings-agent"

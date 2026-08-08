@@ -66,6 +66,7 @@ export async function POST(req: Request) {
       intent: data.intent,
       runId: data.run_id ?? result.runId,
       hasContext: result.hasContext ?? Boolean(data.run_id),
+      contextCharCount: result.contextCharCount,
       context_bundle: data.context_bundle,
       stats: memoryStats(),
     });

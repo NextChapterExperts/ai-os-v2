@@ -92,9 +92,9 @@ async def _call_ollama_direct(
     *,
     temperature: float = 0.2,
     max_tokens: int = 512,
-    timeout: float = 10.0,
+    timeout: float = 60.0,
 ) -> dict[str, Any]:
-    async with httpx.AsyncClient(timeout=httpx.Timeout(timeout, connect=2.0)) as client:
+    async with httpx.AsyncClient(timeout=httpx.Timeout(timeout, connect=3.0, read=timeout)) as client:
         res = await client.post(
             ollama_chat_url(),
             json={
@@ -142,36 +142,55 @@ async def chat_completion(
     source = "unknown"
 
     if use_ollama_direct:
-        try:
-            from .config import OLLAMA_MODEL
+        from .config import OLLAMA_MODEL
 
+        try:
             data = await _call_ollama_direct(
                 OLLAMA_MODEL,
                 messages,
                 temperature=temperature,
                 max_tokens=max_tokens,
+                timeout=60.0,
             )
             source = "ollama-direct"
             resolved_model = sovereign_alias
-        except Exception:
-            log.warning("Ollama direkt fehlgeschlagen — Fallback LiteLLM")
-            try:
-                data = await _call_litellm(
-                    resolved_model,
-                    messages,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                )
-                source = "litellm"
-            except Exception:
-                log.warning("Sowohl Ollama als auch LiteLLM nicht erreichbar — Offline Fallback")
-                data = {
-                    "model": resolved_model,
-                    "choices": [{"message": {"role": "assistant", "content": "Inferenz nicht erreichbar (Ollama/LiteLLM offline)"}}],
-                    "usage": {},
-                    "_source": "offline-fallback",
-                }
-                source = "offline-fallback"
+        except Exception as exc:
+            log.warning(f"Ollama direkt ({OLLAMA_MODEL}) fehlgeschlagen: {exc} — versuche Fallback-Modelle")
+            # Try lightweight fallback model on Ollama before LiteLLM
+            for fallback_model in ("qwen2.5:14b", "qwen2.5:7b", "llama3.1:8b"):
+                try:
+                    data = await _call_ollama_direct(
+                        fallback_model,
+                        messages,
+                        temperature=temperature,
+                        max_tokens=max_tokens,
+                        timeout=30.0,
+                    )
+                    source = "ollama-direct"
+                    resolved_model = fallback_model
+                    break
+                except Exception:
+                    continue
+
+            if not data:
+                log.warning("Ollama Fallbacks fehlgeschlagen — versuche LiteLLM")
+                try:
+                    data = await _call_litellm(
+                        resolved_model,
+                        messages,
+                        temperature=temperature,
+                        max_tokens=max_tokens,
+                    )
+                    source = "litellm"
+                except Exception:
+                    log.warning("Sowohl Ollama als auch LiteLLM nicht erreichbar — Offline Fallback")
+                    data = {
+                        "model": resolved_model,
+                        "choices": [{"message": {"role": "assistant", "content": "Inferenz nicht erreichbar (Ollama/LiteLLM offline)"}}],
+                        "usage": {},
+                        "_source": "offline-fallback",
+                    }
+                    source = "offline-fallback"
     else:
         try:
             data = await _call_litellm(

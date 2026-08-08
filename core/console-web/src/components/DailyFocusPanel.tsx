@@ -16,74 +16,87 @@ interface PhaseGate {
   defaultState: MilestoneState;
 }
 
+const V2_REPO_PATH = "/home/peter/Projekte/active/studentenprojekt_v2";
+const PHASE_STORAGE_KEY = "aios_waqam_v2_phase_states";
+
 const PHASES: PhaseGate[] = [
   {
-    id: "phase-1",
+    id: "saeule-1",
     phaseNumber: "01",
-    title: "Kickoff & Rollen",
-    subtitle: "Studenten-Pitch & Freigabe",
-    dateRange: "Mo. 27.07.",
-    deliverableFile: "projekt_pitch_studenten_de.md",
-    description: "Studenten-Pitch sichten, Anforderungsprofil für 2–3 Studierende freigeben und Aufgabenverteilung zuteilen.",
+    title: "Säule 1: Enablement",
+    subtitle: "Demystifizieren & Abholen",
+    dateRange: "Mo. – Di.",
+    deliverableFile: "saeule_1_enablement/00_AP_Uebersicht_Saeule1.md",
+    description:
+      "Master-Index, KI-Grundbegriffe (Tokens, RAG, Agents), 5 KI-Modi, 4 Strategie-Typen und A3-Übersetzer-Canvas für den Workshop-Einstieg.",
     keyActions: [
-      "Pitch-Unterlagen (DE/EN) prüfen & freigeben",
-      "Rollenverteilung (rollenverteilung_studenten.md) festlegen",
+      "Fact-Sheets zu KI-Basics & Enterprise-Modi finalisieren",
+      "A3-Übersetzer-Canvas (4 Perspektiven) freigeben",
+      "Kickoff-Leitfaden & Rollenverteilung verknüpfen",
+    ],
+    defaultState: "completed",
+  },
+  {
+    id: "saeule-2",
+    phaseNumber: "02",
+    title: "Säule 2: KI-Herausforderungen",
+    subtitle: "11 Risiken & Live-Blog-Simulator",
+    dateRange: "Mi.",
+    deliverableFile: "saeule_2_herausforderungen_simulator/00_AP_Uebersicht_Saeule2.md",
+    description:
+      "11 stochastische KI-Risiken aus den Realpessimismus-Blogs erfassen und Live-Blog-Simulator für Bot-Provokation im Workshop spezifizieren (TRICUS-Verstöße).",
+    keyActions: [
+      "11 Risiken mit Blog-Belegen dokumentieren (Failing Silently, RAG-Drift, …)",
+      "Live-Simulator für 6–7 Kern-Blogs spezifizieren",
+      "TRICUS-Regeln als Workshop-Nachweis verankern",
     ],
     defaultState: "active",
   },
   {
-    id: "phase-2a",
-    phaseNumber: "02",
-    title: "Paket 1: Portfolio",
-    subtitle: "SAP AI Scoping & Features",
-    dateRange: "Di. 28.07.",
-    deliverableFile: "paket1_sap_ai_portfolio.md",
-    description: "Grundlagen des Autonomous Enterprise definieren und existierende SAP AI Features bewerten.",
-    keyActions: [
-      "SAP Business AI Scope abstimmen",
-      "Feature-Matrix für Studenten aufbereiten",
-    ],
-    defaultState: "pending",
-  },
-  {
-    id: "phase-2b",
+    id: "saeule-3",
     phaseNumber: "03",
-    title: "Paket 2: Stochastik",
-    subtitle: "Risiko & Simulator",
-    dateRange: "Mi. 29.07. – Fr. 31.07.",
-    deliverableFile: "paket2_stochastik_risiko.md",
-    description: "KI-Halluzinationsrisiken & Realpessimismus-Bloghürden mit dem Störungs-Handbuch & Simulator koppeln.",
+    title: "Säule 3: SAP-Lösungsarchitektur",
+    subtitle: "Gegenmittel & AI Stack",
+    dateRange: "Do.",
+    deliverableFile: "saeule_3_sap_loesungsarchitektur/00_AP_Uebersicht_Saeule3.md",
+    description:
+      "SAP-Gegenmittel zu allen 11 Herausforderungen aus Säule 2 — BTP Validation Gates, GenAI Hub, Loop-Breaker, Event Mesh, HITL — plus SAP AI Stack entlang IA-AI-Framework.",
     keyActions: [
-      "Störungs- & Manipulations-Handbuch integrieren",
-      "Simulator-Testfälle für Stresstest definieren",
+      "1:1-Mapping Risiko → SAP-Gegenmittel erstellen",
+      "Joule Suite, AI Hub, Knowledge Graph & Clean Core dokumentieren",
+      "Referenzhandbuch Säule 3 als Berater-Artefakt abschließen",
     ],
     defaultState: "pending",
   },
   {
-    id: "phase-3",
+    id: "saeule-4",
     phaseNumber: "04",
-    title: "Paket 3: WAQAM Board",
-    subtitle: "Use Case & UI Overhaul",
-    dateRange: "Mo. 03.08. – Di. 04.08.",
-    deliverableFile: "paket3_use_case_simulation.md",
-    description: "EXT-01 Lieferanten-Onboarding Szenario im WAQAM Board überarbeiten und Vorstandsslides vorbereiten.",
+    title: "Säule 4: Use-Case & Simulation",
+    subtitle: "Datenblatt & WAQAM PCS",
+    dateRange: "Fr.",
+    deliverableFile: "saeule_4_use_case_simulation/00_AP_Uebersicht_Saeule4.md",
+    description:
+      "Use-Case-Datenblätter (10 Dimensionen) für 1–3 Kunden-Workflows (z. B. EXT-01) und WAQAM PCS-Simulation über 4 Betriebsarten vorbereiten.",
     keyActions: [
-      "Board UI auf neusten Stand bringen",
-      "Lieferanten-Onboarding Testfall durchspielen",
+      "Datenblatt-Vorlage mit Parametern V, Q, U, C, L, N, P ausfüllen",
+      "WAQAM Board PCS-Simulation (Deterministisch → Agentenmodus) testen",
+      "EXT-01 Szenario als Referenz-Use-Case durchspielen",
     ],
     defaultState: "pending",
   },
   {
-    id: "phase-4",
+    id: "lcc-release",
     phaseNumber: "05",
-    title: "Final Release",
-    subtitle: "Go-Live & Briefing Kit",
-    dateRange: "Fr. 07.08. (RELEASE)",
-    deliverableFile: "projekt_overview.canvas",
-    description: "Pakete 1–3 als fertiges Studenten-Kit (PDF & Repository) übergeben. Offizieller Projektstart!",
+    title: "LCC-Release V2",
+    subtitle: "Projektpaket abgabebereit",
+    dateRange: "Fr. (Release)",
+    deliverableFile: "01_ROADMAP.md",
+    description:
+      "Komplettes 4-Säulen-Projektpaket V2 im LCC (Landshut Competence Center) abgabe- und startbereit — inklusive aller Säulen-Artefakte und Studenten-Kit.",
     keyActions: [
-      "Dry Run aus Studenten-Perspektive durchführen",
-      "GitHub Repo & Unterlagen für Studenten freigeben",
+      "Dry Run aus Studierenden-Perspektive durchführen",
+      "Alle Säulen-Ordner & Fact-Sheets auf Vollständigkeit prüfen",
+      "LCC-Upload & Freigabe für Studierenden-Start",
     ],
     defaultState: "pending",
   },
@@ -99,10 +112,10 @@ const OTHER_PROJECTS = [
 
 export function DailyFocusPanel() {
   const [phaseStates, setPhaseStates] = useState<Record<string, MilestoneState>>({});
-  const [selectedPhaseId, setSelectedPhaseId] = useState<string>("phase-1");
+  const [selectedPhaseId, setSelectedPhaseId] = useState<string>("saeule-2");
 
   useEffect(() => {
-    const saved = localStorage.getItem("aios_waqam_phase_states");
+    const saved = localStorage.getItem(PHASE_STORAGE_KEY);
     if (saved) {
       try {
         setPhaseStates(JSON.parse(saved));
@@ -115,7 +128,7 @@ export function DailyFocusPanel() {
   const setPhaseState = (id: string, state: MilestoneState) => {
     const updated = { ...phaseStates, [id]: state };
     setPhaseStates(updated);
-    localStorage.setItem("aios_waqam_phase_states", JSON.stringify(updated));
+    localStorage.setItem(PHASE_STORAGE_KEY, JSON.stringify(updated));
   };
 
   const getPhaseState = (phase: PhaseGate): MilestoneState => {
@@ -142,16 +155,17 @@ export function DailyFocusPanel() {
               Priorität 1 · Höchste Dringlichkeit
             </span>
             <span className="text-xs font-mono text-indigo-400 tracking-wide uppercase">
-              studentenprojekt
+              studentenprojekt_v2
             </span>
           </div>
 
           <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-            WAQAM Studenten-Start
+            4-Säulen-Sprint · LCC-Readiness
           </h2>
           <p className="mt-1 text-sm text-slate-400 max-w-2xl leading-relaxed">
-            Meilenstein-Fahrplan für die 3 Kernpakete. Ziel-Release:{" "}
-            <span className="font-semibold text-slate-200">Freitag, 07. August 2026</span>
+            Meilenstein-Fahrplan für das Beratungsmodell V2 (Enablement → Risiken → SAP-Architektur →
+            Simulation). Ziel:{" "}
+            <span className="font-semibold text-slate-200">LCC-Release V2 diese Woche (Fr.)</span>
           </p>
         </div>
 
@@ -193,7 +207,7 @@ export function DailyFocusPanel() {
       {/* Interactive Timeline Track */}
       <div className="relative z-10 mt-8">
         <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
-          <span>📍 Phasen-Fahrplan (Woche 1 & Woche 2)</span>
+          <span>📍 4-Säulen-Sprint (Mo. – Fr.)</span>
           <span className="text-slate-500 font-normal">Phase anklicken für Detail-Ansicht</span>
         </div>
 
@@ -221,7 +235,7 @@ export function DailyFocusPanel() {
                 <div>
                   <div className="flex items-center justify-between">
                     <span className="font-mono text-xs font-bold text-indigo-400">
-                      PHASE {phase.phaseNumber}
+                      SÄULE {phase.phaseNumber}
                     </span>
                     <span
                       className={`h-2.5 w-2.5 rounded-full ${
@@ -268,7 +282,7 @@ export function DailyFocusPanel() {
           <div>
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs font-bold text-indigo-400">
-                Phase {activePhase.phaseNumber} Details
+                Säule {activePhase.phaseNumber} · Details
               </span>
               <span className="text-slate-600">·</span>
               <span className="text-xs text-amber-300 font-medium">
@@ -358,7 +372,7 @@ export function DailyFocusPanel() {
               <span className="truncate">{activePhase.deliverableFile}</span>
             </div>
             <p className="text-[11px] text-slate-400 leading-normal">
-              Liegt im Repository <span className="font-mono text-slate-300">/home/peter/Projekte/active/studentenprojekt/</span>
+              Liegt im Repository <span className="font-mono text-slate-300">{V2_REPO_PATH}/</span>
             </p>
           </div>
         </div>

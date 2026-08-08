@@ -98,3 +98,44 @@ def calendar_list_events(args: dict[str, Any]) -> dict[str, Any]:
         "count": len(events),
         "status": result.get("status"),
     }
+
+@register("calendar", "list_events_range")
+def calendar_list_events_range(args: dict[str, Any]) -> dict[str, Any]:
+    start_raw = args.get("start_date") or args.get("since_date") or "2026-07-01"
+    end_raw = args.get("end_date") or args.get("until_date")
+    dry_run = bool(args.get("dry_run"))
+    max_results = int(args.get("max_results") or 250)
+    if dry_run:
+        return {
+            "ok": True,
+            "dry_run": True,
+            "start_date": str(start_raw)[:10],
+            "end_date": str(end_raw or date.today().isoformat())[:10],
+            "events": [],
+            "count": 0,
+        }
+    if not google_auth.secrets_configured():
+        return {
+            "ok": True,
+            "status": "stub",
+            "events": [],
+            "count": 0,
+            "message": "token.json fehlt",
+        }
+    try:
+        start_day = date.fromisoformat(str(start_raw)[:10])
+        end_day = date.fromisoformat(str(end_raw)[:10]) if end_raw else date.today()
+    except ValueError:
+        return {"ok": False, "error": "invalid_date", "message": "start_date/end_date ungültig"}
+    events = calendar_client.fetch_events_for_range_paginated(
+        start_day, end_day, max_results=max_results, interactive=False,
+    )
+    return {
+        "ok": True,
+        "start_date": start_day.isoformat(),
+        "end_date": end_day.isoformat(),
+        "events": events,
+        "count": len(events),
+        "status": "connected",
+    }
+

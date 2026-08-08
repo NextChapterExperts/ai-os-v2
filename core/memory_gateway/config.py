@@ -16,7 +16,7 @@ COMPUTE_CONFIG = REPO_ROOT / "config" / "compute.yaml"
 LITELLM_URL = os.environ.get("LITELLM_URL", "http://127.0.0.1:4000")
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "192.168.178.64")
 OLLAMA_PORT = os.environ.get("OLLAMA_PORT", "11434")
-OLLAMA_MODEL = os.environ.get("OLLAMA_DEFAULT_MODEL", "qwen3.6-64k:latest")
+OLLAMA_MODEL = os.environ.get("OLLAMA_DEFAULT_MODEL", "qwen3.6:27b")
 DEFAULT_COMPUTE_MODE = os.environ.get("DEFAULT_COMPUTE_MODE", "sovereign")
 MODE_STATE_PATH = Path(
     os.environ.get(

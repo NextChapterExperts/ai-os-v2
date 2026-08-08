@@ -17,7 +17,7 @@ type Meeting = {
   title: string;
   held_at: string;
   participants: string;
-  participant_refs?: string[];
+  participant_refs?: Array<string | { email?: string; name?: string }>;
   summary: string;
   engagement_ids: string[];
   tags: string[];
@@ -25,6 +25,17 @@ type Meeting = {
   open_todo_count?: number;
   attachments?: Attachment[];
   attachment_count?: number;
+  source?: string;
+  calendar_event_id?: string;
+  location?: string;
+};
+
+type PersonStat = {
+  email: string;
+  name?: string;
+  meeting_count: number;
+  last_meeting_at?: string;
+  first_meeting_at?: string;
 };
 
 type EngagementOption = { id: string; title: string };
@@ -136,6 +147,9 @@ export function MeetingsPanel() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [queryInput, setQueryInput] = useState("");
+  const [personQuery, setPersonQuery] = useState("");
+  const [personStat, setPersonStat] = useState<PersonStat | null>(null);
+  const [personLoading, setPersonLoading] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     q: "",
     unassigned: false,
@@ -448,6 +462,7 @@ export function MeetingsPanel() {
     }
   }
 
+
   return (
     <div className="meetings-panel">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
@@ -461,8 +476,9 @@ export function MeetingsPanel() {
           </p>
         </div>
         <button type="button" className="btn-primary" onClick={openCreate}>
-          Meeting erfassen
-        </button>
+            Meeting erfassen
+          </button>
+        </div>
       </div>
 
       <div className="mb-6 flex flex-wrap gap-2">
@@ -735,6 +751,9 @@ export function MeetingsPanel() {
               <button type="button" className="meetings-row-title" onClick={() => openEdit(m)}>
                 {m.title}
               </button>
+              {!m.summary?.trim() && (m.source === "calendar" || m.tags?.includes("calendar-import")) ? (
+                <span className="badge ml-2" data-variant="curated">Kalender · Summary fehlt</span>
+              ) : null}
               <p className="mono muted m-0 mt-1 text-xs">{formatDate(m.held_at)}</p>
               {m.participants ? (
                 <p className="muted m-0 mt-2 text-sm">Teilnehmer: {m.participants}</p>

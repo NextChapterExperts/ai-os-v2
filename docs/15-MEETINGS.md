@@ -1,7 +1,8 @@
 # AI-OS v2 — Meeting-Inbox
 
-**Stand:** Juli 2026  
-**UI:** Console `/meetings` · **API:** `GET/POST /v1/meetings`, `PATCH/DELETE /v1/meetings/{id}`  
+**Stand:** August 2026  
+**UI:** Console `/akten/meetings` (Redirect `/meetings`)  
+**Fachagent:** `/agents` → „Meetings aus Kalender importieren“ (`meetings-calendar-sync`) · **API:** `GET/POST /v1/meetings`, `PATCH/DELETE /v1/meetings/{id}`  
 **Speicher:** SQLite `{AIOS_MEMORY_ROOT}/state/meetings.db`
 
 ## Zweck
@@ -52,3 +53,12 @@ API (Bridge): `POST /v1/meetings/participants/process`, `POST /v1/meetings/parti
 - Calendar-MCP + **time-agent** → automatischer Import als `org:Meeting` (Graph)  
 - Optional Sync kurierter Meetings aus Inbox → DP-Commit  
 - Lagebild-Ask: „Was war im letzten Meeting?“ über federierte Suche
+
+
+## Kalender-Import (Meetings-Agent)
+
+- **Agent:** `agents/meetings/` — MCP `meetings.sync_from_calendar`
+- **Startdatum:** ab **1. Juli 2026** (konfigurierbar)
+- **Ablauf:** Kalender liest Titel, Datum, Teilnehmer → Meeting-Rahmen in SQLite-Akte; **Zusammenfassung bleibt leer** für manuelle Ergänzung
+- **Analytics im Report:** `person_stats` (Anzahl, letztes Meeting pro Kontakt) + `forecast_next_month`
+- **API:** `GET /v1/meetings/person-stats?person=email@example.com&since_date=2026-07-01`

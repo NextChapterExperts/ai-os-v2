@@ -47,6 +47,13 @@ _FEDERATED_KEYWORDS = (
     "berücksichtigt",
     "schon mal",
     "im projekt",
+    "cap",
+    "cap-applikation",
+    "cap applikation",
+    "graffiti",
+    "nd graffiti",
+    "dashboard",
+    "petru",
 )
 
 _PROJECT_SLUG_RE = re.compile(r"1100[- ]?ai[- ]?os[- ]?v2|ai-os-v2", re.I)
@@ -94,10 +101,8 @@ def _enhance_federated_query(question: str) -> str:
     lower = base.lower()
     extras: list[str] = []
     if _PROJECT_SLUG_RE.search(base) or "ai-os" in lower:
-        extras.extend(["AI-OS v2", "ROADMAP", "Phase", "Memory"])
-    elif _mentions_active_project(base):
-        extras.extend(["ROADMAP", "Engagement", "org:KnowledgeAsset"])
-    if any(k in lower for k in ("stand", "status", "fortschritt")):
+        extras.extend(["AI-OS v2", "ROADMAP"])
+    if any(k in lower for k in ("stand", "status", "fortschritt", " meilenstein", "roadmap")):
         extras.append("Implementierungsstand")
     if not extras:
         return base
@@ -116,7 +121,6 @@ async def _federated_hits(
     query = _enhance_federated_query(question)
     result = await unified_search_run({}, tenant_id, {"query": query, "limit": limit})
     hits = result.get("sources") or []
-    # Kuratiert/Graph vor Episoden — ROADMAP ist authoritative für Projektstand
     priority = {"graph": 0, "curated": 1, "raw-file": 2, "episodic": 3}
     hits.sort(key=lambda h: (priority.get(str(h.get("source_type")), 9), -float(h.get("score") or 0)))
 
@@ -419,8 +423,8 @@ async def run(
 
     if federated:
         fed_chunks = await _federated_hits(question, tenant_id)
-        # Kuratiert/Graph zuerst; episodisch nur ergänzend (weniger Rauschen aus Letta)
-        chunks = _merge_chunks(fed_chunks, episodic_chunks if len(fed_chunks) < 8 else [])
+        # Episodische FTS-Treffer und kuratierte Graph-Hits zusammenführen
+        chunks = _merge_chunks(episodic_chunks, fed_chunks)
         memory_backend = "federated" if fed_chunks else memory_backend
     else:
         chunks = episodic_chunks
@@ -469,5 +473,6 @@ async def run(
         "sourceCount": len(chunks),
         "tenant_id": tenant_id,
         "runId": run_id,
+        "contextCharCount": len(context_text),
         "llmContext": llm_context,
     }

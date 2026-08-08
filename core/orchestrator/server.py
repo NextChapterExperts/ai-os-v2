@@ -170,6 +170,24 @@ async def meetings_list(
     }
 
 
+
+
+@app.get("/v1/meetings/person-stats")
+async def meetings_person_stats(
+    tenant_id: str = "nextchapter",
+    person: str | None = None,
+    since_date: str | None = "2026-07-01",
+) -> dict[str, Any]:
+    """Kontakt-Meeting-Statistik — „Hatte ich schon ein Meeting mit X?“"""
+    from .meetings_store import compute_person_meeting_stats, lookup_person_meeting_stats
+
+    if person:
+        stat = lookup_person_meeting_stats(tenant_id, person, since_date=since_date)
+        return {"tenant_id": tenant_id, "found": stat is not None, "person": stat}
+    stats = compute_person_meeting_stats(tenant_id, since_date=since_date)
+    return {"tenant_id": tenant_id, "count": len(stats), "person_stats": stats}
+
+
 @app.get("/v1/meetings/{meeting_id}")
 async def meetings_get(meeting_id: str, tenant_id: str = "nextchapter") -> dict[str, Any]:
     from .meetings_store import get_meeting, list_engagement_options
@@ -777,10 +795,17 @@ class WorkflowExecuteRequest(BaseModel):
     payload: dict[str, Any] = Field(default_factory=dict)
 
 
+def _ensure_workflow_registry() -> None:
+    """Alle Workflow-Module laden (idempotent — auch nach Hot-Deploy ohne Prozess-Neustart)."""
+    import core.workflow_engine.sample_workflows  # noqa: F401 — handwerk + side-effect imports
+    import core.workflow_engine.email_workflows  # noqa: F401
+    import core.workflow_engine.meetings_workflows  # noqa: F401
+
+
 @app.get("/v1/workflows/registry")
 async def get_workflows_registry() -> dict[str, Any]:
     """Gibt die Liste aller registrierten Workflows inklusive JSON-Schemata zurück."""
-    import core.workflow_engine.sample_workflows  # Ensures sample workflows are registered
+    _ensure_workflow_registry()
     from core.workflow_engine.generic_runner import get_workflow_registry
 
     registry = get_workflow_registry()
@@ -815,7 +840,7 @@ async def get_dataproduct_schema(node_type: str) -> dict[str, Any]:
 @app.post("/v1/workflow/execute")
 async def post_workflow_execute(req: WorkflowExecuteRequest) -> dict[str, Any]:
     """Führt einen registrierten deterministischen Workflow aus."""
-    import core.workflow_engine.sample_workflows  # Ensures sample workflows are registered
+    _ensure_workflow_registry()
     from core.workflow_engine.generic_runner import execute_registered_workflow
 
     try:

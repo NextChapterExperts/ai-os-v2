@@ -3,7 +3,7 @@
 **Für:** LLMs, Entwickler, die das System von Grund auf bauen  
 **Zweck:** Vollständige technische Spezifikation — ausreichend detailliert um ohne zusätzlichen Kontext zu starten  
 **Basis:** AI-OS v1 (../1000-AI-OS) — eingefroren Juli 2026  
-**Stand:** August 2026 (aktualisiert 2026-08-03 — Email-Fachagent & Release-Tags; zuvor 2026-07-30 — Universal File Upload Ingest Service & Drag-Drop UI, Appliance VM Packaging Automation & Cloud-Init Bootstrap, Agent SDK Contract Framework, Deterministic Generic Workflow Engine, DataProduct Schema Export APIs & Dynamic Console UI Form/Result Renderers, Compute Mode Fallback & Service Health Regression Suite, Daily Open Loops Formatting Cleanup & Navigation Context Preservation, Daily Open Loops Clarity & Direct Navigation Links, Synthesized Meeting Summary Restoration, Regression Test Suite for Meeting Search & Dispatch, Orchestrator Live Reload & Compute Mode Fallback, Meeting To-Do Search Integration, Wyrd-Key & Odin Legend Popover, Lagebild UI Cleanup & Prompt Dropdown, Standard Prompt Catalog & Refined Intent Router, VIRKI UI Branding, Git Push Automation & Multi-Repo Sync, Document Viewers, WAQAM & Studentenprojekt Restrukturierung, Projekt Zorro)  
+**Stand:** August 2026 (aktualisiert 2026-08-08 — Local Model Gateway Fix & 60s Ollama Timeout, Context Size Badge & LLM Context Link Restoration, CAP & Dashboard Project Memory Search Enhancement; zuvor 2026-08-04 — Portfolio & Lagebild auf `studentenprojekt_v2` / 4-Säulen-Sprint; zuvor 2026-08-03 — Email-Fachagent & Release-Tags; zuvor 2026-07-30 — Universal File Upload Ingest Service & Drag-Drop UI, Appliance VM Packaging Automation & Cloud-Init Bootstrap, Agent SDK Contract Framework, Deterministic Generic Workflow Engine, DataProduct Schema Export APIs & Dynamic Console UI Form/Result Renderers, Compute Mode Fallback & Service Health Regression Suite, Daily Open Loops Formatting Cleanup & Navigation Context Preservation, Daily Open Loops Clarity & Direct Navigation Links, Synthesized Meeting Summary Restoration, Regression Test Suite for Meeting Search & Dispatch, Orchestrator Live Reload & Compute Mode Fallback, Meeting To-Do Search Integration, Wyrd-Key & Odin Legend Popover, Lagebild UI Cleanup & Prompt Dropdown, Standard Prompt Catalog & Refined Intent Router, VIRKI UI Branding, Git Push Automation & Multi-Repo Sync, Document Viewers, WAQAM & Studentenprojekt Restrukturierung, Projekt Zorro)  
 **Modus:** **Eine Implementierung** — keine Alternativen in dieser Roadmap. Jede Entscheidung ist final.  
 **Detail-Spec Company Brain:** [docs/09-COMPANY-BRAIN.md](docs/09-COMPANY-BRAIN.md) · **Memory einfach:** [docs/10-MEMORY-EINFACH.md](docs/10-MEMORY-EINFACH.md) · **Kontext Lagebild→LLM:** [docs/14-KONTEXT.md](docs/14-KONTEXT.md)  
 **Erstes Lizenzprodukt (VM):** [docs/11-PLATFORM-VM.md](docs/11-PLATFORM-VM.md)  
@@ -955,7 +955,9 @@ Next.js 15 — aus v1 (`stack/console-web/`) portieren, aber mit neuer Routenstr
 
 ```
 src/app/
-├── page.tsx                # Ebene 1: Lagebild (daily summary, alerts)
+├── page.tsx                # Ebene 1: Lagebild (daily summary, alerts, DailyFocusPanel)
+├── portfolio/
+│   └── page.tsx            # Projekte & Meilensteine (Portfolio-DB, Prio-Filter)
 ├── workflows/
 │   ├── page.tsx            # Ebene 2: Workflow-Übersicht
 │   ├── briefing/page.tsx   # Daily Briefing
@@ -2088,6 +2090,7 @@ GATE-COMMS-04  Bestehende Person per E-Mail wird gemerged, nicht blind überschr
 
 ```
 /                           Lagebild
+/portfolio                  Projekte & Meilensteine (Portfolio-DB, Prio-Gruppen, Dokument-Sprung)
 /workflows                  Alle Workflows + Status
 /workflows/briefing         Daily Briefing (starten + History)
 /workflows/research         Recherche starten
@@ -2117,6 +2120,25 @@ make demo   # infra + monitoring + core + platform-agents + seed-tenant "demo"
 ```
 
 Senkt die Einstiegshürde für neue Nutzer/Kunden auf einen Befehl und dient zugleich als Smoke-Test der gesamten Platform.
+
+### 10.4 Portfolio & Lagebild-Fokus (2026-08-04)
+
+**Kontext:** Aktives Praxisprojekt unter `/home/peter/Projekte/active/studentenprojekt_v2` (4-Säulen-Beratungsmodell, LCC-Readiness). Das Legacy-Verzeichnis `studentenprojekt` ist **nicht mehr aktiv**.
+
+| Baustein | Status | Pfad / Route |
+|----------|--------|--------------|
+| **Portfolio-Datenbank** — `studentenprojekt_v2` statt Legacy-Paket 1–3 | ✅ | `core/console-web/src/lib/portfolio-db.ts` |
+| **Console `/portfolio`** — Prio-Gruppen, Spotlight, Meilenstein-Fortschritt, Dokument-Chips | ✅ | `core/console-web/src/app/portfolio/page.tsx` |
+| **DailyFocusPanel** — 4-Säulen-Sprint (Säule 1–4 + LCC-Release V2) | ✅ | `core/console-web/src/components/DailyFocusPanel.tsx` |
+| **Projekt-Roadmap (SSOT)** — Ablauf Mo–Fr, Engagement `eng:waqam-students` | ✅ (extern) | `Projekte/active/studentenprojekt_v2/01_ROADMAP.md` |
+
+**Abnahme (Console):**
+
+- Portfolio listet `studentenprojekt_v2` mit Säulen-Meilensteinen und korrekten `file://`-Pfaden
+- Lagebild-Fokus zeigt Säule 2 als aktiv, Säule 1 als abgenommen (Default)
+- Filter Prio 1 / 2&3 / Continuous ohne Doppelung des Spotlight-Projekts
+
+**Nächster Schritt (Projektinhalt, nicht AI-OS):** Säulen 2–4 in `studentenprojekt_v2` gemäß `01_ROADMAP.md` ausarbeiten → LCC-Release V2.
 
 ---
 
@@ -3268,6 +3290,15 @@ Jeder abgeschlossene Roadmap-Meilenstein erhält einen **annotierten Git-Tag** i
 git tag -l 'roadmap/*'
 git show roadmap/2026-08-03-p4-email-invoices --stat
 ```
+
+## Stand & Changelog (2026-08-04 — Portfolio V2 & 4-Säulen-Lagebild)
+
+- **Portfolio-Daten (`portfolio-db.ts`):** Legacy `studentenprojekt` durch **`studentenprojekt_v2`** ersetzt — Pfade, Dokumente und Meilensteine entlang des 4-Säulen-Modells; WAQAM-Board-Abhängigkeit aktualisiert.
+- **Console `/portfolio`:** UI-Überarbeitung — Prioritäts-Kacheln als Filter, Spotlight für `studentenprojekt_v2`, gruppierte Projekt-Sektionen (Prio 1 / 2&3 / Continuous), Karten-Grid mit Meilenstein-Fortschritt und einklappbaren Dokument-Links.
+- **Lagebild `DailyFocusPanel`:** Phasen-Fahrplan von Paket 1–3 auf **4-Säulen-Sprint + LCC-Release V2** umgestellt; neuer localStorage-Key `aios_waqam_v2_phase_states`.
+- **Externe SSOT:** Projektinhalt unter `/home/peter/Projekte/active/studentenprojekt_v2/` — siehe [§10.4 Portfolio & Lagebild-Fokus](#104-portfolio--lagebild-fokus-2026-08-04).
+
+---
 
 ## Stand & Changelog (2026-08-03 — Email-Fachagent, Google-Plattform & Release-Tags)
 

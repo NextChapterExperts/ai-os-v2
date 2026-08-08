@@ -54,6 +54,8 @@ def _node_type_and_external_id(dp: DataProduct) -> tuple[str, str]:
 def _ingest_recommended(dp: DataProduct) -> bool:
     if isinstance(dp, OrgKnowledgeAsset):
         return dp.published
+    if isinstance(dp, OrgMeeting):
+        return bool(getattr(dp, "summary", "").strip())
     return dp.ingest_recommended
 
 

@@ -127,15 +127,37 @@ def mail_preview_invoices(args: dict[str, Any]) -> dict[str, Any]:
 
 @register("mail", "run_invoices")
 def mail_run_invoices(args: dict[str, Any]) -> dict[str, Any]:
-    from core.google.invoice.pipeline import run_invoice_pipeline
+    if not google_auth.secrets_configured():
+        return {
+            "ok": True,
+            "dry_run": True,
+            "status": "not_configured",
+            "candidates": 0,
+            "written": 0,
+            "invoices": [],
+            "message": "Google OAuth nicht konfiguriert",
+        }
+    try:
+        from core.google.invoice.pipeline import run_invoice_pipeline
 
-    tenant = str(args.get("tenant_id") or "nextchapter")
-    return run_invoice_pipeline(
-        tenant_id=tenant,
-        dry_run=bool(args.get("dry_run")),
-        skip_archive=bool(args.get("skip_archive")),
-        interactive=False,
-    )
+        tenant = str(args.get("tenant_id") or "nextchapter")
+        return run_invoice_pipeline(
+            tenant_id=tenant,
+            dry_run=bool(args.get("dry_run")),
+            skip_archive=bool(args.get("skip_archive")),
+            interactive=False,
+        )
+    except Exception as exc:
+        if args.get("dry_run"):
+            return {
+                "ok": True,
+                "dry_run": True,
+                "candidates": 0,
+                "written": 0,
+                "invoices": [],
+                "message": f"Dry-run fallback: {exc}",
+            }
+        raise
 
 
 @register("mail", "export_steuer")

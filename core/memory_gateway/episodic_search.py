@@ -74,15 +74,20 @@ def search_episodic(
             hit = _letta_hit(ep, score=0.92)
             merged[_dedupe_key(hit)] = hit
 
-    if mode in ("yesterday", "week", "today"):
-        sqlite_rows = chunks_in_window(pid, start, end, limit=limit, user_id=uid)
-    else:
-        sqlite_rows = search_chunks_fts(query, project_id=pid, limit=limit, user_id=uid)
-        if not sqlite_rows:
-            sqlite_rows = search_chunks(query, project_id=pid, limit=limit, user_id=uid)
+    # 1. FTS5 / Freitextsuche für gezielte Themeneinträge
+    fts_rows = search_chunks_fts(query, project_id=pid, limit=limit, user_id=uid)
+    if not fts_rows:
+        fts_rows = search_chunks(query, project_id=pid, limit=limit, user_id=uid)
 
-    for c in sqlite_rows:
-        hit = _chunk_hit(c, score=0.9, collection="memory.db")
+    for c in fts_rows:
+        hit = _chunk_hit(c, score=0.98, collection="memory.db")
+        key = _dedupe_key(hit)
+        merged[key] = hit
+
+    # 2. Ergänzende Zeitfenster-Chunks
+    window_rows = chunks_in_window(pid, start, end, limit=limit, user_id=uid)
+    for c in window_rows:
+        hit = _chunk_hit(c, score=0.75, collection="memory.db")
         key = _dedupe_key(hit)
         if key not in merged:
             merged[key] = hit

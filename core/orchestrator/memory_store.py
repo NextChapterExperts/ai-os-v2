@@ -83,8 +83,12 @@ def chunks_in_window(
                 sql += " AND role = ?"
                 params.append(role)
             if has_user_col:
-                sql += " AND (visibility = 'company' OR (visibility = 'team' AND (project_id IS NULL OR project_id = ?)) OR (visibility = 'private' AND user_id = ?))"
-                params.extend([project_id or DEFAULT_PROJECT, uid])
+                if with_project and project_id:
+                    sql += " AND (visibility = 'company' OR (visibility = 'team' AND (project_id IS NULL OR project_id = ? OR project_id = ?)) OR (visibility = 'private' AND user_id = ?))"
+                    params.extend([project_id, DEFAULT_PROJECT, uid])
+                else:
+                    sql += " AND (visibility = 'company' OR visibility = 'team' OR visibility IS NULL OR user_id = ? OR user_id = 'default_user')"
+                    params.append(uid)
             elif with_project and has_project_col and project_id:
                 sql += " AND project_id = ?"
                 params.append(project_id)
@@ -129,8 +133,12 @@ def search_chunks(
             )
             params: list[Any] = [since, like, like]
             if has_user_col:
-                sql += " AND (visibility = 'company' OR (visibility = 'team' AND (project_id IS NULL OR project_id = ?)) OR (visibility = 'private' AND user_id = ?))"
-                params.extend([project_id or DEFAULT_PROJECT, uid])
+                if with_project and project_id:
+                    sql += " AND (visibility = 'company' OR (visibility = 'team' AND (project_id IS NULL OR project_id = ? OR project_id = ?)) OR (visibility = 'private' AND user_id = ?))"
+                    params.extend([project_id, DEFAULT_PROJECT, uid])
+                else:
+                    sql += " AND (visibility = 'company' OR visibility = 'team' OR visibility IS NULL OR user_id = ? OR user_id = 'default_user')"
+                    params.append(uid)
             elif with_project and has_project_col and project_id:
                 sql += " AND project_id = ?"
                 params.append(project_id)
@@ -146,11 +154,24 @@ def search_chunks(
         con.close()
 
 
+_GERMAN_STOP_WORDS = {
+    "wo", "wer", "was", "wie", "wann", "warum", "und", "oder", "der", "die", "das", "dem", "den", "des",
+    "ein", "eine", "einer", "einem", "einen", "eines", "mit", "von", "aus", "bei", "nach", "fuer", "für",
+    "in", "im", "an", "am", "um", "zu", "zur", "zum", "ueber", "über", "unter", "vor", "habe", "hast", "hat",
+    "haben", "hatte", "hatten", "ich", "du", "er", "sie", "es", "wir", "ihr", "mein", "dein", "sein", "uns",
+    "welchem", "welche", "welcher", "welches", "dass", "daß", "nicht", "auch", "noch", "schon", "sehr", "viel",
+    "mehr", "aber", "gibt", "gab", "geht", "ging", "besprochen", "gemacht", "gehabt", "gesagt", "gefragt",
+    "wissen", "will", "moechte", "möchte", "projekt", "projekte", "datei", "dateien", "ordner", "pfad",
+    "thema", "themen", "punkt", "punkte", "info", "infos", "information", "informationen"
+}
+
+
 def _escape_fts(query: str) -> str:
-    tokens = [t for t in re.split(r"\W+", query.strip()) if len(t) >= 2]
-    if not tokens:
-        return ""
-    return " AND ".join(f'"{t.replace(chr(34), "")}"' for t in tokens[:12])
+    raw_tokens = [t for t in re.split(r"\W+", query.strip()) if len(t) >= 2]
+    keywords = [t for t in raw_tokens if t.lower() not in _GERMAN_STOP_WORDS]
+    if not keywords:
+        keywords = raw_tokens
+    return " AND ".join(f'"{t.replace(chr(34), "")}"' for t in keywords[:8])
 
 
 def search_chunks_fts(
@@ -181,8 +202,12 @@ def search_chunks_fts(
             )
             params: list[Any] = [fts_q]
             if has_user_col:
-                sql += " AND (c.visibility = 'company' OR (c.visibility = 'team' AND (c.project_id IS NULL OR c.project_id = ?)) OR (c.visibility = 'private' AND c.user_id = ?))"
-                params.extend([project_id or DEFAULT_PROJECT, uid])
+                if with_project and project_id:
+                    sql += " AND (c.visibility = 'company' OR (c.visibility = 'team' AND (c.project_id IS NULL OR c.project_id = ? OR c.project_id = ?)) OR (c.visibility = 'private' AND c.user_id = ?))"
+                    params.extend([project_id, DEFAULT_PROJECT, uid])
+                else:
+                    sql += " AND (c.visibility = 'company' OR c.visibility = 'team' OR c.visibility IS NULL OR c.user_id = ? OR c.user_id = 'default_user')"
+                    params.append(uid)
             elif with_project and has_project_col and project_id:
                 sql += " AND c.project_id = ?"
                 params.append(project_id)

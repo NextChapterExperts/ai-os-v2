@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { MeetingPickerField } from "@/components/MeetingPickerField";
 
 interface JsonSchemaProperty {
   type?: string;
@@ -10,6 +11,8 @@ interface JsonSchemaProperty {
   enum?: string[];
   anyOf?: Array<{ type?: string }>;
   "x-enum-labels"?: Record<string, string>;
+  "x-visible-when"?: Record<string, string>;
+  "x-widget"?: string;
 }
 
 interface JsonSchema {
@@ -35,10 +38,20 @@ function enumLabel(prop: JsonSchemaProperty, value: string): string {
   return prop["x-enum-labels"]?.[value] ?? value;
 }
 
+function isFieldVisible(
+  prop: JsonSchemaProperty,
+  formData: Record<string, any>,
+): boolean {
+  const rule = prop["x-visible-when"];
+  if (!rule) return true;
+  return Object.entries(rule).every(([field, expected]) => formData[field] === expected);
+}
+
 interface DynamicDataProductFormProps {
   schema: JsonSchema;
   initialValues?: Record<string, any> | null;
   onSubmit: (data: Record<string, any>) => void;
+  onFormDataChange?: (data: Record<string, any>) => void;
   loading?: boolean;
   submitLabel?: string;
   loadingLabel?: string;
@@ -48,6 +61,7 @@ export const DynamicDataProductForm: React.FC<DynamicDataProductFormProps> = ({
   schema,
   initialValues,
   onSubmit,
+  onFormDataChange,
   loading = false,
   submitLabel = "Agent ausführen",
   loadingLabel = "Agent läuft…",
@@ -90,8 +104,18 @@ export const DynamicDataProductForm: React.FC<DynamicDataProductFormProps> = ({
     } else if (type === "boolean") {
       parsedValue = Boolean(value);
     }
-    setFormData((prev) => ({ ...prev, [key]: parsedValue }));
+    setFormData((prev) => {
+      const next = { ...prev, [key]: parsedValue };
+      onFormDataChange?.(next);
+      return next;
+    });
   };
+
+  useEffect(() => {
+    if (Object.keys(formData).length > 0) {
+      onFormDataChange?.(formData);
+    }
+  }, [formData, onFormDataChange]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,28 +153,38 @@ export const DynamicDataProductForm: React.FC<DynamicDataProductFormProps> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {properties.map(([key, prop]) => {
+          if (!isFieldVisible(prop, formData)) return null;
           const isRequired = requiredFields.has(key);
           const rawType = prop.type || (prop.anyOf && prop.anyOf[0]?.type) || "string";
           const label = prop.title || key.replace(/_/g, " ");
+          const isTextarea =
+            prop["x-widget"] === "textarea" ||
+            key === "summary" ||
+            (rawType === "string" && key.includes("beschreibung"));
+          const isMeetingPicker = prop["x-widget"] === "meeting-picker";
 
           return (
             <div
               key={key}
-              className={`space-y-1.5 ${
-                rawType === "string" && !prop.enum && key.includes("beschreibung")
-                  ? "md:col-span-2"
-                  : ""
-              }`}
+              className={`space-y-1.5 ${isTextarea || isMeetingPicker ? "md:col-span-2" : ""}`}
             >
               <label className="block text-xs font-semibold text-[var(--ink)] flex items-center justify-between">
                 <span>
                   {label}
                   {isRequired && <span className="text-[var(--danger)] ml-1">*</span>}
                 </span>
-                <span className="mono text-[10px] muted uppercase">{rawType}</span>
+                {!isMeetingPicker ? (
+                  <span className="mono text-[10px] muted uppercase">{rawType}</span>
+                ) : null}
               </label>
 
-              {prop.enum ? (
+              {prop["x-widget"] === "meeting-picker" ? (
+                <MeetingPickerField
+                  value={String(formData[key] || "")}
+                  onChange={(id) => handleChange(key, id, rawType)}
+                  required={isRequired}
+                />
+              ) : prop.enum ? (
                 <select
                   value={formData[key] || ""}
                   onChange={(e) => handleChange(key, e.target.value, rawType)}
@@ -181,6 +215,15 @@ export const DynamicDataProductForm: React.FC<DynamicDataProductFormProps> = ({
                     {formData[key] ? "Ja / Aktiv" : "Nein / Inaktiv"}
                   </span>
                 </div>
+              ) : isTextarea ? (
+                <textarea
+                  rows={5}
+                  value={formData[key] !== undefined ? formData[key] : ""}
+                  placeholder={prop.description || `Eingabe für ${label}`}
+                  onChange={(e) => handleChange(key, e.target.value, rawType)}
+                  className="w-full bg-[color-mix(in_oklab,white_85%,transparent)] border border-[var(--line)] text-[var(--ink)] rounded-lg px-3 py-2 text-xs placeholder-[var(--ink-soft)] focus:outline-none focus:border-[var(--signal)] transition-colors min-h-[120px]"
+                  required={isRequired}
+                />
               ) : (
                 <input
                   type={rawType === "number" || rawType === "integer" ? "number" : "text"}
@@ -192,7 +235,7 @@ export const DynamicDataProductForm: React.FC<DynamicDataProductFormProps> = ({
                   required={isRequired}
                 />
               )}
-              {prop.description && (
+              {prop.description && prop["x-widget"] !== "meeting-picker" && (
                 <p className="text-[10px] muted m-0">{prop.description}</p>
               )}
             </div>

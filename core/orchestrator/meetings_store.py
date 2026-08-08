@@ -16,10 +16,21 @@ from .brain_store import list_engagements
 REPO_ROOT = Path(__file__).resolve().parents[2]
 ACTIVE_ROOT = Path(os.environ.get("AIOS_ACTIVE_ROOT", REPO_ROOT.parent / "active"))
 MEMORY_ROOT = Path(os.environ.get("AIOS_MEMORY_ROOT", "/opt/ai-os/memory"))
-DB_PATH = Path(os.environ.get("AIOS_MEETINGS_DB", MEMORY_ROOT / "state" / "meetings.db"))
-ATTACHMENTS_ROOT = Path(
-    os.environ.get("AIOS_MEETINGS_ATTACHMENTS_DIR", MEMORY_ROOT / "state" / "meetings" / "attachments")
-)
+
+
+def _db_path() -> Path:
+    return Path(os.environ.get("AIOS_MEETINGS_DB", MEMORY_ROOT / "state" / "meetings.db"))
+
+
+def _attachments_root() -> Path:
+    return Path(
+        os.environ.get(
+            "AIOS_MEETINGS_ATTACHMENTS_DIR",
+            MEMORY_ROOT / "state" / "meetings" / "attachments",
+        )
+    )
+
+
 MAX_ATTACHMENT_BYTES = int(os.environ.get("AIOS_MEETING_ATTACHMENT_MAX_BYTES", str(25 * 1024 * 1024)))
 
 _SCHEMA = """
@@ -58,8 +69,9 @@ def _now() -> str:
 
 
 def _connect() -> sqlite3.Connection:
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    con = sqlite3.connect(str(DB_PATH))
+    db_path = _db_path()
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    con = sqlite3.connect(str(db_path))
     con.row_factory = sqlite3.Row
     con.executescript(_SCHEMA)
     _migrate_participant_refs(con)
@@ -91,7 +103,7 @@ def _safe_filename(name: str) -> str:
 
 def _attachment_dir(meeting_id: str) -> Path:
     safe = re.sub(r"[^a-zA-Z0-9_-]", "_", meeting_id)
-    base = ATTACHMENTS_ROOT.resolve()
+    base = _attachments_root().resolve()
     p = (base / safe).resolve()
     if not str(p).startswith(str(base)):
         raise ValueError(f"Invalid meeting_id: {meeting_id}")
@@ -129,20 +141,44 @@ def _row_to_dict(row: sqlite3.Row, *, tenant_id: str | None = None) -> dict[str,
     open_todos = sum(1 for t in todos if isinstance(t, dict) and not t.get("done"))
     tid = tenant_id or row["tenant_id"]
     attachments = _list_attachments_for(row["id"], tid)
+    tags = _parse_json_list(row["tags"])
+    project = ""
+    for tag in tags:
+        if isinstance(tag, str) and tag.startswith("project:"):
+            project = tag[8:]
+            break
+    title_str = row["title"]
+    if not project and title_str:
+        try:
+            from core.google.meetings.project_parse import resolve_project_from_title
+            from core.orchestrator.brain_store import list_engagements, list_offerings
+
+            project, _ = resolve_project_from_title(
+                title_str,
+                engagements=list_engagements(),
+                offerings=list_offerings(),
+            )
+        except Exception:
+            pass
     return {
         "id": row["id"],
         "tenant_id": row["tenant_id"],
-        "title": row["title"],
+        "title": title_str,
+        "project": project,
         "held_at": row["held_at"],
         "participants": row["participants"],
         "participant_refs": _parse_json_list(row["participant_refs"]),
         "summary": row["summary"],
         "engagement_ids": _parse_json_list(row["engagement_ids"]),
-        "tags": _parse_json_list(row["tags"]),
+        "tags": tags,
         "todos": todos,
         "open_todo_count": open_todos,
         "attachments": attachments,
         "attachment_count": len(attachments),
+        "calendar_event_id": row["calendar_event_id"] if "calendar_event_id" in row.keys() else "",
+        "source": row["source"] if "source" in row.keys() else "manual",
+        "location": row["location"] if "location" in row.keys() else "",
+        "end_at": row["end_at"] if "end_at" in row.keys() else "",
         "created_at": row["created_at"],
         "updated_at": row["updated_at"],
     }
@@ -502,3 +538,254 @@ def delete_attachment(meeting_id: str, attachment_id: str, tenant_id: str) -> bo
     if path.is_file():
         path.unlink()
     return True
+
+
+def _migrate_calendar_columns(con: sqlite3.Connection) -> None:
+    cols = {row[1] for row in con.execute("PRAGMA table_info(meetings)").fetchall()}
+    additions = {
+        "calendar_event_id": "TEXT",
+        "source": "TEXT NOT NULL DEFAULT 'manual'",
+        "location": "TEXT NOT NULL DEFAULT ''",
+        "end_at": "TEXT NOT NULL DEFAULT ''",
+    }
+    for col, typedef in additions.items():
+        if col not in cols:
+            con.execute(f"ALTER TABLE meetings ADD COLUMN {col} {typedef}")
+    con.execute(
+        "CREATE INDEX IF NOT EXISTS idx_meetings_calendar_event "
+        "ON meetings(tenant_id, calendar_event_id)"
+    )
+    con.commit()
+
+
+def _connect_with_migrations() -> sqlite3.Connection:
+    con = _connect()
+    _migrate_calendar_columns(con)
+    return con
+
+
+def _format_participants(attendees: list[dict[str, Any]]) -> str:
+    parts: list[str] = []
+    for att in attendees:
+        if not isinstance(att, dict):
+            continue
+        email = str(att.get("email") or "").strip()
+        name = str(att.get("name") or "").strip()
+        if name and email:
+            parts.append(f"{name} <{email}>")
+        elif email:
+            parts.append(email)
+        elif name:
+            parts.append(name)
+    return ", ".join(parts)
+
+
+def _attendee_refs(attendees: list[dict[str, Any]]) -> list[dict[str, str]]:
+    refs: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for att in attendees:
+        if not isinstance(att, dict):
+            continue
+        email = str(att.get("email") or "").strip().lower()
+        name = str(att.get("name") or "").strip()
+        if not email and not name:
+            continue
+        key = email or name.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        refs.append({"email": email, "name": name})
+    return refs
+
+
+def find_meeting_by_calendar_event_id(
+    calendar_event_id: str,
+    tenant_id: str,
+) -> dict[str, Any] | None:
+    if not calendar_event_id:
+        return None
+    con = _connect_with_migrations()
+    try:
+        row = con.execute(
+            "SELECT * FROM meetings WHERE tenant_id = ? AND calendar_event_id = ?",
+            (tenant_id, calendar_event_id),
+        ).fetchone()
+    finally:
+        con.close()
+    return _row_to_dict(row) if row else None
+
+
+def upsert_calendar_meeting(
+    tenant_id: str,
+    *,
+    calendar_event_id: str,
+    title: str,
+    held_at: str,
+    end_at: str = "",
+    location: str = "",
+    attendees: list[dict[str, Any]] | None = None,
+    project: str = "",
+    engagement_ids: list[str] | None = None,
+    dry_run: bool = False,
+) -> tuple[str, dict[str, Any] | None]:
+    """Kalender-Event in Meeting-Inbox upserten. Returns (action, meeting)."""
+    attendees = attendees or []
+    if not calendar_event_id or not title.strip():
+        return "skipped", None
+
+    participant_refs = _attendee_refs(attendees)
+    participants = _format_participants(attendees)
+    tags = ["calendar-import"]
+    if project.strip():
+        tags.append(f"project:{project.strip()}")
+    merged_engagements = list(engagement_ids or [])
+    existing = find_meeting_by_calendar_event_id(calendar_event_id, tenant_id)
+
+    payload = {
+        "title": title.strip(),
+        "held_at": held_at,
+        "end_at": end_at,
+        "location": location,
+        "participants": participants,
+        "participant_refs": participant_refs,
+        "tags": tags,
+        "engagement_ids": merged_engagements,
+        "calendar_event_id": calendar_event_id,
+        "source": "calendar",
+    }
+
+    if dry_run:
+        action = "updated" if existing else "created"
+        preview = {
+            **payload,
+            "id": existing["id"] if existing else f"meet:gcal-{calendar_event_id[:12]}",
+            "tenant_id": tenant_id,
+            "summary": (existing or {}).get("summary", ""),
+            "has_summary": bool((existing or {}).get("summary", "").strip()),
+        }
+        return action, preview
+
+    if existing:
+        if existing.get("summary", "").strip():
+            update_data = {
+                "title": payload["title"],
+                "held_at": payload["held_at"],
+                "participants": payload["participants"],
+                "participant_refs": payload["participant_refs"],
+                "tags": tags,
+            }
+            if merged_engagements:
+                update_data["engagement_ids"] = merged_engagements
+            updated = update_meeting(existing["id"], tenant_id, update_data)
+            if updated:
+                con = _connect_with_migrations()
+                try:
+                    con.execute(
+                        "UPDATE meetings SET end_at = ?, location = ?, source = ?, calendar_event_id = ? "
+                        "WHERE id = ? AND tenant_id = ?",
+                        (end_at, location, "calendar", calendar_event_id, existing["id"], tenant_id),
+                    )
+                    con.commit()
+                finally:
+                    con.close()
+                updated = get_meeting(existing["id"], tenant_id)
+            return "updated", updated
+        updated = update_meeting(existing["id"], tenant_id, payload)
+        return "updated", updated
+
+    meeting_id = f"meet:gcal-{calendar_event_id[:16]}"
+    payload["id"] = meeting_id
+    payload.setdefault("summary", "")
+    payload.setdefault("engagement_ids", [])
+    payload.setdefault("todos", [])
+    created = create_meeting(tenant_id, payload)
+    con = _connect_with_migrations()
+    try:
+        con.execute(
+            "UPDATE meetings SET end_at = ?, location = ?, source = ?, calendar_event_id = ? "
+            "WHERE id = ? AND tenant_id = ?",
+            (end_at, location, "calendar", calendar_event_id, meeting_id, tenant_id),
+        )
+        con.commit()
+    finally:
+        con.close()
+    return "created", get_meeting(meeting_id, tenant_id)
+
+
+def compute_person_meeting_stats(
+    tenant_id: str,
+    *,
+    since_date: str | None = None,
+) -> list[dict[str, Any]]:
+    """Aggregiert Meetings pro Teilnehmer-E-Mail (für „Hatte ich schon ein Meeting mit X?“)."""
+    con = _connect_with_migrations()
+    try:
+        sql = "SELECT * FROM meetings WHERE tenant_id = ?"
+        params: list[Any] = [tenant_id]
+        if since_date:
+            sql += " AND held_at >= ?"
+            params.append(since_date)
+        sql += " ORDER BY held_at ASC"
+        rows = con.execute(sql, params).fetchall()
+    finally:
+        con.close()
+
+    stats: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        meeting = _row_to_dict(row)
+        held_at = str(meeting.get("held_at") or "")
+        title = str(meeting.get("title") or "")
+        mid = str(meeting.get("id") or "")
+        refs = meeting.get("participant_refs") or []
+        if not isinstance(refs, list):
+            refs = []
+        for ref in refs:
+            if not isinstance(ref, dict):
+                continue
+            email = str(ref.get("email") or "").strip().lower()
+            name = str(ref.get("name") or "").strip()
+            if not email:
+                continue
+            bucket = stats.setdefault(
+                email,
+                {
+                    "email": email,
+                    "name": name,
+                    "meeting_count": 0,
+                    "first_meeting_at": held_at,
+                    "last_meeting_at": held_at,
+                    "meeting_ids": [],
+                    "meeting_titles": [],
+                },
+            )
+            if name and not bucket.get("name"):
+                bucket["name"] = name
+            bucket["meeting_count"] += 1
+            bucket["last_meeting_at"] = held_at
+            if held_at and (not bucket.get("first_meeting_at") or held_at < bucket["first_meeting_at"]):
+                bucket["first_meeting_at"] = held_at
+            bucket["meeting_ids"].append(mid)
+            if title:
+                bucket["meeting_titles"].append(title)
+
+    result = sorted(stats.values(), key=lambda x: (-x["meeting_count"], x["email"]))
+    for item in result:
+        item["meeting_titles"] = item["meeting_titles"][-5:]
+        item["meeting_ids"] = item["meeting_ids"][-20:]
+    return result
+
+
+def lookup_person_meeting_stats(
+    tenant_id: str,
+    person_query: str,
+    *,
+    since_date: str | None = None,
+) -> dict[str, Any] | None:
+    """Sucht Person per E-Mail oder Name (Teilstring)."""
+    q = person_query.strip().lower()
+    if not q:
+        return None
+    for stat in compute_person_meeting_stats(tenant_id, since_date=since_date):
+        if q in stat["email"] or q in stat.get("name", "").lower():
+            return stat
+    return None

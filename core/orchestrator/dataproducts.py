@@ -71,6 +71,7 @@ class OrgMeeting(DataProduct):
     meeting_id: str
     title: str
     held_at: str
+    summary: str = ""
     attendee_refs: list[str] = Field(default_factory=list)
     source_ref: str | None = None
     about_refs: list[str] = Field(default_factory=list)

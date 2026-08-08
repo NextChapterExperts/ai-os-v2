@@ -37,7 +37,7 @@ async def list_servers() -> dict[str, Any]:
         from core.google import auth as google_auth
 
         status = "connected" if google_auth.secrets_configured() else "stub"
-        if server_id not in ("mail", "calendar", "drive"):
+        if server_id not in ("mail", "calendar", "drive", "meetings"):
             status = "stub"
         servers.append({"id": server_id, "status": status, "tools": tools})
     return {"servers": servers}

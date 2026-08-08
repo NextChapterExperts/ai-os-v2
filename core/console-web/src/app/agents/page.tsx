@@ -4,7 +4,9 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { DynamicDataProductForm } from "@/components/DynamicDataProductForm";
 import { DataProductViewer } from "@/components/DataProductViewer";
+import { MeetingsReportViewer } from "@/components/MeetingsReportViewer";
 import { FileUploadDropzone } from "@/components/FileUploadDropzone";
+import { mergeAgentInputSchema } from "@/lib/merge-agent-schema";
 
 interface AgentItem {
   workflow_id: string;
@@ -51,6 +53,110 @@ const SAMPLE_HANDWERK_AGENT: AgentItem = {
   },
 };
 
+
+const EMAIL_INVOICES_AGENT: AgentItem = {
+  workflow_id: "email-invoices",
+  name: "Gmail-Rechnungen extrahieren",
+  description:
+    "Scannt Gmail nach Rechnungs-Kandidaten, archiviert PDFs in Google Drive und schreibt neue Zeilen ins Google Sheet.",
+  input_schema: {
+    title: "Gmail-Rechnungen extrahieren",
+    description: "Gmail-Rechnungs-Pipeline (email-agent via MCP)",
+    properties: {
+      run_mode: {
+        type: "string",
+        enum: ["dry_run", "live"],
+        default: "dry_run",
+        title: "Ausführungsmodus",
+        "x-enum-labels": {
+          dry_run: "Nur Vorschau (Dry-Run) — nichts schreiben",
+          live: "Live — Sheet & Drive aktualisieren",
+        },
+      },
+      archive_mode: {
+        type: "string",
+        enum: ["archive", "skip"],
+        default: "archive",
+        title: "PDF-Archiv in Drive",
+        "x-enum-labels": {
+          archive: "PDFs nach Drive archivieren",
+          skip: "Archivierung überspringen",
+        },
+      },
+    },
+  },
+  output_schema: { title: "InvoicePipelineReport" },
+};
+
+const MEETINGS_AGENT: AgentItem = {
+  workflow_id: "meetings-agent",
+  name: "Meetings-Agent",
+  description:
+    "Termine aus Google-Kalender laden (ab 1. Juli 2026) oder Meeting-Zusammenfassung ins Company Brain speichern.",
+  input_schema: {
+    title: "Meetings-Agent",
+    properties: {
+      aufgabe: {
+        type: "string",
+        enum: ["termine_abrufen", "zusammenfassung_speichern"],
+        default: "termine_abrufen",
+        title: "Aufgabe",
+        "x-enum-labels": {
+          termine_abrufen: "Termine aus Kalender laden",
+          zusammenfassung_speichern: "Zusammenfassung ins Company Brain",
+        },
+      },
+      run_mode: {
+        type: "string",
+        enum: ["dry_run", "live"],
+        default: "dry_run",
+        title: "Ausführungsmodus",
+        "x-enum-labels": {
+          dry_run: "Nur Vorschau (Dry-Run)",
+          live: "Live ausführen",
+        },
+      },
+      since_date: {
+        type: "string",
+        default: "2026-07-01",
+        title: "Kalender ab Datum",
+        "x-visible-when": { aufgabe: "termine_abrufen" },
+      },
+      include_forecast: {
+        type: "string",
+        enum: ["yes", "no"],
+        default: "yes",
+        title: "Forecast (31 Tage)",
+        "x-enum-labels": { yes: "Ja", no: "Nein" },
+        "x-visible-when": { aufgabe: "termine_abrufen" },
+      },
+      meeting_id: {
+        type: "string",
+        default: "",
+        title: "Meeting auswählen",
+        "x-visible-when": { aufgabe: "zusammenfassung_speichern" },
+        "x-widget": "meeting-picker",
+      },
+      summary: {
+        type: "string",
+        default: "",
+        title: "Zusammenfassung",
+        "x-visible-when": { aufgabe: "zusammenfassung_speichern" },
+        "x-widget": "textarea",
+      },
+    },
+  },
+  output_schema: { title: "MeetingsAgentReport" },
+};
+
+/** Fachagenten — immer in der UI, auch wenn Registry kurz offline ist. */
+const CORE_FACHAGENTS: Record<string, AgentItem> = {
+  "email-invoices": EMAIL_INVOICES_AGENT,
+  "meetings-agent": MEETINGS_AGENT,
+};
+
+const AGENT_DISPLAY_ORDER = ["email-invoices", "meetings-agent", "handwerk-angebot"];
+
 const SAMPLE_PREFILLS: Record<string, Record<string, any>> = {
   "handwerk-angebot": {
     kunden_name: "Malerbetrieb Schulze GmbH",
@@ -69,6 +175,10 @@ const AGENT_ACTION_LABELS: Record<string, { submit: string; loading: string }> =
     submit: "Rechnungen extrahieren",
     loading: "Gmail wird gescannt…",
   },
+  "meetings-agent": {
+    submit: "Ausführen",
+    loading: "Meetings-Agent läuft…",
+  },
 };
 
 const EMAIL_INVOICE_AGENT_IDS = new Set(["email-invoices"]);
@@ -82,9 +192,10 @@ type InvoiceResources = {
 
 export default function AgentsPage() {
   const [agents, setAgents] = useState<Record<string, AgentItem>>({
+    ...CORE_FACHAGENTS,
     "handwerk-angebot": SAMPLE_HANDWERK_AGENT,
   });
-  const [selectedAgentId, setSelectedAgentId] = useState<string>("handwerk-angebot");
+  const [selectedAgentId, setSelectedAgentId] = useState<string>("email-invoices");
   const [loading, setLoading] = useState(false);
   const [executing, setExecuting] = useState(false);
   const [lastResult, setLastResult] = useState<any>(null);
@@ -94,6 +205,7 @@ export default function AgentsPage() {
     SAMPLE_PREFILLS["handwerk-angebot"]
   );
   const [invoiceResources, setInvoiceResources] = useState<InvoiceResources | null>(null);
+  const [agentFormData, setAgentFormData] = useState<Record<string, any>>({});
 
   useEffect(() => {
     fetchAgents();
@@ -129,7 +241,20 @@ export default function AgentsPage() {
         const data = await res.json();
         const wfs = data.workflows || {};
         if (Object.keys(wfs).length > 0) {
-          setAgents((prev) => ({ ...prev, ...wfs }));
+          const merged: Record<string, AgentItem> = {};
+          for (const [id, wf] of Object.entries(wfs) as [string, AgentItem][]) {
+            const fallback = CORE_FACHAGENTS[id];
+            merged[id] = fallback
+              ? {
+                  ...wf,
+                  input_schema: mergeAgentInputSchema(
+                    fallback.input_schema,
+                    wf.input_schema,
+                  ),
+                }
+              : wf;
+          }
+          setAgents((prev) => ({ ...prev, ...merged }));
         }
       }
     } catch (e) {
@@ -158,7 +283,12 @@ export default function AgentsPage() {
       const completed = res.ok && (data.status === "completed" || data.ok) && outputDp;
 
       if (completed) {
-        setLastResult({ ok: true, output_dp: outputDp });
+        setLastResult({
+          ok: true,
+          output_dp: outputDp,
+          commit: data.commit,
+          services: data.services,
+        });
         const agentName = agents[selectedAgentId]?.name || selectedAgentId;
         setHistory((prev) => [
           {
@@ -168,9 +298,34 @@ export default function AgentsPage() {
           },
           ...prev.slice(0, 4),
         ]);
+        if (
+          selectedAgentId === "meetings-agent" &&
+          formData.aufgabe === "termine_abrufen" &&
+          formData.run_mode === "live"
+        ) {
+          const meetings = (outputDp?.meetings || []) as Array<Record<string, unknown>>;
+          const pick =
+            meetings.find((m) => !m.has_summary) ??
+            meetings[0];
+          const meetingId = String(pick?.meeting_id || pick?.id || "");
+          if (meetingId) {
+            setOverrideFormData({
+              ...formData,
+              aufgabe: "zusammenfassung_speichern",
+              meeting_id: meetingId,
+              summary: "",
+            });
+          }
+        }
       } else if (!res.ok || data.detail || data.error) {
+        const errMsg =
+          typeof data.detail === "string"
+            ? data.detail
+            : Array.isArray(data.detail)
+              ? data.detail.map((d: { msg?: string }) => d.msg).filter(Boolean).join("; ")
+              : data.error || `HTTP ${res.status}`;
         setLastResult({
-          error: data.detail || data.error || `HTTP ${res.status}`,
+          error: errMsg,
         });
       } else if (selectedAgentId === "handwerk-angebot") {
         // Fallback simulation for local UI demonstration if Orchestrator port 8091 is offline
@@ -205,13 +360,33 @@ export default function AgentsPage() {
     handleExecute(sample);
   };
 
-  const selectedAgent = selectedAgentId ? agents[selectedAgentId] : SAMPLE_HANDWERK_AGENT;
+  const selectedAgent = selectedAgentId ? agents[selectedAgentId] : EMAIL_INVOICES_AGENT;
   const agentCount = Object.keys(agents).length;
+  const sortedAgents = Object.values(agents).sort((a, b) => {
+    const ia = AGENT_DISPLAY_ORDER.indexOf(a.workflow_id);
+    const ib = AGENT_DISPLAY_ORDER.indexOf(b.workflow_id);
+    const ra = ia === -1 ? 99 : ia;
+    const rb = ib === -1 ? 99 : ib;
+    return ra - rb;
+  });
   const hasSamplePrefill = Boolean(SAMPLE_PREFILLS[selectedAgentId]);
-  const actionLabels = AGENT_ACTION_LABELS[selectedAgentId] ?? {
+  const baseActionLabels = AGENT_ACTION_LABELS[selectedAgentId] ?? {
     submit: "Agent ausführen",
     loading: "Agent läuft…",
   };
+  const actionLabels =
+    selectedAgentId === "meetings-agent"
+      ? agentFormData.aufgabe === "zusammenfassung_speichern"
+        ? {
+            submit:
+              agentFormData.run_mode === "live"
+                ? "Zusammenfassung ins Company Brain speichern"
+                : "Zusammenfassung (Dry-Run) prüfen",
+            loading: "Wird gespeichert…",
+          }
+        : { submit: "Termine aus Kalender laden", loading: "Kalender wird gelesen…" }
+      : baseActionLabels;
+  const isMeetingsAgent = selectedAgentId === "meetings-agent";
   const isEmailInvoiceAgent = EMAIL_INVOICE_AGENT_IDS.has(selectedAgentId);
 
   return (
@@ -275,7 +450,7 @@ export default function AgentsPage() {
             </div>
 
             <div className="space-y-3">
-              {Object.values(agents).map((ag) => {
+              {sortedAgents.map((ag) => {
                 const isSelected = ag.workflow_id === selectedAgentId;
                 return (
                   <button
@@ -396,6 +571,7 @@ export default function AgentsPage() {
                 <DynamicDataProductForm
                   schema={selectedAgent.input_schema}
                   initialValues={overrideFormData}
+                  onFormDataChange={setAgentFormData}
                   onSubmit={handleExecute}
                   loading={executing}
                   submitLabel={actionLabels.submit}
@@ -417,10 +593,58 @@ export default function AgentsPage() {
                   </div>
                 ) : (
                   <>
+                    {Array.isArray(lastResult.services?.started) &&
+                    lastResult.services.started.length > 0 ? (
+                      <div className="p-3 rounded-xl border border-[var(--line)] bg-[color-mix(in_oklab,var(--signal)_8%,white)] text-xs text-[var(--ink)]">
+                        Backend automatisch gestartet:{" "}
+                        {lastResult.services.started.join(", ")}
+                      </div>
+                    ) : null}
+                    {isMeetingsAgent &&
+                    lastResult.output_dp?.operation === "zusammenfassung_speichern" ? (
+                      <div
+                        className={`p-4 rounded-xl border text-xs space-y-2 ${
+                          lastResult.output_dp?.dry_run
+                            ? "border-[var(--line)] bg-[color-mix(in_oklab,white_90%,transparent)]"
+                            : "border-[var(--signal)] bg-[color-mix(in_oklab,var(--signal)_10%,white)]"
+                        }`}
+                      >
+                        <div className="font-semibold text-[var(--ink)]">
+                          {lastResult.output_dp?.dry_run
+                            ? "Dry-Run: Würde ins Company Brain committen"
+                            : "Im Company Brain gespeichert (org:Meeting)"}
+                        </div>
+                        {lastResult.output_dp?.kg_external_id ? (
+                          <div className="mono text-[10px] muted">
+                            KG: {lastResult.output_dp.kg_node_type} ·{" "}
+                            {lastResult.output_dp.kg_external_id}
+                          </div>
+                        ) : null}
+                        {lastResult.commit?.node_id && !lastResult.output_dp?.dry_run ? (
+                          <Link
+                            href={`/platform/kg?node=${encodeURIComponent(lastResult.commit.node_id)}`}
+                            className="btn-ghost text-xs inline-flex"
+                          >
+                            Im Knowledge Graph ansehen
+                          </Link>
+                        ) : null}
+                        {lastResult.output_dp?.dry_run ? (
+                          <p className="text-[10px] muted m-0">
+                            Modus auf <strong>Live</strong> stellen, um wirklich zu speichern.
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    {isMeetingsAgent &&
+                    lastResult.output_dp?.operation === "termine_abrufen" ? (
+                      <MeetingsReportViewer report={lastResult.output_dp} />
+                    ) : (
                     <DataProductViewer
                       dataProduct={lastResult.output_dp || lastResult.result}
                       title={`${selectedAgent.name} — Output`}
                     />
+                    )}
+                    
                     {isEmailInvoiceAgent && lastResult.output_dp?.sheet_url ? (
                       <div className="flex flex-wrap gap-2">
                         <a

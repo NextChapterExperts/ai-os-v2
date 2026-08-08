@@ -7,6 +7,92 @@ interface DataProductViewerProps {
   title?: string;
 }
 
+
+
+
+function formatMeetingDate(iso: unknown): string {
+  if (!iso || typeof iso !== "string") return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso.slice(0, 16);
+  return d.toLocaleString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+function renderMeetingsTable(rows: Record<string, unknown>[]): React.ReactNode {
+  return (
+    <div className="p-4 rounded-xl border border-[var(--line)] bg-white space-y-2 overflow-x-auto">
+      <div className="text-xs font-bold text-[var(--signal)] uppercase tracking-wider mono">
+        Termine ({rows.length})
+      </div>
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="border-b border-[var(--line)]">
+            <th className="text-left p-2 font-semibold">Projekt</th>
+            <th className="text-left p-2 font-semibold">Titel</th>
+            <th className="text-left p-2 font-semibold">Datum</th>
+            <th className="text-left p-2 font-semibold">Teilnehmer</th>
+            <th className="text-left p-2 font-semibold">Summary</th>
+            <th className="text-left p-2 font-semibold">Meeting-ID</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.slice(0, 30).map((row, i) => (
+            <tr key={i} className="border-b border-[var(--line)] last:border-0 align-top">
+              <td className="p-2 whitespace-nowrap">{String(row.project || "—")}</td>
+              <td className="p-2 font-semibold text-[var(--ink)]">{String(row.title || "—")}</td>
+              <td className="p-2 mono whitespace-nowrap">{formatMeetingDate(row.held_at)}</td>
+              <td className="p-2 text-[var(--ink-soft)] max-w-xs">{String(row.participants_label || row.participants || "—")}</td>
+              <td className="p-2">{row.has_summary ? "✓" : "offen"}</td>
+              <td className="p-2 mono text-[10px] muted">{String(row.meeting_id || "—")}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function renderArrayField(key: string, value: unknown): React.ReactNode {
+  if (!Array.isArray(value) || value.length === 0) return null;
+  if (key === "meetings" && typeof value[0] === "object" && value[0] !== null) {
+    return renderMeetingsTable(value as Record<string, unknown>[]);
+  }
+  if (key === "forecast_next_month" && typeof value[0] === "object" && value[0] !== null) {
+    return renderMeetingsTable(
+      (value as Record<string, unknown>[]).map((r) => ({ ...r, has_summary: false })),
+    );
+  }
+  if (typeof value[0] !== "object" || value[0] === null) return null;
+  const rows = value as Record<string, unknown>[];
+  const cols = Object.keys(rows[0]).filter((k) => !["tenant_id", "produced_by", "workflow_run_id"].includes(k)).slice(0, 6);
+  return (
+    <div key={key} className="p-4 rounded-xl border border-[var(--line)] bg-white space-y-2 overflow-x-auto">
+      <div className="text-xs font-bold text-[var(--signal)] uppercase tracking-wider mono">
+        {key.replace(/_/g, " ")} ({rows.length})
+      </div>
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="border-b border-[var(--line)]">
+            {cols.map((c) => (
+              <th key={c} className="text-left p-2 font-semibold">{c.replace(/_/g, " ")}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.slice(0, 20).map((row, i) => (
+            <tr key={i} className="border-b border-[var(--line)] last:border-0">
+              {cols.map((c) => (
+                <td key={c} className="p-2 mono align-top">
+                  {typeof row[c] === "object" ? JSON.stringify(row[c]) : String(row[c] ?? "")}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export const DataProductViewer: React.FC<DataProductViewerProps> = ({
   dataProduct,
   title = "Ergebnis DataProduct",
@@ -97,9 +183,14 @@ export const DataProductViewer: React.FC<DataProductViewerProps> = ({
             return null;
           })}
 
+          {businessFields.map(([key, value]) => renderArrayField(key, value))}
+
           {/* Key Value Grid for scalar fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {businessFields.map(([key, value]) => {
+              if (Array.isArray(value) && value.length && typeof value[0] === "object") {
+                return null;
+              }
               if (typeof value === "string" && (value.includes("\n") || key.includes("text") || key.includes("angebot"))) {
                 return null; // Already rendered above
               }

@@ -57,3 +57,4 @@ register_workflow(
 )
 
 from . import email_workflows  # noqa: E402, F401 — registriert Email-Fachagenten
+from . import meetings_workflows  # noqa: E402, F401 — registriert Meetings-Fachagenten

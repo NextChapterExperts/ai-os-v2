@@ -32,8 +32,23 @@ servers:
       - list_today
       - get_week
       - list_events
+      - list_events_range
       - list_attendees
       - get_event
+
+  meetings:
+    type: native
+    adapter: meetings
+    caps:
+      max_calls_per_workflow: 5
+      max_calls_per_hour_per_tenant: 30
+    audit: true
+    allowed_tenants: all
+    tools:
+      - sync_from_calendar
+      - commit_to_company_brain
+      - person_stats
+      - status
 
   drive:
     type: native

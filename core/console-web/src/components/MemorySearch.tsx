@@ -37,6 +37,7 @@ type AskResponse = {
   results?: Source[];
   runId?: string;
   hasContext?: boolean;
+  contextCharCount?: number;
   federated?: boolean;
   memoryBackend?: string;
   error?: string;
@@ -254,16 +255,19 @@ export function MemorySearch({
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <p className="mono muted m-0 text-xs">
               {data.model} · {sourceCount} Quellen
+              {data.contextCharCount !== undefined
+                ? ` · ${data.contextCharCount.toLocaleString("de-DE")} Zeichen Kontext`
+                : null}
               {data.memoryBackend ? ` · ${data.memoryBackend}` : null}
               {data.federated ? " · federated" : null}
             </p>
-            {data.runId && data.hasContext !== false ? (
+            {data.runId ? (
               <Link
                 href={`/context/${data.runId}`}
                 className="btn-ghost"
                 style={{ padding: "0.4rem 0.75rem", fontSize: "0.85rem" }}
               >
-                LLM-Kontext anzeigen
+                LLM-Kontext anzeigen →
               </Link>
             ) : null}
             {sources.length > 0 ? (
