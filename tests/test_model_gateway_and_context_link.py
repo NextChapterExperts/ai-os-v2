@@ -14,9 +14,9 @@ from core.memory_gateway.config import model_for_mode, OLLAMA_MODEL
 from core.orchestrator.handlers import memory_ask
 
 
-def test_sovereign_default_model_is_qwen3_6_27b():
-    """Verify default sovereign model is set to qwen3.6:27b (matching installed Ollama model)."""
-    assert OLLAMA_MODEL == "qwen3.6:27b"
+def test_sovereign_default_model_is_qwen2_5_32b():
+    """Verify default sovereign model is set to qwen2.5:32b (matching installed fast non-thinking model)."""
+    assert OLLAMA_MODEL == "qwen2.5:32b"
     assert model_for_mode("sovereign") == "ai-os-sovereign"
 
 
