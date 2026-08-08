@@ -157,7 +157,7 @@ async def chat_completion(
         except Exception as exc:
             log.warning(f"Ollama direkt ({OLLAMA_MODEL}) fehlgeschlagen: {exc} — versuche Fallback-Modelle")
             # Try lightweight fallback model on Ollama before LiteLLM
-            for fallback_model in ("qwen2.5:14b", "qwen2.5:7b", "llama3.1:8b"):
+            for fallback_model in ("qwen2.5:32b", "qwen2.5:14b", "llama3.1:8b"):
                 try:
                     data = await _call_ollama_direct(
                         fallback_model,

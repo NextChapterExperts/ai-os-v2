@@ -1,7 +1,7 @@
 model_list:
   - model_name: ai-os-sovereign
     litellm_params:
-      model: ollama/qwen3.6:27b
+      model: ollama/qwen2.5:32b
       api_base: os.environ/OLLAMA_API_BASE
       api_key: dummy
 

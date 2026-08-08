@@ -31,7 +31,7 @@ LETTA_STATE_PATH = Path(
 )
 LETTA_EMBED_MODEL = os.environ.get("LETTA_EMBED_MODEL", "nomic-embed-text:latest")
 LETTA_EMBED_DIM = int(os.environ.get("LETTA_EMBED_DIM", "768"))
-TIMEOUT = float(os.environ.get("LETTA_TIMEOUT", "1.0"))
+TIMEOUT = float(os.environ.get("LETTA_TIMEOUT", "5.0"))
 
 _EPISODE_TS = re.compile(r"\[(\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2})?)\]")
 
