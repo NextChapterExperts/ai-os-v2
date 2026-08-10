@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 # Adapter registrieren (Side-Effect)
@@ -13,6 +14,13 @@ import core.mcp_gateway.adapters  # noqa: F401
 from core.mcp_gateway.adapters.registry import allowlist, dispatch
 
 app = FastAPI(title="AI-OS MCP Gateway", version="2.0.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class MCPCallRequest(BaseModel):

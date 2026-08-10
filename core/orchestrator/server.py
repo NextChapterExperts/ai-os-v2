@@ -8,6 +8,7 @@ from typing import Any
 
 import httpx
 from fastapi import FastAPI, File, HTTPException, Query, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field, ValidationError
 
@@ -24,6 +25,13 @@ from core.memory_gateway.client import chat_completion, list_models
 from core.memory_gateway.config import compute_mode_snapshot, set_active_mode
 
 app = FastAPI(title="AI-OS Orchestrator", version="2.0.0-skeleton")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class DispatchRequest(BaseModel):
