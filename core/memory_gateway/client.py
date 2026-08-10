@@ -100,7 +100,7 @@ async def _call_ollama_direct(
             json={
                 "model": model,
                 "stream": False,
-                "think": False,
+                "keep_alive": "30m",
                 "messages": messages,
                 "options": {"temperature": temperature, "num_predict": max_tokens},
             },

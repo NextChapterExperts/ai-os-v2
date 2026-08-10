@@ -32,9 +32,9 @@ def test_local_monster_modes_configuration():
 
 def test_monster_mode_to_ollama_mapping():
     """Prüft, ob die Sovereign-Modi korrekt auf die Ollama-Modellnamen mappen."""
-    assert MODE_TO_OLLAMA_MODEL["sovereign"] == "qwen2.5-coder:32b"
+    assert MODE_TO_OLLAMA_MODEL["sovereign"] == "qwen2.5-coder:14b"
     assert MODE_TO_OLLAMA_MODEL["sovereign_r1"] == "deepseek-r1:32b"
-    assert MODE_TO_OLLAMA_MODEL["sovereign_coder"] == "qwen2.5-coder:32b"
+    assert MODE_TO_OLLAMA_MODEL["sovereign_coder"] == "qwen2.5-coder:14b"
     assert MODE_TO_OLLAMA_MODEL["sovereign_nemo"] == "mistral-nemo:12b"
     assert MODE_TO_OLLAMA_MODEL["sovereign_hermes"] == "hermes3:8b"
     assert MODE_TO_OLLAMA_MODEL["sovereign_vision"] == "llama3.2-vision:11b"
@@ -77,5 +77,15 @@ def test_ollama_monster_host_configuration():
     assert OLLAMA_HOST == "192.168.178.116"
     assert OLLAMA_PORT == "11434"
     assert ollama_chat_url() == "http://192.168.178.116:11434/api/chat"
+
+
+def test_ollama_keep_alive_configuration():
+    """Prüft, ob _call_ollama_direct das VRAM keep_alive (30m) beinhaltet."""
+    import inspect
+    from core.memory_gateway import client
+    source = inspect.getsource(client._call_ollama_direct)
+    assert '"keep_alive": "30m"' in source
+    assert '"think": False' not in source
+
 
 
