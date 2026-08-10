@@ -133,31 +133,35 @@ async def chat_completion(
     mode = get_mode(compute_mode)
     resolved_model = model or model_for_mode(mode)
     sid = session_id or str(uuid.uuid4())
-    sovereign_alias = model_for_mode("sovereign")
-    use_ollama_direct = mode == "sovereign" and (
-        model is None or resolved_model == sovereign_alias
+    sovereign_alias = model_for_mode(mode)
+    is_sovereign_mode = mode.startswith("sovereign")
+    use_ollama_direct = is_sovereign_mode and mode != "sovereign_vllm" and (
+        model is None or resolved_model.startswith("ollama/") or resolved_model.startswith("ai-os-") or resolved_model == sovereign_alias
     )
 
     data: dict[str, Any] = {}
     source = "unknown"
 
     if use_ollama_direct:
-        from .config import OLLAMA_MODEL
+        from .config import MODE_TO_OLLAMA_MODEL, OLLAMA_MODEL
 
+        target_ollama_model = MODE_TO_OLLAMA_MODEL.get(mode, OLLAMA_MODEL)
         try:
             data = await _call_ollama_direct(
-                OLLAMA_MODEL,
+                target_ollama_model,
                 messages,
                 temperature=temperature,
                 max_tokens=max_tokens,
                 timeout=60.0,
             )
             source = "ollama-direct"
-            resolved_model = sovereign_alias
+            resolved_model = target_ollama_model
         except Exception as exc:
-            log.warning(f"Ollama direkt ({OLLAMA_MODEL}) fehlgeschlagen: {exc} — versuche Fallback-Modelle")
+            log.warning(f"Ollama direkt ({target_ollama_model}) fehlgeschlagen: {exc} — versuche Fallback-Modelle")
             # Try lightweight fallback model on Ollama before LiteLLM
-            for fallback_model in ("qwen2.5:32b", "qwen2.5:14b", "llama3.1:8b"):
+            for fallback_model in ("qwen2.5-coder:32b", "deepseek-r1:32b", "mistral-nemo:12b", "hermes3:8b"):
+                if fallback_model == target_ollama_model:
+                    continue
                 try:
                     data = await _call_ollama_direct(
                         fallback_model,

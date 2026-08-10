@@ -20,8 +20,23 @@
               "icon": "lucide-file",
               "title": "VERKAUFSPITCH"
             }
+          },
+          {
+            "id": "ad5b38e377467546",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "api-access zum Monster.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "api-access zum Monster"
+            }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -187,6 +202,11 @@
   },
   "active": "5419e213a3ec7ae8",
   "lastOpenFiles": [
+    "tests/__pycache__/test_local_monster_models_regression.cpython-314.pyc",
+    "tests/__pycache__/test_local_monster_models_regression.cpython-314-pytest-9.1.1.pyc",
+    "tests/test_local_monster_models_regression.py",
+    "docs/VERKAUFSPITCH.md",
+    "api-access zum Monster.md",
     "core/orchestrator/__pycache__/intent_router.cpython-314.pyc.135306372131488",
     "content/knowledge/README.md",
     "content/knowledge",
@@ -194,7 +214,6 @@
     "core/orchestrator/__pycache__/server.cpython-314.pyc.124027321317392",
     "docs/17-PITCH-DECK.md",
     "scripts/__pycache__/run-memory-testcases.cpython-314.pyc.131807770596768",
-    "docs/VERKAUFSPITCH.md",
     "docs/16-VERKAUFSPITCH.md",
     "docs/18-VIRKI-GTM-CAMPAIGN-STRATEGY.md",
     "docs/17-VIRKI-BRAND-STORY.md",

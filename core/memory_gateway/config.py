@@ -14,9 +14,9 @@ import yaml
 REPO_ROOT = Path(__file__).resolve().parents[2]
 COMPUTE_CONFIG = REPO_ROOT / "config" / "compute.yaml"
 LITELLM_URL = os.environ.get("LITELLM_URL", "http://127.0.0.1:4000")
-OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "192.168.178.64")
+OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "192.168.178.116")
 OLLAMA_PORT = os.environ.get("OLLAMA_PORT", "11434")
-OLLAMA_MODEL = os.environ.get("OLLAMA_DEFAULT_MODEL", "qwen2.5:32b")
+OLLAMA_MODEL = os.environ.get("OLLAMA_DEFAULT_MODEL", "qwen2.5-coder:32b")
 DEFAULT_COMPUTE_MODE = os.environ.get("DEFAULT_COMPUTE_MODE", "sovereign")
 MODE_STATE_PATH = Path(
     os.environ.get(
@@ -24,6 +24,16 @@ MODE_STATE_PATH = Path(
         "/opt/ai-os/memory/state/compute-mode.json",
     )
 )
+
+MODE_TO_OLLAMA_MODEL = {
+    "sovereign": "qwen2.5-coder:32b",
+    "sovereign_r1": "deepseek-r1:32b",
+    "sovereign_coder": "qwen2.5-coder:32b",
+    "sovereign_nemo": "mistral-nemo:12b",
+    "sovereign_hermes": "hermes3:8b",
+    "sovereign_vision": "llama3.2-vision:11b",
+}
+
 
 
 @lru_cache(maxsize=1)

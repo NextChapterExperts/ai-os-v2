@@ -1,9 +1,45 @@
 model_list:
   - model_name: ai-os-sovereign
     litellm_params:
-      model: ollama/qwen2.5:32b
+      model: ollama/qwen2.5-coder:32b
       api_base: os.environ/OLLAMA_API_BASE
       api_key: dummy
+
+  - model_name: ai-os-deepseek-r1
+    litellm_params:
+      model: ollama/deepseek-r1:32b
+      api_base: os.environ/OLLAMA_API_BASE
+      api_key: dummy
+
+  - model_name: ai-os-qwen-coder
+    litellm_params:
+      model: ollama/qwen2.5-coder:32b
+      api_base: os.environ/OLLAMA_API_BASE
+      api_key: dummy
+
+  - model_name: ai-os-mistral-nemo
+    litellm_params:
+      model: ollama/mistral-nemo:12b
+      api_base: os.environ/OLLAMA_API_BASE
+      api_key: dummy
+
+  - model_name: ai-os-hermes3
+    litellm_params:
+      model: ollama/hermes3:8b
+      api_base: os.environ/OLLAMA_API_BASE
+      api_key: dummy
+
+  - model_name: ai-os-llama-vision
+    litellm_params:
+      model: ollama/llama3.2-vision:11b
+      api_base: os.environ/OLLAMA_API_BASE
+      api_key: dummy
+
+  - model_name: ai-os-vllm
+    litellm_params:
+      model: openai/Qwen/Qwen2.5-Coder-14B-Instruct
+      api_base: http://192.168.178.116:8001/v1
+      api_key: none
 
   - model_name: ai-os-balanced
     litellm_params:
@@ -31,3 +67,4 @@ litellm_settings:
     - ai-os-balanced: ["ai-os-fallback"]
     - ai-os-premium: ["ai-os-fallback"]
     - ai-os-coding: ["ai-os-fallback"]
+
