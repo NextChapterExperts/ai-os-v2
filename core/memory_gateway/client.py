@@ -134,7 +134,7 @@ async def chat_completion(
     resolved_model = model or model_for_mode(mode)
     sid = session_id or str(uuid.uuid4())
     sovereign_alias = model_for_mode(mode)
-    is_sovereign_mode = mode.startswith("sovereign")
+    is_sovereign_mode = mode == "auto" or mode.startswith("sovereign")
     use_ollama_direct = is_sovereign_mode and mode != "sovereign_vllm" and (
         model is None or resolved_model.startswith("ollama/") or resolved_model.startswith("ai-os-") or resolved_model == sovereign_alias
     )
@@ -143,9 +143,14 @@ async def chat_completion(
     source = "unknown"
 
     if use_ollama_direct:
-        from .config import MODE_TO_OLLAMA_MODEL, OLLAMA_MODEL
+        from .config import MODE_TO_OLLAMA_MODEL, OLLAMA_MODEL, resolve_auto_model
 
-        target_ollama_model = MODE_TO_OLLAMA_MODEL.get(mode, OLLAMA_MODEL)
+        if mode == "auto":
+            prompt_text = " ".join(str(m.get("content") or "") for m in messages)
+            target_ollama_model = resolve_auto_model(prompt_text)
+        else:
+            target_ollama_model = MODE_TO_OLLAMA_MODEL.get(mode, OLLAMA_MODEL)
+
         try:
             data = await _call_ollama_direct(
                 target_ollama_model,

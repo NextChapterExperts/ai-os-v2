@@ -1,29 +1,33 @@
 # Compute-Modi (P12/P19) — Lokale Monster-Modelle + Cloud Fallbacks
 # Endpunkte & Modelle gemäß api-access zum Monster.md (192.168.178.116)
 modes:
+  auto:
+    default_model: ai-os-auto-router
+    label: "✨ Auto-Router (Smart)"
+    description: "Analysiert Intent & wählt automatisch das optimale Monster-Modell (Qwen Coder, DeepSeek R1, Mistral, Llama Vision)"
   sovereign:
     default_model: ai-os-sovereign
-    label: "Qwen 2.5 Coder 32B (Default)"
+    label: "Qwen 2.5 Coder 32B (Pinnable)"
     description: "Code, Webseiten, JSON & Tool-Calling (128k Kontext)"
   sovereign_r1:
     default_model: ai-os-deepseek-r1
-    label: "DeepSeek-R1 32B (Lokal)"
+    label: "DeepSeek-R1 32B (Pinnable)"
     description: "Logik, Reasoning & komplexe Problemlösung (128k Kontext)"
   sovereign_coder:
     default_model: ai-os-qwen-coder
-    label: "Qwen 2.5 Coder 32B (Lokal)"
+    label: "Qwen 2.5 Coder 32B (Pinnable)"
     description: "Code, Webseiten, JSON & Tool-Calling (128k Kontext)"
   sovereign_nemo:
     default_model: ai-os-mistral-nemo
-    label: "Mistral Nemo 12B (Lokal)"
+    label: "Mistral Nemo 12B (Pinnable)"
     description: "E-Mails, Blogs & deutsche Texte (128k Kontext)"
   sovereign_hermes:
     default_model: ai-os-hermes3
-    label: "Hermes 3 8B (Lokal)"
+    label: "Hermes 3 8B (Pinnable)"
     description: "Multi-Agenten Orchestrierung & Tool-Calling"
   sovereign_vision:
     default_model: ai-os-llama-vision
-    label: "Llama 3.2 Vision 11B (Lokal)"
+    label: "Llama 3.2 Vision 11B (Pinnable)"
     description: "OCR, Bild-, PDF- & Dokumentenanalyse"
   sovereign_vllm:
     default_model: ai-os-vllm
@@ -42,5 +46,6 @@ modes:
     label: "Coding (Free)"
     description: "Poolside Laguna M.1 — OpenRouter :free, agentic coding"
 
-default_mode: sovereign
+default_mode: auto
+
 

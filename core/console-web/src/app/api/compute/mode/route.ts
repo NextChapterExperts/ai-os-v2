@@ -19,20 +19,28 @@ export async function GET() {
   } catch (err) {
     return NextResponse.json(
       {
-        active_mode: "sovereign",
-        active_model: "ai-os-sovereign",
-        active_label: "Lokal (LAN)",
-        active_description: "Ollama auf LAN — Fallback (Orchestrator beschäftigt)",
-        config_default_mode: "sovereign",
+        active_mode: "auto",
+        active_model: "ai-os-auto-router",
+        active_label: "✨ Auto-Router (Smart)",
+        active_description: "Analysiert Intent & wählt automatisch das optimale Monster-Modell",
+        config_default_mode: "auto",
         updated_at: null,
         modes: [
           {
-            id: "sovereign",
-            default_model: "ai-os-sovereign",
-            label: "Qwen 2.5 Coder 32B (Default)",
-            description: "Code, Webseiten, JSON & Tool-Calling (128k Kontext)",
+            id: "auto",
+            default_model: "ai-os-auto-router",
+            label: "✨ Auto-Router (Smart)",
+            description: "Analysiert Intent & wählt automatisch das optimale Monster-Modell (Qwen Coder, DeepSeek R1, Mistral, Llama Vision)",
             is_active: true,
             is_config_default: true,
+          },
+          {
+            id: "sovereign",
+            default_model: "ai-os-sovereign",
+            label: "Qwen 2.5 Coder 32B (Pinnable)",
+            description: "Code, Webseiten, JSON & Tool-Calling (128k Kontext)",
+            is_active: false,
+            is_config_default: false,
           },
           {
             id: "sovereign_r1",

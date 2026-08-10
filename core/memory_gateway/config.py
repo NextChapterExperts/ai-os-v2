@@ -26,6 +26,7 @@ MODE_STATE_PATH = Path(
 )
 
 MODE_TO_OLLAMA_MODEL = {
+    "auto": "qwen2.5-coder:32b",
     "sovereign": "qwen2.5-coder:32b",
     "sovereign_r1": "deepseek-r1:32b",
     "sovereign_coder": "qwen2.5-coder:32b",
@@ -33,6 +34,23 @@ MODE_TO_OLLAMA_MODEL = {
     "sovereign_hermes": "hermes3:8b",
     "sovereign_vision": "llama3.2-vision:11b",
 }
+
+
+def resolve_auto_model(prompt_text: str = "") -> str:
+    """Smart Auto-Router: Analysiert den Prompt & wählt das optimale Monster-Modell."""
+    lower = prompt_text.lower()
+
+    if any(k in lower for k in ("bild", "pdf", "ocr", "foto", "dokument", "image", "analyse bild")):
+        return "llama3.2-vision:11b"
+    if any(k in lower for k in ("code", "script", "skript", "python", "javascript", "json", "sql", "html", "function", "bug", "refactor", "class")):
+        return "qwen2.5-coder:32b"
+    if any(k in lower for k in ("warum", "analysiere", "logik", "reasoning", "beweise", "erkläre im detail", "vergleiche", "berechne", "strategie")):
+        return "deepseek-r1:32b"
+    if any(k in lower for k in ("mail", "email", "e-mail", "blog", "zusammenfassung", "entwurf", "text", "schreibe")):
+        return "mistral-nemo:12b"
+    return "qwen2.5-coder:32b"
+
+
 
 
 

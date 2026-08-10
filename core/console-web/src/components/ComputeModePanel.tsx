@@ -106,11 +106,21 @@ export function ComputeModePanel() {
           <div className="mt-4 flex flex-wrap gap-2">
             {data.modes.map((mode) => {
               const active = mode.id === data.active_mode;
+              const isAuto = mode.id === "auto";
+              let btnClass = "btn-secondary text-sm";
+              if (active) {
+                btnClass = isAuto
+                  ? "btn-primary text-sm font-semibold bg-emerald-600 text-white shadow-md"
+                  : "btn-primary text-sm font-semibold";
+              } else if (isAuto) {
+                btnClass = "btn-secondary text-sm border-emerald-500/50 text-emerald-400 font-medium";
+              }
+
               return (
                 <button
                   key={mode.id}
                   type="button"
-                  className={active ? "btn-primary text-sm" : "btn-secondary text-sm"}
+                  className={btnClass}
                   onClick={() => selectMode(mode.id)}
                   disabled={pending || active}
                   title={mode.description}

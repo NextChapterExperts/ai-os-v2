@@ -202,6 +202,9 @@
   },
   "active": "5419e213a3ec7ae8",
   "lastOpenFiles": [
+    "tests/__pycache__/test_auto_router_mode_regression.cpython-314.pyc",
+    "tests/__pycache__/test_auto_router_mode_regression.cpython-314-pytest-9.1.1.pyc",
+    "tests/test_auto_router_mode_regression.py",
     "tests/__pycache__/test_local_monster_models_regression.cpython-314.pyc",
     "tests/__pycache__/test_local_monster_models_regression.cpython-314-pytest-9.1.1.pyc",
     "tests/test_local_monster_models_regression.py",
