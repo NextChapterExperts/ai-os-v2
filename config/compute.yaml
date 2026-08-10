@@ -44,7 +44,7 @@ modes:
   coding:
     default_model: ai-os-coding
     label: "Coding (Free)"
-    description: "Poolside Laguna M.1 — OpenRouter :free, agentic coding"
+    description: "Qwen 2.5 Coder 32B Instruct — OpenRouter :free, agentic coding"
 
 default_mode: auto
 
