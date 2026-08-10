@@ -7,8 +7,8 @@ modes:
     description: "Analysiert Intent & wählt automatisch das optimale Monster-Modell (Qwen Coder, DeepSeek R1, Mistral, Llama Vision)"
   sovereign:
     default_model: ai-os-sovereign
-    label: "Qwen 2.5 Coder 32B (Pinnable)"
-    description: "Code, Webseiten, JSON & Tool-Calling (128k Kontext)"
+    label: "Qwen 2.5 Coder 14B (Souverän & Schnelligkeit)"
+    description: "Ultra-schnelle lokale Inferenz (0.35s VRAM-Hit), Code, JSON & Tool-Calling"
   sovereign_r1:
     default_model: ai-os-deepseek-r1
     label: "DeepSeek-R1 32B (Pinnable)"

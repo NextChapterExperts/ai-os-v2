@@ -37,8 +37,8 @@ export async function GET() {
           {
             id: "sovereign",
             default_model: "ai-os-sovereign",
-            label: "Qwen 2.5 Coder 32B (Pinnable)",
-            description: "Code, Webseiten, JSON & Tool-Calling (128k Kontext)",
+            label: "Qwen 2.5 Coder 14B (Souverän & Schnelligkeit)",
+            description: "Ultra-schnelle lokale Inferenz (0.35s VRAM-Hit), Code, JSON & Tool-Calling",
             is_active: false,
             is_config_default: false,
           },
