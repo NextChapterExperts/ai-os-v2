@@ -51,7 +51,7 @@ services:
     volumes: ["letta_data:/root/.letta"]
     environment:
       # Agents werden per API mit OLLAMA_HOST aus .env angelegt (letta_client.py)
-      OLLAMA_HOST: ${OLLAMA_HOST:-192.168.178.64}
+      OLLAMA_HOST: ${OLLAMA_HOST:-192.168.178.116}
       OLLAMA_PORT: ${OLLAMA_PORT:-11434}
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -63,9 +63,9 @@ services:
     ports: ["${LITELLM_PORT:-4000}:4000"]
     environment:
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
-      OLLAMA_HOST: ${OLLAMA_HOST:-192.168.178.64}
+      OLLAMA_HOST: ${OLLAMA_HOST:-192.168.178.116}
       OLLAMA_PORT: ${OLLAMA_PORT:-11434}
-      OLLAMA_API_BASE: http://${OLLAMA_HOST:-192.168.178.64}:${OLLAMA_PORT:-11434}/v1
+      OLLAMA_API_BASE: http://${OLLAMA_HOST:-192.168.178.116}:${OLLAMA_PORT:-11434}/v1
     volumes:
       - ../config/litellm-config.yaml:/app/config.yaml:ro
     command: ["--config", "/app/config.yaml", "--port", "4000"]

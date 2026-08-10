@@ -223,7 +223,7 @@ services:
 
 ```env
 # === Inference ===
-OLLAMA_HOST=192.168.178.64
+OLLAMA_HOST=192.168.178.116
 OLLAMA_PORT=11434
 OLLAMA_DEFAULT_MODEL=qwen3.6-64k:latest
 DEFAULT_COMPUTE_MODE=sovereign         # sovereign | balanced | premium

@@ -14,7 +14,7 @@ services:
       AIOS_MEMORY_DB: /opt/ai-os/memory/memory.db
       AIOS_MEMORY_PROJECT: home-peter-Projekte
       AIOS_BRAIN_SEED: /app/customers/nextchapter/knowledge/seed/brain.json
-      OLLAMA_HOST: ${OLLAMA_HOST:-192.168.178.64}
+      OLLAMA_HOST: ${OLLAMA_HOST:-192.168.178.116}
       OLLAMA_PORT: ${OLLAMA_PORT:-11434}
       OLLAMA_DEFAULT_MODEL: ${OLLAMA_DEFAULT_MODEL:-qwen3.6-64k:latest}
     volumes:

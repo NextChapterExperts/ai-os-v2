@@ -70,3 +70,12 @@ def test_vllm_mode_configuration():
     assert VLLM_MODEL == "/workspace/model"
     assert vllm_chat_url() == "http://192.168.178.116:8001/v1/chat/completions"
 
+
+def test_ollama_monster_host_configuration():
+    """Prüft, ob der OLLAMA_HOST auf den aktiven KI-Server (192.168.178.116) zeigt."""
+    from core.memory_gateway.config import OLLAMA_HOST, OLLAMA_PORT, ollama_chat_url
+    assert OLLAMA_HOST == "192.168.178.116"
+    assert OLLAMA_PORT == "11434"
+    assert ollama_chat_url() == "http://192.168.178.116:11434/api/chat"
+
+
