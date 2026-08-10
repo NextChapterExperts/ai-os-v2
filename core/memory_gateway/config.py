@@ -17,6 +17,9 @@ LITELLM_URL = os.environ.get("LITELLM_URL", "http://127.0.0.1:4000")
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "192.168.178.116")
 OLLAMA_PORT = os.environ.get("OLLAMA_PORT", "11434")
 OLLAMA_MODEL = os.environ.get("OLLAMA_DEFAULT_MODEL", "qwen2.5-coder:32b")
+VLLM_HOST = os.environ.get("VLLM_HOST", "192.168.178.116")
+VLLM_PORT = os.environ.get("VLLM_PORT", "8001")
+VLLM_MODEL = os.environ.get("VLLM_DEFAULT_MODEL", "/workspace/model")
 DEFAULT_COMPUTE_MODE = os.environ.get("DEFAULT_COMPUTE_MODE", "sovereign")
 MODE_STATE_PATH = Path(
     os.environ.get(
@@ -126,6 +129,11 @@ def model_for_mode(mode: str | None = None) -> str:
 
 def ollama_chat_url() -> str:
     return f"http://{OLLAMA_HOST}:{OLLAMA_PORT}/api/chat"
+
+
+def vllm_chat_url() -> str:
+    return f"http://{VLLM_HOST}:{VLLM_PORT}/v1/chat/completions"
+
 
 
 def list_compute_modes() -> list[dict[str, Any]]:

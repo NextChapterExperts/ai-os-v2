@@ -60,3 +60,13 @@ def test_monster_mode_switching():
         assert snap["active_mode"] == "sovereign_hermes"
     finally:
         set_active_mode(original_mode)
+
+
+def test_vllm_mode_configuration():
+    """Prüft die vLLM Konfiguration und den Modellnamen."""
+    from core.memory_gateway.config import VLLM_HOST, VLLM_MODEL, VLLM_PORT, vllm_chat_url
+    assert VLLM_HOST == "192.168.178.116"
+    assert VLLM_PORT == "8001"
+    assert VLLM_MODEL == "/workspace/model"
+    assert vllm_chat_url() == "http://192.168.178.116:8001/v1/chat/completions"
+

@@ -116,6 +116,31 @@ async def _call_ollama_direct(
         }
 
 
+async def _call_vllm_direct(
+    model: str,
+    messages: list[dict[str, Any]],
+    *,
+    temperature: float = 0.2,
+    max_tokens: int = 512,
+    timeout: float = 60.0,
+) -> dict[str, Any]:
+    from .config import vllm_chat_url
+    async with httpx.AsyncClient(timeout=httpx.Timeout(timeout, connect=3.0, read=timeout)) as client:
+        res = await client.post(
+            vllm_chat_url(),
+            json={
+                "model": model,
+                "messages": messages,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+            },
+        )
+        res.raise_for_status()
+        data = res.json()
+        data["_source"] = "vllm-direct"
+        return data
+
+
 async def chat_completion(
     messages: list[dict[str, Any]],
     *,
@@ -123,8 +148,10 @@ async def chat_completion(
     model: str | None = None,
     compute_mode: str | None = None,
     produced_by: str = "memory-gateway",
+    intent: str = "general_chat",
     session_id: str | None = None,
     project_id: str | None = None,
+    user_id: str = "peter",
     temperature: float = 0.2,
     max_tokens: int = 512,
     persist: bool = True,
@@ -142,7 +169,23 @@ async def chat_completion(
     data: dict[str, Any] = {}
     source = "unknown"
 
-    if use_ollama_direct:
+    if mode == "sovereign_vllm":
+        from .config import VLLM_MODEL
+        target_vllm_model = VLLM_MODEL
+        try:
+            data = await _call_vllm_direct(
+                target_vllm_model,
+                messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                timeout=30.0,
+            )
+            source = "vllm-direct"
+            resolved_model = target_vllm_model
+        except Exception as exc:
+            log.warning(f"vLLM direkt fehlgeschlagen ({target_vllm_model}): {exc} — versuche LiteLLM Fallback")
+
+    if not data and use_ollama_direct:
         from .config import MODE_TO_OLLAMA_MODEL, OLLAMA_MODEL, resolve_auto_model
 
         if mode == "auto":
