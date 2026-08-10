@@ -57,11 +57,8 @@ class MCPAdapter:
                 res.raise_for_status()
                 data = res.json()
                 return data.get("result", data)
-            except httpx.ConnectError:
-                # Fallback / Direct Stub execution in local test environments
-                return {
-                    "status": "stub",
-                    "server": server,
-                    "tool": tool,
-                    "arguments": arguments,
-                }
+            except (httpx.ConnectError, httpx.HTTPStatusError):
+                # Fallback / Direct local dispatch in test/stub environments
+                from core.mcp_gateway.adapters.registry import dispatch
+                args = {**arguments, "tenant_id": self.tenant_id}
+                return dispatch(server, tool, args)
