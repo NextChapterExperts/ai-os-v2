@@ -1,9 +1,9 @@
 model_list:
   - model_name: ai-os-sovereign
     litellm_params:
-      model: ollama/qwen2.5-coder:14b
-      api_base: os.environ/OLLAMA_API_BASE
-      api_key: dummy
+      model: hosted_vllm//workspace/model
+      api_base: http://192.168.178.116:8001/v1
+      api_key: none
 
   - model_name: ai-os-deepseek-r1
     litellm_params:

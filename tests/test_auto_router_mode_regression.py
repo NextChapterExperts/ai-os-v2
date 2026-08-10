@@ -16,9 +16,9 @@ from core.memory_gateway.config import (
 
 def test_auto_router_prompt_intent_classification():
     """Prüft, ob resolve_auto_model die richtigen Modelle je nach Intent auswählt."""
-    # Code / Python / SQL / JSON -> qwen2.5-coder:32b
-    assert resolve_auto_model("Schreibe ein Python-Skript für den E-Mail Agenten") == "qwen2.5-coder:32b"
-    assert resolve_auto_model("Fixe den Bug in der SQL-Abfrage") == "qwen2.5-coder:32b"
+    # Code / Python / SQL / JSON -> qwen2.5-coder:14b
+    assert resolve_auto_model("Schreibe ein Python-Skript für den E-Mail Agenten") == "qwen2.5-coder:14b"
+    assert resolve_auto_model("Fixe den Bug in der SQL-Abfrage") == "qwen2.5-coder:14b"
 
     # Reasoning / Logik -> deepseek-r1:32b
     assert resolve_auto_model("Warum schlägt der Checkpoint fehl? Analysiere die Logik im Detail") == "deepseek-r1:32b"

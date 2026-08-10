@@ -169,7 +169,7 @@ async def chat_completion(
     data: dict[str, Any] = {}
     source = "unknown"
 
-    if mode == "sovereign_vllm":
+    if mode == "sovereign" or mode == "sovereign_vllm":
         from .config import VLLM_MODEL
         target_vllm_model = VLLM_MODEL
         try:
@@ -178,12 +178,12 @@ async def chat_completion(
                 messages,
                 temperature=temperature,
                 max_tokens=max_tokens,
-                timeout=30.0,
+                timeout=10.0,
             )
             source = "vllm-direct"
             resolved_model = target_vllm_model
         except Exception as exc:
-            log.warning(f"vLLM direkt fehlgeschlagen ({target_vllm_model}): {exc} — versuche LiteLLM Fallback")
+            log.warning(f"vLLM direkt fehlgeschlagen ({target_vllm_model}): {exc} — versuche Fallbacks")
 
     if not data and use_ollama_direct:
         from .config import MODE_TO_OLLAMA_MODEL, OLLAMA_MODEL, resolve_auto_model
@@ -205,44 +205,24 @@ async def chat_completion(
             source = "ollama-direct"
             resolved_model = target_ollama_model
         except Exception as exc:
-            log.warning(f"Ollama direkt ({target_ollama_model}) fehlgeschlagen: {exc} — versuche Fallback-Modelle")
-            # Try lightweight fallback model on Ollama before LiteLLM
-            for fallback_model in ("qwen2.5-coder:32b", "deepseek-r1:32b", "mistral-nemo:12b", "hermes3:8b"):
-                if fallback_model == target_ollama_model:
-                    continue
-                try:
-                    data = await _call_ollama_direct(
-                        fallback_model,
-                        messages,
-                        temperature=temperature,
-                        max_tokens=max_tokens,
-                        timeout=30.0,
-                    )
-                    source = "ollama-direct"
-                    resolved_model = fallback_model
-                    break
-                except Exception:
-                    continue
-
-            if not data:
-                log.warning("Ollama Fallbacks fehlgeschlagen — versuche LiteLLM")
-                try:
-                    data = await _call_litellm(
-                        resolved_model,
-                        messages,
-                        temperature=temperature,
-                        max_tokens=max_tokens,
-                    )
-                    source = "litellm"
-                except Exception:
-                    log.warning("Sowohl Ollama als auch LiteLLM nicht erreichbar — Offline Fallback")
-                    data = {
-                        "model": resolved_model,
-                        "choices": [{"message": {"role": "assistant", "content": "Inferenz nicht erreichbar (Ollama/LiteLLM offline)"}}],
-                        "usage": {},
-                        "_source": "offline-fallback",
-                    }
-                    source = "offline-fallback"
+            log.warning(f"Ollama direkt ({target_ollama_model}) fehlgeschlagen: {exc} — versuche LiteLLM")
+            try:
+                data = await _call_litellm(
+                    resolved_model,
+                    messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                )
+                source = "litellm"
+            except Exception as exc2:
+                log.warning(f"Sowohl Ollama als auch LiteLLM fehlgeschlagen: {exc2} — Offline Fallback")
+                data = {
+                    "model": resolved_model,
+                    "choices": [{"message": {"role": "assistant", "content": "Inferenz nicht erreichbar (Ollama/LiteLLM offline)"}}],
+                    "usage": {},
+                    "_source": "offline-fallback",
+                }
+                source = "offline-fallback"
     else:
         try:
             data = await _call_litellm(
