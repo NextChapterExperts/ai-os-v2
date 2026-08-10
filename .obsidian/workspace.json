@@ -202,6 +202,7 @@
   },
   "active": "5419e213a3ec7ae8",
   "lastOpenFiles": [
+    "scripts/__pycache__/run-compute-mode-testcases.cpython-314.pyc.123742562751904",
     "core/memory_gateway/__pycache__/client.cpython-314.pyc.137171559200928",
     "core/memory_gateway/__pycache__/config.cpython-314.pyc.137171559200928",
     "core/memory_gateway/__pycache__/__init__.cpython-314.pyc.137171559200928",
@@ -212,7 +213,6 @@
     "tests/__pycache__/test_auto_router_mode_regression.cpython-314.pyc",
     "tests/__pycache__/test_auto_router_mode_regression.cpython-314-pytest-9.1.1.pyc",
     "tests/test_auto_router_mode_regression.py",
-    "tests/__pycache__/test_local_monster_models_regression.cpython-314.pyc",
     "docs/VERKAUFSPITCH.md",
     "api-access zum Monster.md",
     "content/knowledge/README.md",
