@@ -53,7 +53,7 @@ model_list:
 
   - model_name: ai-os-coding
     litellm_params:
-      model: openrouter/poolside/laguna-m.1:free
+      model: openrouter/qwen/qwen-2.5-coder-32b-instruct:free
       api_key: os.environ/OPENROUTER_API_KEY
 
   - model_name: ai-os-fallback
