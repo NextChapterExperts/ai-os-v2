@@ -192,8 +192,14 @@ async def run(
         graph_hits + curated + raw_files + episodic_hits + meeting_hits, key=lambda r: r["score"], reverse=True
     )
 
+    answer = ""
+    if combined:
+        from .memory_ask import _summarize
+        answer, _, _, _ = await _summarize(query, combined[:12], tenant_id)
+
     return {
-        "kind": "search",
+        "kind": "ask" if answer else "search",
+        "answer": answer,
         "query": query,
         "sources": combined,
         "sourceCount": len(combined),

@@ -146,16 +146,17 @@ async def _federated_hits(
 
 def _system_prompt(*, federated: bool) -> str:
     system = (
-        "Du bist das AI-OS Company Brain. Antworte ausschließlich auf Deutsch. "
-        "Keine Meta-Kommentare, kein Englisch, keine Gedankengänge — nur die Antwort. "
-        "KURZ: max. 5 Bulletpoints, eine Zeile je Punkt, nur große Themen. "
-        "Keine Dateipfade. Max. 1 Satz Fazit."
+        "Du bist das AI-OS Company Brain (NextChapter Experts). Antworte präzise, professionell und direkt auf Deutsch.\n"
+        "Regeln:\n"
+        "1. Beantworte die konkrete Frage des Nutzers synthetisiert aus den bereitgestellten Gedächtnis-Kontexten.\n"
+        "2. Falls nach einem bestimmten Thema oder Projekt gefragt wird (z. B. 'Haben wir über X gesprochen?'), antworte zuerst klar mit Ja/Nein oder dem aktuellen Befund, gefolgt von den relevanten Details und Projekten.\n"
+        "3. Falls keine Treffer oder Informationen im Gedächtnis vorhanden sind, stelle das klar fest und mache keine Erfindungen.\n"
+        "4. Verwende eine übersichtliche Struktur (Absätze, fettgedruckte Schlüsselbegriffe, Aufzählungen wo sinnvoll)."
     )
     if federated:
         system += (
-            " Bei Projektstand-Fragen: KnowledgeAsset ROADMAP, org:Claim und Graph-Knoten "
-            "haben Vorrang vor Chat-Episoden. Nenne konkrete Phasen, erledigte Bausteine (✅) "
-            "und offene Punkte (⏳), wenn im Kontext vorhanden."
+            "\n5. Bei Projektstand-Fragen: ROADMAP, org:Claim und Graph-Knoten haben Vorrang vor Chat-Episoden. "
+            "Nenne konkrete Phasen, erledigte Bausteine (✅) und offene Punkte (⏳)."
         )
     return system
 

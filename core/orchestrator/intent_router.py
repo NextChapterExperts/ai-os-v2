@@ -28,9 +28,6 @@ def route_intent(raw: str, params: dict[str, Any] | None = None) -> str:
             "suche nach",
             "durchsuche",
             "finde dateien",
-            "haben wir schon mal",
-            "schon mal daran gearbeitet",
-            "in welchem projekt",
         )
     ):
         return "unified_search"
