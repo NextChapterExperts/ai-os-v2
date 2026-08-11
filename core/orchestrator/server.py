@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime, timezone
 import os
 import uuid
 from typing import Any
@@ -78,10 +79,31 @@ async def dispatch_intent(req: DispatchRequest) -> DispatchResponse:
         record_from_params(str(workflow_run_id), params, result)
 
     llm_context = result.pop("llmContext", None)
-    if llm_context:
-        llm_context["orchestratorContext"] = context_bundle
-        save_run_context(run_id, llm_context)
-        result["hasContext"] = True
+    if not isinstance(llm_context, dict):
+        query_text = str(req.params.get("query") or req.params.get("intent_text") or req.intent)
+        llm_context = {
+            "runId": run_id,
+            "tenantId": req.tenant_id,
+            "handler": intent,
+            "createdAt": datetime.now(timezone.utc).isoformat(),
+            "routing": {
+                "intent": intent,
+                "model": str(result.get("model") or "sovereign"),
+                "memoryBackend": str(result.get("memoryBackend") or "default"),
+            },
+            "retrieval": {
+                "question": query_text,
+                "chunks": result.get("sources", []),
+            },
+            "prompt": {
+                "system": "AI-OS Orchestrator Intent Handler",
+                "user": query_text,
+                "contextCharCount": result.get("contextCharCount", 0),
+            },
+        }
+    llm_context["orchestratorContext"] = context_bundle
+    save_run_context(run_id, llm_context)
+    result["hasContext"] = True
     result["runId"] = run_id
 
     # Background task for distillation: browser UI receives response immediately

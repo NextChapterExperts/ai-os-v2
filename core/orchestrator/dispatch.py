@@ -22,6 +22,8 @@ async def dispatch(
         }
 
     if intent == "handwerk_angebot":
+        import core.workflow_engine.sample_workflows  # noqa: F401
+        import core.workflow_engine.meetings_workflows  # noqa: F401
         from core.workflow_engine.generic_runner import execute_registered_workflow
         res = await execute_registered_workflow("handwerk-angebot", tenant_id, {
             "kunden_name": params.get("kunden_name") or "Malerbetrieb Schulze",
