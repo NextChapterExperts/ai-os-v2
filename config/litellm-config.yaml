@@ -41,6 +41,24 @@ model_list:
       api_base: http://192.168.178.116:8001/v1
       api_key: none
 
+  - model_name: /workspace/model
+    litellm_params:
+      model: hosted_vllm//workspace/model
+      api_base: http://192.168.178.116:8001/v1
+      api_key: none
+
+  - model_name: qwen2.5-coder:14b
+    litellm_params:
+      model: ollama/qwen2.5-coder:14b
+      api_base: os.environ/OLLAMA_API_BASE
+      api_key: dummy
+
+  - model_name: sovereign
+    litellm_params:
+      model: hosted_vllm//workspace/model
+      api_base: http://192.168.178.116:8001/v1
+      api_key: none
+
   - model_name: ai-os-balanced
     litellm_params:
       model: openrouter/nvidia/nemotron-3-super-120b-a12b:free

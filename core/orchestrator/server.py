@@ -76,20 +76,26 @@ async def dispatch_intent(req: DispatchRequest) -> DispatchResponse:
     if workflow_run_id:
         record_from_params(str(workflow_run_id), params, result)
 
-    distill = distill_after_run(
-        req.tenant_id,
-        run_id,
-        str(workflow_run_id) if workflow_run_id else None,
-        intent,
-        result,
-    )
     llm_context = result.pop("llmContext", None)
     if llm_context:
         llm_context["orchestratorContext"] = context_bundle
         save_run_context(run_id, llm_context)
         result["hasContext"] = True
     result["runId"] = run_id
-    write_agent_run(intent, result, req.tenant_id, extra={"run_id": run_id, "distill": distill})
+
+    # Background task for distillation: browser UI receives response immediately
+    asyncio.create_task(
+        asyncio.to_thread(
+            distill_after_run,
+            req.tenant_id,
+            run_id,
+            str(workflow_run_id) if workflow_run_id else None,
+            intent,
+            result.copy(),
+        )
+    )
+
+    write_agent_run(intent, result, req.tenant_id, extra={"run_id": run_id})
     return DispatchResponse(
         status="ok",
         intent=intent,

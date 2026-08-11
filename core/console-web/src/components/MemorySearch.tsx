@@ -4,6 +4,8 @@ import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { RunContextPanel } from "@/components/RunContextPanel";
+
 type Source = {
   id: string;
   role: string;
@@ -117,6 +119,7 @@ export function MemorySearch({
   const [data, setData] = useState<AskResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showSources, setShowSources] = useState(false);
+  const [showContext, setShowContext] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const run = useCallback((query: string) => {
@@ -125,6 +128,7 @@ export function MemorySearch({
         setError(null);
         setData(null);
         setShowSources(false);
+        setShowContext(false);
         const activeUserId = typeof window !== "undefined" ? localStorage.getItem("aios_active_user_id") ?? "person:peter-alexander" : "person:peter-alexander";
         const res = await fetch("/api/dispatch", {
           method: "POST",
@@ -262,12 +266,23 @@ export function MemorySearch({
               {data.federated ? " · federated" : null}
             </p>
             {data.runId ? (
+              <button
+                type="button"
+                className="btn-ghost"
+                style={{ padding: "0.4rem 0.75rem", fontSize: "0.85rem" }}
+                onClick={() => setShowContext((v) => !v)}
+                aria-expanded={showContext}
+              >
+                {showContext ? "Kontext ausblenden" : "Kontext einblenden"}
+              </button>
+            ) : null}
+            {data.runId ? (
               <Link
                 href={`/context/${data.runId}`}
                 className="btn-ghost"
                 style={{ padding: "0.4rem 0.75rem", fontSize: "0.85rem" }}
               >
-                LLM-Kontext anzeigen →
+                Detailseite ↗
               </Link>
             ) : null}
             {sources.length > 0 ? (
@@ -283,6 +298,22 @@ export function MemorySearch({
             ) : null}
           </div>
         </article>
+      ) : null}
+
+      {showContext && data?.runId ? (
+        <div className="mt-6 border border-line rounded-xl p-5 bg-card rise">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="section-title m-0 text-base">LLM-Kontext (Run {data.runId.slice(0, 8)})</h3>
+            <button
+              type="button"
+              className="btn-ghost text-xs"
+              onClick={() => setShowContext(false)}
+            >
+              ✕ Schließen
+            </button>
+          </div>
+          <RunContextPanel runId={data.runId} />
+        </div>
       ) : null}
 
       {showSources && sources.length > 0 ? (

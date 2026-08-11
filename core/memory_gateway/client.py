@@ -169,7 +169,7 @@ async def chat_completion(
     data: dict[str, Any] = {}
     source = "unknown"
 
-    if mode == "sovereign" or mode == "sovereign_vllm":
+    if mode in ("auto", "sovereign", "sovereign_vllm", "sovereign_coder"):
         from .config import VLLM_MODEL
         target_vllm_model = VLLM_MODEL
         try:
@@ -178,7 +178,7 @@ async def chat_completion(
                 messages,
                 temperature=temperature,
                 max_tokens=max_tokens,
-                timeout=10.0,
+                timeout=5.0,
             )
             source = "vllm-direct"
             resolved_model = target_vllm_model
@@ -200,7 +200,7 @@ async def chat_completion(
                 messages,
                 temperature=temperature,
                 max_tokens=max_tokens,
-                timeout=60.0,
+                timeout=5.0,
             )
             source = "ollama-direct"
             resolved_model = target_ollama_model

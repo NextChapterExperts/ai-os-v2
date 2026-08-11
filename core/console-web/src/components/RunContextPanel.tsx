@@ -121,7 +121,7 @@ export function RunContextPanel({ runId }: { runId: string }) {
         {(retrieval.chunks ?? []).length > 0 ? (
           <div className="row-list mt-4">
             {(retrieval.chunks ?? []).map((chunk, idx) => (
-              <div key={chunk.id ?? idx} className="search-hit">
+              <div key={`${chunk.id ?? "chunk"}-${idx}`} className="search-hit">
                 <div>
                   <div className="flex flex-wrap items-baseline gap-2">
                     <span className="font-medium">{chunk.title || chunk.role || "Chunk"}</span>
