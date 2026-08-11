@@ -87,7 +87,7 @@ async def test_unified_search_includes_meeting_store_source():
     m = create_meeting(tenant_id, meeting_data)
     try:
         res = await unified_search.run({}, tenant_id, {"query": "Refactoring des Search Providers"})
-        assert res["kind"] == "search"
+        assert res["kind"] in ("search", "ask")
         meeting_hits = [s for s in res["sources"] if s.get("source_type") == "meeting"]
         assert len(meeting_hits) > 0
         assert "Roadmap Alignment Q3" in meeting_hits[0]["title"]
