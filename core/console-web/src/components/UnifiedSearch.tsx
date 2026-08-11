@@ -18,6 +18,7 @@ type UnifiedHit = {
 type SearchResponse = {
   kind: string;
   query: string;
+  answer?: string;
   sources?: UnifiedHit[];
   sourceCount?: number;
   curatedCount?: number;
@@ -25,6 +26,15 @@ type SearchResponse = {
   graphCount?: number;
   episodicCount?: number;
   error?: string | object;
+  result?: {
+    sources?: UnifiedHit[];
+    answer?: string;
+    sourceCount?: number;
+    curatedCount?: number;
+    rawFileCount?: number;
+    graphCount?: number;
+    episodicCount?: number;
+  };
 };
 
 const SOURCE_LABEL: Record<UnifiedHit["source_type"], string> = {
@@ -49,7 +59,7 @@ export function UnifiedSearch() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             query,
-            params: { force_intent: "unified_search", query, limit: 10 },
+            params: { force_intent: "unified_search", query, intent_text: query, limit: 12 },
           }),
           cache: "no-store",
         });
@@ -78,12 +88,13 @@ export function UnifiedSearch() {
     if (next) run(next);
   }
 
-  const sources = data?.sources ?? [];
-  const graphCount = data?.graphCount ?? sources.filter((s) => s.source_type === "graph").length;
-  const curatedCount = data?.curatedCount ?? sources.filter((s) => s.source_type === "curated").length;
-  const rawFileCount = data?.rawFileCount ?? sources.filter((s) => s.source_type === "raw-file").length;
+  const sources = data?.sources ?? data?.result?.sources ?? [];
+  const answer = data?.answer ?? data?.result?.answer;
+  const graphCount = data?.graphCount ?? data?.result?.graphCount ?? sources.filter((s) => s.source_type === "graph").length;
+  const curatedCount = data?.curatedCount ?? data?.result?.curatedCount ?? sources.filter((s) => s.source_type === "curated").length;
+  const rawFileCount = data?.rawFileCount ?? data?.result?.rawFileCount ?? sources.filter((s) => s.source_type === "raw-file").length;
   const episodicCount =
-    data?.episodicCount ?? sources.filter((s) => s.source_type === "episodic").length;
+    data?.episodicCount ?? data?.result?.episodicCount ?? sources.filter((s) => s.source_type === "episodic").length;
 
   return (
     <section className="rise">
@@ -113,6 +124,13 @@ export function UnifiedSearch() {
       ) : null}
 
       {error ? <p className="text-danger mt-3">{error}</p> : null}
+
+      {answer ? (
+        <article className="answer-panel mt-6 rise">
+          <h2 className="section-title">Zusammenfassung</h2>
+          <div className="answer-body whitespace-pre-wrap leading-relaxed">{answer}</div>
+        </article>
+      ) : null}
 
       {sources.length > 0 ? (
         <div className="row-list mt-6">
