@@ -113,7 +113,7 @@ async def _federated_hits(
     question: str,
     tenant_id: str,
     *,
-    limit: int = 14,
+    limit: int = 20,
 ) -> list[dict[str, Any]]:
     """Graph + L1 Qdrant + episodisch via Unified Search."""
     from .unified_search import run as unified_search_run
@@ -121,11 +121,21 @@ async def _federated_hits(
     query = _enhance_federated_query(question)
     result = await unified_search_run({}, tenant_id, {"query": query, "limit": limit})
     hits = result.get("sources") or []
-    priority = {"graph": 0, "curated": 1, "raw-file": 2, "episodic": 3}
-    hits.sort(key=lambda h: (priority.get(str(h.get("source_type")), 9), -float(h.get("score") or 0)))
+
+    filtered: list[dict[str, Any]] = []
+    seen_titles: set[str] = set()
+    for h in hits:
+        t = str(h.get("title") or "").strip()
+        if "Kalender-Sync (Dry-Run)" in t or "MeetingsAgentReport" in t:
+            if "dry-run-report" in seen_titles:
+                continue
+            seen_titles.add("dry-run-report")
+        filtered.append(h)
+
+    filtered.sort(key=lambda h: float(h.get("score") or 0), reverse=True)
 
     chunks: list[dict[str, Any]] = []
-    for h in hits:
+    for h in filtered:
         st = str(h.get("source_type") or "search")
         title = str(h.get("title") or "")
         snippet = str(h.get("snippet") or "")
