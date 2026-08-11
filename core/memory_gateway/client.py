@@ -178,7 +178,7 @@ async def chat_completion(
                 messages,
                 temperature=temperature,
                 max_tokens=max_tokens,
-                timeout=5.0,
+                timeout=1.0,
             )
             source = "vllm-direct"
             resolved_model = target_vllm_model
