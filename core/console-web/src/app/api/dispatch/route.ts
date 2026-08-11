@@ -38,11 +38,18 @@ export async function POST(req: Request) {
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(120_000),
     });
-    const data = await res.json();
+    const rawText = await res.text();
+    let data: Record<string, unknown> = {};
+    try {
+      data = JSON.parse(rawText) as Record<string, unknown>;
+    } catch {
+      data = { message: rawText || `HTTP ${res.status}` };
+    }
     if (!res.ok) {
+      const errorStr = typeof data.detail === "string" ? data.detail : typeof data.message === "string" ? data.message : JSON.stringify(data);
       return NextResponse.json(
-        { kind: "dispatch_error", error: data, stats: memoryStats() },
-        { status: 502 },
+        { kind: "dispatch_error", error: errorStr, stats: memoryStats() },
+        { status: res.status },
       );
     }
 
