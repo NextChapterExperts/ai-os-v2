@@ -1,6 +1,6 @@
 # AI-OS v2 — Ist-Stand
 
-**Stand:** 2026-08-03 (Email-Fachagent Gmail-Rechnungen ✅ · Google-Plattformkern ✅ · Release-Tag-Mechanismus ✅; zuvor 2026-07-27 Git Multi-Repo Sync Engine ✅ + VIRKI Console-Web Overhaul ✅ + Git Push API `/api/git-push` ✅ + Document Viewer `/api/view-file` & Local Opener `/api/open-local` ✅ + WAQAM/Studentenprojekt Restructuring ✅) · **Repo:** [NextChapterExperts/ai-os-v2](https://github.com/NextChapterExperts/ai-os-v2)  
+**Stand:** 2026-08-11 (Company Brain Synthese ✅ · Knowledge Finder & Suche UI Fix ✅ · Run Context Restauration ✅; zuvor 2026-08-10 Inferenz & LiteLLM Ollama IP Sync ✅; zuvor 2026-08-03 Email-Fachagent Gmail-Rechnungen ✅) · **Repo:** [NextChapterExperts/ai-os-v2](https://github.com/NextChapterExperts/ai-os-v2)  
 **Zweck:** Was heute **wirklich läuft** vs. was in Roadmap/Architektur als **Ziel** spezifiziert ist.  
 **Ziel-Spec bleibt:** [ROADMAP.md](../ROADMAP.md) · [01-ARCHITEKTUR.md](01-ARCHITEKTUR.md) · [14-KONTEXT.md](14-KONTEXT.md) — dieses Dokument überschreibt die Vision nicht, sondern den Fortschritt.
 
