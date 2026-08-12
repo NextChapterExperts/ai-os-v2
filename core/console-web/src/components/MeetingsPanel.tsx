@@ -476,9 +476,8 @@ export function MeetingsPanel() {
           </p>
         </div>
         <button type="button" className="btn-primary" onClick={openCreate}>
-            Meeting erfassen
-          </button>
-        </div>
+          Meeting erfassen
+        </button>
       </div>
 
       <div className="mb-6 flex flex-wrap gap-2">

@@ -467,21 +467,10 @@ export function ResearchAgentWorkspace() {
                 <h4 className="text-[var(--signal)] font-bold mb-1 uppercase tracking-wider text-[10px]">
                   Vollständiges Raw LLM-Context JSON:
                 </h4>
-                <pre className="p-3 rounded-xl border border-[var(--line)] bg-slate-900 text-emerald-400 text-[10px] overflow-x-auto max-h-56 m-0">
+                <pre className="p-3 rounded-xl border border-[var(--line)] bg-[color-mix(in_oklab,white_96%,var(--ink))] text-[var(--ink)] text-[10px] overflow-x-auto max-h-56 m-0">
                   {JSON.stringify(result?.llmContext || {}, null, 2)}
                 </pre>
               </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-3 border-t border-[var(--line)] bg-[color-mix(in_oklab,white_95%,var(--ink))] rounded-b-2xl flex justify-end">
-              <button
-                type="button"
-                onClick={() => setShowPromptModal(false)}
-                className="btn-primary text-xs font-bold py-1.5 px-4"
-              >
-                Schließen
-              </button>
             </div>
           </div>
         </div>
