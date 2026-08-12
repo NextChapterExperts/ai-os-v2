@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 interface SourceItem {
   title: string;
@@ -64,6 +65,7 @@ export function ResearchAgentModal({
   onClose: () => void;
   initialQuery?: string;
 }) {
+  const [mounted, setMounted] = useState(false);
   const [query, setQuery] = useState(initialQuery);
   const [depth, setDepth] = useState<"quick" | "deep">("quick");
   const [selectedModel, setSelectedModel] = useState("qwen2.5-coder:14b");
@@ -79,12 +81,27 @@ export function ResearchAgentModal({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
     if (initialQuery && !query) {
       setQuery(initialQuery);
     }
   }, [initialQuery, query]);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
+  if (!isOpen || !mounted) return null;
 
   const executeResearch = async (isRefinement = false, saveToBrain = false) => {
     const activeQuery = query.trim();
@@ -137,16 +154,16 @@ export function ResearchAgentModal({
     }
     setTimeout(() => {
       onClose();
-    }, 400);
+    }, 300);
   };
 
   const currentModelMeta = LAGEBILD_MODELS.find((m) => m.id === selectedModel);
   const promptDetails: PromptContext | null = (result?.llmContext?.prompt as PromptContext) ?? null;
   const summaryText = result?.summary || result?.answer || "";
 
-  return (
-    <div className="fixed inset-0 z-50 bg-white flex flex-col w-screen h-screen overflow-hidden rise">
-      {/* Top Header Navigation Bar */}
+  const modalJSX = (
+    <div className="fixed inset-0 top-0 left-0 right-0 bottom-0 z-[99999] bg-[var(--canvas)] flex flex-col w-full h-full min-h-screen overflow-hidden">
+      {/* Window Top Toolbar */}
       <header className="px-6 py-4 border-b border-[var(--line)] bg-white flex items-center justify-between gap-4 shrink-0 shadow-xs">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-[color-mix(in_oklab,var(--signal)_10%,white)] border border-[var(--signal)] flex items-center justify-center text-xl">
@@ -154,10 +171,10 @@ export function ResearchAgentModal({
           </div>
           <div>
             <h1 className="text-lg font-bold text-[var(--ink)] m-0 leading-tight">
-              Recherche-Agent Workspace
+              Recherche-Agent Workspace (Vollbild)
             </h1>
             <p className="text-xs muted m-0 font-sans">
-              Multi-Hop Dual-Retrieval: Unternehmensgedächtnis & SearXNG IP-Anonymisiert
+              Multi-Hop Dual-Retrieval: Company Brain & SearXNG IP-Anonymisiert
             </p>
           </div>
         </div>
@@ -173,7 +190,7 @@ export function ResearchAgentModal({
             </span>
           )}
 
-          {/* Single primary save & close button */}
+          {/* Primary Action Button */}
           <button
             type="button"
             onClick={handleSaveAndClose}
@@ -182,7 +199,7 @@ export function ResearchAgentModal({
             💾 Speichern & Schließen
           </button>
 
-          {/* Single clean close/cancel button */}
+          {/* Close Action */}
           <button
             type="button"
             onClick={onClose}
@@ -193,11 +210,11 @@ export function ResearchAgentModal({
         </div>
       </header>
 
-      {/* Main Screen Layout: 2 Spacious Equal/Generous Columns */}
+      {/* Main Workspace Body: Full Viewport 2-Column Split */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden bg-[color-mix(in_oklab,white_98%,transparent)]">
-        {/* Left Column (Width: 4/12) — Input, Parameters & Control Workspace */}
+        {/* Left Column (Width: 4/12) — Parameters & Search Trigger */}
         <aside className="lg:col-span-4 p-6 border-r border-[var(--line)] bg-white overflow-y-auto space-y-6">
-          {/* Query Textarea */}
+          {/* Search Query Textarea */}
           <div className="space-y-2">
             <label className="mono text-[11px] uppercase muted font-bold block tracking-wider">
               Recherchethema / Anfrage
@@ -302,7 +319,7 @@ export function ResearchAgentModal({
             </button>
           </div>
 
-          {/* Start Button */}
+          {/* Start Search Button */}
           <button
             type="button"
             disabled={loading || !query.trim()}
@@ -313,7 +330,7 @@ export function ResearchAgentModal({
           </button>
         </aside>
 
-        {/* Right Column (Width: 8/12) — Results, Context Viewer & Dialog Workspace */}
+        {/* Right Column (Width: 8/12) — Result View, Context & Interactive Dialog */}
         <main className="lg:col-span-8 p-8 overflow-y-auto space-y-6 bg-[color-mix(in_oklab,white_97%,transparent)]">
           {error && (
             <div className="p-4 rounded-xl border border-[var(--danger)] bg-[color-mix(in_oklab,var(--danger)_10%,white)] text-[var(--danger)] text-xs mono">
@@ -323,7 +340,7 @@ export function ResearchAgentModal({
 
           {result ? (
             <div className="space-y-6">
-              {/* Metadata Toolbar */}
+              {/* Metadata Bar */}
               <div className="p-4 rounded-2xl border border-[var(--line)] bg-white flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs">
                 <div className="flex flex-wrap items-center gap-3 mono">
                   <span className="badge" data-variant="graph">
@@ -383,7 +400,7 @@ export function ResearchAgentModal({
                 )}
               </div>
 
-              {/* Context Chunks Viewer (Light VIRKI Theme) */}
+              {/* Context Chunks Viewer */}
               {showContextViewer && result.sources && result.sources.length > 0 && (
                 <div className="p-7 rounded-2xl border border-[var(--line)] bg-white space-y-4 shadow-xs">
                   <h2 className="section-title text-base font-bold text-[var(--ink)] m-0 flex items-center gap-2">
@@ -424,7 +441,7 @@ export function ResearchAgentModal({
                 </div>
               )}
 
-              {/* Dialogue Refinement Box */}
+              {/* Interactive Refinement Box */}
               <div className="p-7 rounded-2xl border border-[var(--line)] bg-[color-mix(in_oklab,var(--signal)_5%,white)] space-y-3 shadow-xs">
                 <h3 className="text-sm font-bold text-[var(--ink)] m-0 flex items-center gap-2">
                   <span>💬</span> Interaktiver Dialog & Verfeinerung
@@ -452,7 +469,7 @@ export function ResearchAgentModal({
                 </div>
               </div>
 
-              {/* Prompt Inspector Sub-View (Light VIRKI Theme - No Pitch Black) */}
+              {/* Prompt Inspector Modal Sub-View */}
               {showPromptInspector && (
                 <div className="p-6 rounded-2xl border border-[var(--line)] bg-white text-[var(--ink)] text-xs mono space-y-4 shadow-sm">
                   <div className="flex items-center justify-between border-b border-[var(--line)] pb-3">
@@ -505,7 +522,7 @@ export function ResearchAgentModal({
         </main>
       </div>
 
-      {/* Footer Bar - Clean single status line (No duplicate buttons) */}
+      {/* Footer Bar */}
       <footer className="px-6 py-3 border-t border-[var(--line)] bg-white flex items-center justify-between shrink-0">
         <span className="text-xs muted font-mono">
           {result?.saved_to_brain
@@ -515,4 +532,6 @@ export function ResearchAgentModal({
       </footer>
     </div>
   );
+
+  return createPortal(modalJSX, document.body);
 }
