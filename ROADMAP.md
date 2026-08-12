@@ -2,7 +2,7 @@
 
 **Für:** LLMs, Entwickler, die das System von Grund auf bauen  
 **Zweck:** Vollständige technische Spezifikation — ausreichend detailliert um ohne zusätzlichen Kontext zu starten  
-**Stand:** August 2026 (aktualisiert 2026-08-12 — Autonomer Deep Research Agent Paradigm: Agentengeführte Multi-Hop Web- & Brain-Recherche mit zusammenfassender Synthese, In-Text Quellennachweisen [1], [2], 100vw/100vh randlosem Desktop-Arbeitsfenster via React Portal, zentriertem Hero-Eingabelayout, VIRKI Signal-Akzenten ohne schwarze Buttons, automatischer Company Brain Sicherung und 23/23 bestandenen automatisieren Testfällen inkl. Token-Test `test_23_sap_joule_studio2_in_build_query`)  
+**Stand:** August 2026 (aktualisiert 2026-08-12 — Autonomer Deep Research Agent Paradigm: Interactive WebUI-Style Suggested Follow-up Questions Chips `💡`, Entrümpelte High-Contrast Quellenliste `🌐 Quelle öffnen ↗`, Live Fortschrittsbalken HUD, In-Text Citations [1], [2], 100vw/100vh React Portal Desktop-Workspace, automatischer Company Brain Sicherung und 23/23 bestandenen Testfällen)  
 **Detail-Spec Company Brain:** [docs/09-COMPANY-BRAIN.md](docs/09-COMPANY-BRAIN.md) · **Memory einfach:** [docs/10-MEMORY-EINFACH.md](docs/10-MEMORY-EINFACH.md) · **Kontext Lagebild→LLM:** [docs/14-KONTEXT.md](docs/14-KONTEXT.md)  
 **Erstes Lizenzprodukt (VM):** [docs/11-PLATFORM-VM.md](docs/11-PLATFORM-VM.md)  
 **Leitprinzipien detailliert:** [docs/12-LEITPRINZIPIEN.md](docs/12-LEITPRINZIPIEN.md)  

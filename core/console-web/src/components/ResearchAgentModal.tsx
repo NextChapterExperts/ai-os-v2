@@ -612,16 +612,345 @@ export function ResearchAgentModal({
               )}
             </div>
 
-            {/* Context & Source Chunks Viewer */}
+  const handleSelectSuggestedQuestion = (qText: string) => {
+    const cleanQ = qText.replace(/^[💡🔍]\s*/, "");
+    setRefinementText(cleanQ);
+  };
+
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex flex-col bg-white text-[var(--ink)] font-sans antialiased overflow-hidden">
+      {/* Header Bar */}
+      <header className="flex items-center justify-between px-8 py-4 border-b border-[var(--line)] bg-white shadow-2xs">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[color-mix(in_oklab,var(--signal)_12%,white)] border border-[var(--signal)] flex items-center justify-center text-xl">
+            🔎
+          </div>
+          <div>
+            <h1 className="text-lg font-bold text-[var(--ink)] m-0 leading-tight">
+              Autonomer Deep Research Workspace
+            </h1>
+            <p className="text-xs text-[var(--ink-soft)] m-0 font-mono">
+              AI-OS v2 • Sovereign Multi-Hop Research & Synthese
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {saveStatus && (
+            <span className="text-xs font-mono font-bold text-[var(--ok)] bg-[color-mix(in_oklab,var(--ok)_12%,white)] px-3 py-1.5 rounded-lg border border-[var(--ok)]">
+              {saveStatus}
+            </span>
+          )}
+
+          {/* Direct Save Action Button */}
+          <button
+            type="button"
+            onClick={handleSaveAndClose}
+            className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[var(--signal)] text-white hover:opacity-90 transition-all shadow-xs flex items-center gap-2 cursor-pointer border-none"
+          >
+            💾 Speichern & Schließen
+          </button>
+
+          {/* Close Action */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="btn-ghost text-xs mono px-3"
+          >
+            ✕ Schließen
+          </button>
+        </div>
+      </header>
+
+      {/* Main Workspace Body */}
+      <div className="flex-1 overflow-y-auto bg-[color-mix(in_oklab,white_98%,transparent)]">
+        {!result ? (
+          /* Initial State: Clean Centered Input Hero Layout */
+          <div className="max-w-3xl mx-auto py-12 px-6 space-y-8 flex flex-col items-center justify-center min-h-[calc(100vh-140px)]">
+            <div className="text-center space-y-2">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[color-mix(in_oklab,var(--signal)_12%,white)] border border-[var(--signal)] text-3xl mb-2">
+                🔎
+              </div>
+              <h2 className="text-2xl font-bold text-[var(--ink)] m-0">
+                Was möchten Sie recherchieren?
+              </h2>
+              <p className="text-sm muted max-w-xl mx-auto leading-relaxed">
+                Der Recherche-Agent durchsucht Ihr lokales Unternehmensgedächtnis und führt bei Bedarf eine anonymisierte Web-Recherche via SearXNG durch.
+              </p>
+            </div>
+
+            {/* Centered Input Card */}
+            <div className="w-full bg-white p-8 rounded-2xl border border-[var(--line)] shadow-sm space-y-6">
+              <div className="space-y-2">
+                <label className="mono text-[11px] uppercase muted font-bold block tracking-wider text-left">
+                  Recherchethema / Anfrage
+                </label>
+                <textarea
+                  rows={4}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="z. B. SAP S/4HANA Migration Performance im Vergleich zu Oracle Cloud ERP 2026..."
+                  className="w-full p-4 rounded-xl border border-[var(--line)] bg-white text-base text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--signal)] font-sans leading-relaxed shadow-xs"
+                />
+              </div>
+
+              {/* Options Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+                {/* Model Selector */}
+                <div className="space-y-2 text-left">
+                  <label className="mono text-[11px] uppercase muted font-bold block tracking-wider">
+                    Modell auswählen (Lagebild)
+                  </label>
+                  <select
+                    value={selectedModel}
+                    onChange={(e) => setSelectedModel(e.target.value)}
+                    className="w-full p-3 rounded-xl border border-[var(--line)] bg-white text-xs font-mono text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--signal)]"
+                  >
+                    {LAGEBILD_MODELS.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.label}
+                      </option>
+                    ))}
+                  </select>
+                  {currentModelMeta && (
+                    <p className="text-[11px] text-[var(--ink-soft)] italic m-0 pt-0.5 leading-snug">
+                      💡 {currentModelMeta.desc}
+                    </p>
+                  )}
+                </div>
+
+                {/* Depth Selector */}
+                <div className="space-y-2 text-left">
+                  <label className="mono text-[11px] uppercase muted font-bold block tracking-wider">
+                    Recherche-Tiefe
+                  </label>
+                  <div className="flex p-1 rounded-xl border border-[var(--line)] bg-[color-mix(in_oklab,white_95%,var(--ink))] gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setDepth("quick")}
+                      className={`flex-1 text-xs py-2.5 font-bold rounded-lg transition-all ${
+                        depth === "quick"
+                          ? "bg-[var(--signal)] text-white shadow-xs"
+                          : "text-[var(--ink-soft)] hover:text-[var(--ink)]"
+                      }`}
+                    >
+                      ⚡ Quick (30s)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDepth("deep")}
+                      className={`flex-1 text-xs py-2.5 font-bold rounded-lg transition-all ${
+                        depth === "deep"
+                          ? "bg-[var(--signal)] text-white shadow-xs"
+                          : "text-[var(--ink-soft)] hover:text-[var(--ink)]"
+                      }`}
+                    >
+                      🔬 Deep (Multi-Hop)
+                    </button>
+                  </div>
+                </div>
+
+                {/* Compute Mode */}
+                <div className="space-y-2 text-left">
+                  <label className="mono text-[11px] uppercase muted font-bold block tracking-wider">
+                    Compute-Modus
+                  </label>
+                  <select
+                    value={computeMode}
+                    onChange={(e) => setComputeMode(e.target.value)}
+                    className="w-full p-3 rounded-xl border border-[var(--line)] bg-white text-xs font-mono text-[var(--ink)] focus:outline-none"
+                  >
+                    <option value="sovereign">Sovereign (Lokal LAN)</option>
+                    <option value="balanced">Balanced Hybrid</option>
+                    <option value="premium">Premium Cloud API</option>
+                  </select>
+                </div>
+
+                {/* Anonymization Toggle */}
+                <div className="space-y-2 text-left">
+                  <label className="mono text-[11px] uppercase muted font-bold block tracking-wider">
+                    Anonymisierung & IP-Schutz
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setAnonymize(!anonymize)}
+                    className={`w-full p-3 rounded-xl border text-xs font-mono text-left flex items-center justify-between transition-all ${
+                      anonymize
+                        ? "border-[var(--signal)] bg-[color-mix(in_oklab,var(--signal)_8%,white)] text-[var(--ink)]"
+                        : "border-[var(--line)] bg-white muted"
+                    }`}
+                  >
+                    <span>{anonymize ? "🛡️ SearXNG Proxy: Aktiv" : "🌐 Direkt-Modus"}</span>
+                    <span className="badge" data-variant={anonymize ? "curated" : "raw"}>
+                      {anonymize ? "Anonym" : "Direkt"}
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {error && (
+                <div className="p-4 rounded-xl border border-[var(--danger)] bg-[color-mix(in_oklab,var(--danger)_10%,white)] text-[var(--danger)] text-xs mono">
+                  ❌ Fehler: {error}
+                </div>
+              )}
+
+              {/* Live Agent Progress HUD & Animated Fortschrittsbalken */}
+              {loading ? (
+                <div className="w-full bg-white p-8 rounded-2xl border border-[var(--signal)] shadow-md space-y-6 text-left">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[color-mix(in_oklab,var(--signal)_12%,white)] border border-[var(--signal)] flex items-center justify-center text-xl animate-spin">
+                        ⏳
+                      </div>
+                      <div>
+                        <h3 className="text-base font-bold text-[var(--ink)] m-0 flex items-center gap-2">
+                          <span>🤖 Autonomer Recherche-Agent arbeitet…</span>
+                        </h3>
+                        <p className="text-xs text-[var(--signal)] font-mono font-bold m-0 pt-0.5">
+                          {RESEARCH_STEPS[Math.min(progressStep, 3)]?.label}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="font-mono text-2xl font-extrabold text-[var(--signal)]">
+                      {progressPercent}%
+                    </span>
+                  </div>
+
+                  {/* Animated Progress Bar Fill */}
+                  <div className="w-full h-3 rounded-full bg-[color-mix(in_oklab,var(--signal)_15%,white)] overflow-hidden border border-[color-mix(in_oklab,var(--signal)_30%,white)]">
+                    <div
+                      className="h-full bg-[var(--signal)] transition-all duration-500 ease-out rounded-full shadow-xs"
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                  </div>
+
+                  {/* Step Checklist Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                    {RESEARCH_STEPS.map((s, sIdx) => {
+                      const isDone = sIdx < progressStep;
+                      const isCurrent = sIdx === progressStep;
+                      return (
+                        <div
+                          key={sIdx}
+                          className={`p-3 rounded-xl border text-xs font-mono flex items-center gap-2.5 transition-all ${
+                            isDone
+                              ? "border-[var(--line)] bg-[color-mix(in_oklab,white_96%,var(--ink))] text-[var(--ink)]"
+                              : isCurrent
+                              ? "border-[var(--signal)] bg-[color-mix(in_oklab,var(--signal)_10%,white)] text-[var(--signal)] font-bold shadow-2xs"
+                              : "border-[var(--line)] bg-white text-[var(--ink-soft)] opacity-40"
+                          }`}
+                        >
+                          <span className="text-sm">{isDone ? "✅" : isCurrent ? "🔄" : "⚪"}</span>
+                          <span className="truncate">{s.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="pt-3 flex flex-wrap items-center justify-between text-[11px] font-mono muted border-t border-[var(--line)] gap-2">
+                    <span>🛡️ SearXNG Proxy: {anonymize ? "Aktiv (IP-Schutz)" : "Direkt"}</span>
+                    <span>🧠 Modell: {selectedModel}</span>
+                    <span>⚡ Compute: {computeMode}</span>
+                  </div>
+                </div>
+              ) : (
+                /* Centered Big Start Button (VIRKI Signal Blue, ZERO black) */
+                <button
+                  type="button"
+                  disabled={!query.trim()}
+                  onClick={() => executeResearch(false)}
+                  className="w-full py-4 rounded-xl text-base font-bold bg-[var(--signal)] text-white hover:opacity-90 transition-all shadow-md cursor-pointer border-none flex items-center justify-center gap-2"
+                >
+                  🚀 Recherche Jetzt Starten
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* Result View Layout: Full-Width Centered Reader Layout */
+          <div className="max-w-5xl mx-auto py-10 px-8 space-y-8">
+            {error && (
+              <div className="p-4 rounded-xl border border-[var(--danger)] bg-[color-mix(in_oklab,var(--danger)_10%,white)] text-[var(--danger)] text-xs mono">
+                ❌ Fehler: {error}
+              </div>
+            )}
+
+            {/* Toolbar Action Header */}
+            <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl bg-white border border-[var(--line)] shadow-2xs">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleNewResearch}
+                  className="px-4 py-2 rounded-xl text-xs font-bold border border-[var(--line)] bg-white hover:bg-[color-mix(in_oklab,white_90%,var(--ink))] text-[var(--ink)] transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  <span>🔄</span> Neue Recherche
+                </button>
+                <span className="mono text-xs muted">
+                  Modell: <strong className="text-[var(--ink)]">{result.model || selectedModel}</strong>
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowContextViewer(!showContextViewer)}
+                  className="px-3 py-1.5 rounded-lg border border-[var(--line)] bg-white text-xs mono text-[var(--ink)] hover:bg-[color-mix(in_oklab,white_90%,var(--ink))]"
+                >
+                  {showContextViewer ? "🙈 Kontext verbergen" : "👁️ Kontext anzeigen"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowPromptInspector(!showPromptInspector)}
+                  className="px-3 py-1.5 rounded-lg border border-[var(--signal)] bg-[color-mix(in_oklab,var(--signal)_10%,white)] text-xs mono text-[var(--signal)] font-bold hover:bg-[var(--signal)] hover:text-white transition-all"
+                >
+                  📄 Prompt Inspektor
+                </button>
+              </div>
+            </div>
+
+            {/* Query & Executive Report Header */}
+            <div className="p-6 rounded-2xl border border-[var(--signal)] bg-[color-mix(in_oklab,var(--signal)_5%,white)] space-y-2 shadow-xs flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <span className="mono text-[11px] uppercase text-[var(--signal)] font-bold tracking-wider block mb-1">
+                  🤖 Autonomer Deep Research Bericht
+                </span>
+                <h2 className="text-xl font-bold text-[var(--ink)] m-0 leading-snug">
+                  {query}
+                </h2>
+              </div>
+              <span className="badge" data-variant="ok">
+                ⚡ Autonom Ausgewertet
+              </span>
+            </div>
+
+            {/* Main Executive Intelligence Report Box */}
+            <div className="p-8 rounded-2xl border border-[var(--line)] bg-white space-y-6 shadow-sm">
+              <div className="flex items-center justify-between border-b border-[var(--line)] pb-4">
+                <h2 className="section-title text-xl font-bold text-[var(--ink)] m-0 flex items-center gap-2">
+                  <span>📄</span> Forschungsbericht & Synthese
+                </h2>
+                <span className="text-xs mono muted">
+                  Vertrauen: {result.confidence ? Math.round(result.confidence * 100) : 92}%
+                </span>
+              </div>
+
+              {/* Formatted Report Content */}
+              <div className="p-7 rounded-2xl bg-[color-mix(in_oklab,white_96%,var(--ink))] border border-[var(--line)] shadow-2xs">
+                {renderMarkdownReport(summaryText)}
+              </div>
+            </div>
+
+            {/* Decluttered & Professional Source Link List */}
             {showContextViewer && result.sources && result.sources.length > 0 && (
               <div className="p-8 rounded-2xl border border-[var(--line)] bg-white space-y-6 shadow-xs">
                 <div className="flex items-center justify-between border-b border-[var(--line)] pb-4">
                   <div>
                     <h2 className="section-title text-lg font-bold text-[var(--ink)] m-0 flex items-center gap-2">
-                      <span>📖</span> Gefundene Quellen & Nachweise ({result.sources.length})
+                      <span>📖</span> Evaluierte Quellen & Nachweise ({result.sources.length})
                     </h2>
                     <p className="text-xs muted m-0 mt-0.5 font-sans">
-                      Klicken Sie auf den Button einer Quelle, um das Original im Browser aufzurufen.
+                      Klicken Sie auf den Button einer Quelle, um die Originalseite im Browser zu öffnen.
                     </p>
                   </div>
                   <span className="badge" data-variant="curated">
@@ -629,7 +958,8 @@ export function ResearchAgentModal({
                   </span>
                 </div>
 
-                <div className="space-y-5">
+                {/* Sleek High-Contrast Sources List */}
+                <div className="space-y-3">
                   {result.sources.map((src, idx) => {
                     const cleanSnippet = cleanTextSnippet(src.snippet);
                     const isWeb = src.source_type === "web_searxng";
@@ -638,51 +968,39 @@ export function ResearchAgentModal({
                     return (
                       <div
                         key={idx}
-                        className="p-6 rounded-2xl border border-[var(--line)] bg-[color-mix(in_oklab,white_98%,transparent)] space-y-4 hover:border-[var(--line-strong)] transition-all shadow-2xs"
+                        className="p-4 rounded-xl border border-[var(--line)] bg-white hover:border-[var(--signal)] transition-all shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-left"
                       >
-                        {/* Header Badge Row */}
-                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--line)] pb-3">
-                          <div className="flex items-center gap-2">
-                            <span className="w-6 h-6 rounded-full bg-[var(--signal)] text-white text-xs font-bold font-mono flex items-center justify-center">
+                        <div className="space-y-1 flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="w-5 h-5 rounded-md bg-[color-mix(in_oklab,var(--signal)_15%,white)] text-[var(--signal)] text-xs font-bold font-mono flex items-center justify-center">
                               #{idx + 1}
                             </span>
-                            <span className="badge" data-variant={isWeb ? "curated" : "graph"}>
-                              {isWeb ? "🌐 Web (SearXNG Anonym)" : "🧠 Company Brain"}
+                            <span className="font-bold text-sm text-[var(--ink)] truncate">
+                              {src.title || "Recherche-Quelle"}
                             </span>
-                            <span className="badge" data-variant="ok">
+                            <span className="badge" data-variant={isWeb ? "curated" : "graph"}>
+                              {isWeb ? "🌐 Web" : "🧠 Brain"}
+                            </span>
+                            <span className="text-[11px] font-mono muted">
                               Vertrauen: {trustScore}%
                             </span>
                           </div>
-
-                          {src.url && (
-                            <a
-                              href={src.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="px-4 py-1.5 rounded-xl bg-[color-mix(in_oklab,var(--signal)_10%,white)] border border-[var(--signal)] text-[var(--signal)] font-bold text-xs hover:bg-[var(--signal)] hover:text-white transition-all inline-flex items-center gap-1.5 no-underline"
-                            >
-                              <span>🌐 Originalquelle im Browser öffnen</span>
-                              <span>↗</span>
-                            </a>
-                          )}
+                          <p className="text-xs text-[var(--ink-soft)] line-clamp-2 m-0 font-sans leading-relaxed">
+                            {cleanSnippet || "Kein Textinhalt verfügbar."}
+                          </p>
                         </div>
 
-                        {/* Title & Domain URL */}
-                        <div className="space-y-1">
-                          <h3 className="text-base font-bold text-[var(--ink)] m-0 leading-snug">
-                            {src.title || "Recherche-Quelle"}
-                          </h3>
-                          {src.url && (
-                            <div className="mono text-xs text-[var(--signal)] truncate">
-                              🔗 {src.url}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Formatted Text Snippet Box */}
-                        <div className="p-4 rounded-xl bg-white border border-[var(--line)] text-xs text-[var(--ink)] leading-relaxed font-sans whitespace-pre-wrap">
-                          {cleanSnippet || "Kein Textinhalt verfügbar."}
-                        </div>
+                        {src.url && (
+                          <a
+                            href={src.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="px-4 py-2 rounded-xl bg-[color-mix(in_oklab,var(--signal)_10%,white)] border border-[var(--signal)] text-[var(--signal)] font-bold text-xs hover:bg-[var(--signal)] hover:text-white transition-all inline-flex items-center gap-1.5 no-underline shrink-0"
+                          >
+                            <span>🌐 Quelle öffnen</span>
+                            <span>↗</span>
+                          </a>
+                        )}
                       </div>
                     );
                   })}
@@ -690,20 +1008,45 @@ export function ResearchAgentModal({
               </div>
             )}
 
-            {/* Interactive Refinement Box */}
-            <div className="p-8 rounded-2xl border border-[var(--line)] bg-[color-mix(in_oklab,var(--signal)_5%,white)] space-y-4 shadow-xs">
-              <h3 className="text-base font-bold text-[var(--ink)] m-0 flex items-center gap-2">
-                <span>💬</span> Interaktiver Dialog & Verfeinerung
-              </h3>
-              <p className="text-xs muted m-0">
-                Möchtest du bestimmte Punkte vertiefen oder eine korrigierte Suchrichtung eingeben?
-              </p>
+            {/* WebUI-Style Interactive Refinement Box with Clickable Question Chips */}
+            <div className="p-8 rounded-2xl border border-[var(--line)] bg-[color-mix(in_oklab,var(--signal)_5%,white)] space-y-5 shadow-xs">
+              <div className="space-y-1 text-left">
+                <h3 className="text-base font-bold text-[var(--ink)] m-0 flex items-center gap-2">
+                  <span>💬</span> Interaktiver Dialog & Vertiefung
+                </h3>
+                <p className="text-xs muted m-0">
+                  Wähle eine vorgeschlagene Vertiefungsfrage aus oder gib eigene Wünsche ein:
+                </p>
+              </div>
+
+              {/* WebUI Suggested Questions Chips */}
+              {result.sub_questions && result.sub_questions.length > 0 && (
+                <div className="space-y-2 text-left">
+                  <label className="mono text-[11px] uppercase text-[var(--signal)] font-bold block tracking-wider">
+                    💡 Empfohlene Folgefragen (Klick zum Übernehmen):
+                  </label>
+                  <div className="flex flex-wrap gap-2 text-left">
+                    {result.sub_questions.map((sq, sqIdx) => (
+                      <button
+                        key={sqIdx}
+                        type="button"
+                        onClick={() => handleSelectSuggestedQuestion(sq)}
+                        className="px-3.5 py-2 rounded-xl border border-[color-mix(in_oklab,var(--signal)_30%,white)] bg-white hover:bg-[color-mix(in_oklab,var(--signal)_10%,white)] hover:border-[var(--signal)] text-xs text-[var(--ink)] font-sans font-medium transition-all text-left shadow-2xs cursor-pointer flex items-center gap-1.5"
+                      >
+                        <span>{sq}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Refinement Input & Action */}
               <div className="flex gap-3 pt-1">
                 <input
                   type="text"
                   value={refinementText}
                   onChange={(e) => setRefinementText(e.target.value)}
-                  placeholder="z. B. Fokussiere dich auf Lizenzaspekte und erstelle einen Tabellenvergleich..."
+                  placeholder="Eigene Nachfrage eingeben oder aus den Chips wählen..."
                   className="flex-1 p-3.5 rounded-xl border border-[var(--line)] bg-white text-xs text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--signal)]"
                   onKeyDown={(e) => e.key === "Enter" && executeResearch(true)}
                 />
@@ -711,9 +1054,9 @@ export function ResearchAgentModal({
                   type="button"
                   disabled={loading || !refinementText.trim()}
                   onClick={() => executeResearch(true)}
-                  className="px-5 py-3.5 rounded-xl text-xs font-bold border border-[var(--signal)] bg-[color-mix(in_oklab,var(--signal)_10%,white)] text-[var(--signal)] hover:bg-[var(--signal)] hover:text-white transition-all cursor-pointer"
+                  className="px-5 py-3.5 rounded-xl text-xs font-bold border border-[var(--signal)] bg-[var(--signal)] text-white hover:opacity-90 transition-all cursor-pointer shadow-xs"
                 >
-                  Verfeinern
+                  🚀 Verfeinern
                 </button>
               </div>
             </div>

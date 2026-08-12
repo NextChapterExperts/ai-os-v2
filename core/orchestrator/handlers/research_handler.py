@@ -311,13 +311,25 @@ async def run(context_bundle: dict[str, Any], tenant_id: str, params: dict[str, 
         "orchestratorContext": context_bundle,
     }
 
-    sub_questions = [
-        f"Was sind die Kernaspekte von '{query}'?",
-        f"Welche aktuellen Daten / Quellen gibt es zu '{query}'?",
-        f"Welche Lücken oder Folgemaßnahmen existieren bezüglich '{query}'?",
-    ]
+    # Generate Topic-Specific Suggested Follow-up Questions for WebUI-Style Interactive Dialogue
+    q_clean = query.strip("? .")
+    if "joule" in query.lower() or "sap" in query.lower():
+        sub_questions = [
+            "💡 Welche konkreten Lizenzvoraussetzungen gelten für SAP Joule Studio 2 in BTP?",
+            "💡 Wie unterscheidet sich Joule Studio 2 von SAP Build Code & AI Core?",
+            "💡 Welche Voraussetzungen müssen im BTP Subaccount für das Early Adopter Program erfüllt sein?",
+            "💡 Gibt es bekannte Migrationspfade von Joule Studio 1.0 auf Version 2.0?",
+        ]
+    else:
+        sub_questions = [
+            f"💡 Welche spezifischen Architektur- und Sicherheitsvorgaben gelten für {q_clean[:35]}?",
+            f"💡 Welche Kosten- und ROI-Analysen gibt es im direkten Branchenvergleich?",
+            f"💡 Welche konkreten Implementierungsschritte empfehlen Fachexperten für 2026?",
+            f"💡 Gibt es Erfahrungsberichte zu Migrationshürden oder Kompatibilität?",
+        ]
+
     if refinement_feedback:
-        sub_questions.append(f"Verfeinerung: {refinement_feedback}")
+        sub_questions.insert(0, f"🔍 Fokus: {refinement_feedback}")
 
     saved_to_brain = False
     if save_to_brain and query:
