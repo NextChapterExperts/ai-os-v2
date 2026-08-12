@@ -28,7 +28,7 @@ interface ResearchResponse {
   model_used?: string;
   model?: string;
   sub_questions?: string[];
-  llmContext?: any;
+  llmContext?: Record<string, unknown>;
   saved_to_brain?: boolean;
 }
 
@@ -122,9 +122,10 @@ export function ResearchAgentModal({
       if (saveToBrain || data.saved_to_brain) {
         setSaveStatus("✅ Im Unternehmensgedächtnis (Company Brain) gespeichert!");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Research error:", err);
-      setError(err.message || "Fehler bei der Recherche.");
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg || "Fehler bei der Recherche.");
     } finally {
       setLoading(false);
     }

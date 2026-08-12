@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import { ResearchAgentModal } from "@/components/ResearchAgentModal";
 
@@ -16,7 +18,7 @@ interface PromptContext {
   full_prompt_text?: string;
   contextCharCount?: number;
   token_estimate?: number;
-  orchestratorContext?: any;
+  orchestratorContext?: Record<string, unknown>;
 }
 
 interface ResearchResponse {
@@ -29,7 +31,7 @@ interface ResearchResponse {
   model_used?: string;
   model?: string;
   sub_questions?: string[];
-  llmContext?: any;
+  llmContext?: Record<string, unknown>;
 }
 
 const LAGEBILD_MODELS = [
@@ -103,9 +105,10 @@ export function ResearchAgentWorkspace() {
         throw new Error(data.error);
       }
       setResult(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Research error:", err);
-      setError(err.message || "Fehler bei der Ausführung der Recherche.");
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg || "Fehler bei der Ausführung der Recherche.");
     } finally {
       setLoading(false);
     }
@@ -366,7 +369,7 @@ export function ResearchAgentWorkspace() {
                       </span>
                     </div>
                     {src.snippet ? (
-                      <p className="muted text-[11px] line-clamp-2 m-0">{src.snippet}</p>
+                      <p className="muted text-[11px] line-clamp-2 m-0">{cleanTextSnippet(src.snippet)}</p>
                     ) : null}
                   </div>
                 ))}
@@ -482,6 +485,8 @@ export function ResearchAgentWorkspace() {
             </div>
           </div>
         </div>
+      )}
+
       {/* FULLSCREEN POPUP MODAL */}
       <ResearchAgentModal
         isOpen={isModalOpen}
