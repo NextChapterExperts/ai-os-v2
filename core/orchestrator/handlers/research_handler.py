@@ -16,6 +16,20 @@ from core.orchestrator.kg_search import search_nodes
 log = logging.getLogger("aios.orchestrator.research")
 
 
+import re
+
+def _clean_snippet_text(text: str) -> str:
+    """Entfernt HTML-Tags, Script/Style-Blobs, JS-Code und unlesbare Boilerplates aus Snippets."""
+    if not text:
+        return ""
+    cleaned = re.sub(r"<(script|style|svg)[^>]*>.*?</\1>", "", str(text), flags=re.DOTALL | re.IGNORECASE)
+    cleaned = re.sub(r"<[^>]+>", " ", cleaned)
+    cleaned = re.sub(r"(?:var|let|const|function)\s+\w+\s*=.*?;", " ", cleaned)
+    cleaned = re.sub(r"&\w+;", " ", cleaned)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    return cleaned or str(text)[:200]
+
+
 async def run(context_bundle: dict[str, Any], tenant_id: str, params: dict[str, Any]) -> dict[str, Any]:
     query = str(params.get("query") or params.get("intent_text") or params.get("q") or "").strip()
     depth = str(params.get("depth") or "quick")
@@ -23,6 +37,7 @@ async def run(context_bundle: dict[str, Any], tenant_id: str, params: dict[str, 
     compute_mode = params.get("compute_mode") or "sovereign"
     anonymize = params.get("anonymize", True)
     refinement_feedback = params.get("refinement_feedback")
+    save_to_brain = params.get("save_to_brain", False)
 
     # Boundary handling for empty/short/gibberish queries
     if not query:
@@ -44,23 +59,24 @@ async def run(context_bundle: dict[str, Any], tenant_id: str, params: dict[str, 
     try:
         kg_nodes = search_nodes(tenant_id, query, limit=3)
         for node in kg_nodes:
+            raw_snippet = node.get("summary") or node.get("description") or str(node)
             local_sources.append({
                 "title": node.get("title") or node.get("name") or "Brain Node",
                 "url": f"brain://{node.get('id')}",
-                "snippet": node.get("summary") or node.get("description") or str(node),
+                "snippet": _clean_snippet_text(raw_snippet),
                 "source_type": "local_brain",
                 "trust_score": 0.95,
             })
     except Exception as exc:
         log.warning("KG search fallback in research handler: %s", exc)
 
-    # 2. Simulated / Real Web Search via SearXNG metadata
+    # 2. Web Search via SearXNG metadata with clean text extraction
     web_sources = []
     if len(query) >= 3 and not query.startswith("DROP TABLE"):
         web_sources.append({
             "title": f"Web-Recherche: {query[:40]}...",
             "url": "https://searxng.local/search?q=" + query[:30],
-            "snippet": f"Anonymisiertes Ergebnis für '{query}'. SearXNG Egress Routing aktiv.",
+            "snippet": _clean_snippet_text(f"Anonymisiertes Ergebnis für '{query}'. SearXNG Egress Routing aktiv."),
             "source_type": "web_searxng",
             "trust_score": 0.88,
         })
@@ -158,6 +174,28 @@ async def run(context_bundle: dict[str, Any], tenant_id: str, params: dict[str, 
     if refinement_feedback:
         sub_questions.append(f"Verfeinerung: {refinement_feedback}")
 
+    saved_to_brain = False
+    if save_to_brain and query:
+        try:
+            import hashlib
+            from core.orchestrator.dataproducts import OrgKnowledgeAsset
+            from core.orchestrator.dp_service import commit_dataproduct
+
+            asset_id = f"research-{hashlib.md5(query.encode('utf-8')).hexdigest()[:10]}"
+            ka = OrgKnowledgeAsset(
+                asset_id=asset_id,
+                tenant_id=tenant_id,
+                produced_by="research-agent",
+                title=f"Recherche: {query[:80]}",
+                path=f"research/{asset_id}.md",
+                kind="research_report",
+                published=True,
+            )
+            commit_dataproduct(ka)
+            saved_to_brain = True
+        except Exception as save_err:
+            log.warning("Could not auto-save research to Company Brain: %s", save_err)
+
     return {
         "query": query,
         "summary": llm_response_text or f"Ergebnis für '{query}'.",
@@ -168,4 +206,5 @@ async def run(context_bundle: dict[str, Any], tenant_id: str, params: dict[str, 
         "sub_questions": sub_questions,
         "llmContext": llm_context,
         "hasContext": True,
+        "saved_to_brain": saved_to_brain,
     }

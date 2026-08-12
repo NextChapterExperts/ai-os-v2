@@ -1,6 +1,5 @@
-"use client";
-
 import React, { useState } from "react";
+import { ResearchAgentModal } from "@/components/ResearchAgentModal";
 
 interface SourceItem {
   title: string;
@@ -33,15 +32,31 @@ interface ResearchResponse {
   llmContext?: any;
 }
 
-const AVAILABLE_MODELS = [
-  { id: "qwen2.5-coder:14b", label: "Qwen 2.5 Coder 14B (Sovereign Local Default)" },
-  { id: "mistral-nemo:12b", label: "Mistral Nemo 12B (Fast Sovereign)" },
-  { id: "hermes-3:8b", label: "Hermes 3 8B (Lightweight Local)" },
-  { id: "deepseek-r1:32b", label: "DeepSeek R1 32B (Reasoning Heavy)" },
-  { id: "openrouter/auto", label: "OpenRouter Cloud (Premium Fallback)" },
+const LAGEBILD_MODELS = [
+  { id: "auto", label: "✨ Auto-Router (Smart)", desc: "Analysiert Intent & wählt automatisch das optimale Monster-Modell" },
+  { id: "qwen2.5-coder:14b", label: "Qwen 2.5 Coder 14B (Souverän & Schnelligkeit)", desc: "Ultra-schnelle lokale Inferenz (0.35s VRAM-Hit), Code, JSON & Tool-Calling" },
+  { id: "deepseek-r1:32b", label: "DeepSeek-R1 32B (Reasoning & Logik)", desc: "Logik, Reasoning & komplexe Problemlösung (128k Kontext)" },
+  { id: "mistral-nemo:12b", label: "Mistral Nemo 12B (Deutsche Texte)", desc: "E-Mails, Blogs & deutsche Texte (128k Kontext)" },
+  { id: "hermes3:8b", label: "Hermes 3 8B (Multi-Agent)", desc: "Multi-Agenten Orchestrierung & Tool-Calling" },
+  { id: "llama3.2-vision:11b", label: "Llama 3.2 Vision 11B (Vision/PDF)", desc: "OCR, Bild-, PDF- & Dokumentenanalyse" },
+  { id: "openrouter/balanced", label: "☁️ OpenRouter Cloud (Balanced)", desc: "Nemotron Super 120B — OpenRouter Cloud (262K Kontext)" },
+  { id: "openrouter/premium", label: "☁️ OpenRouter Cloud (Premium)", desc: "Nemotron Ultra 550B / Claude 3.5 — OpenRouter Frontier (1M Kontext)" },
+  { id: "openrouter/coding", label: "☁️ OpenRouter Cloud (Coding)", desc: "Qwen 2.5 Coder 32B Instruct — Agentic Coding" },
 ];
 
+function cleanTextSnippet(text?: string): string {
+  if (!text) return "";
+  let s = String(text);
+  s = s.replace(/<(script|style|svg)[^>]*>.*?<\/\1>/gis, "");
+  s = s.replace(/<[^>]+>/g, " ");
+  s = s.replace(/(?:var|let|const|function)\s+\w+\s*=.*?;/g, " ");
+  s = s.replace(/&\w+;/g, " ");
+  s = s.replace(/\s+/g, " ").trim();
+  return s;
+}
+
 export function ResearchAgentWorkspace() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [depth, setDepth] = useState<"quick" | "deep">("quick");
   const [selectedModel, setSelectedModel] = useState("qwen2.5-coder:14b");
@@ -101,6 +116,34 @@ export function ResearchAgentWorkspace() {
 
   return (
     <div className="space-y-6">
+      {/* Fullscreen Pop-up Launcher Banner */}
+      <div className="p-5 rounded-2xl border border-[var(--signal)] bg-[color-mix(in_oklab,var(--signal)_8%,white)] shadow-sm flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="badge" data-variant="graph">
+              Vollbild-Arbeitsfenster
+            </span>
+            <span className="badge" data-variant="curated">
+              Company Brain Auto-Save
+            </span>
+          </div>
+          <h3 className="section-title text-base font-bold text-[var(--ink)] m-0">
+            Recherche in großem Arbeitsfenster (Pop-up) ausführen
+          </h3>
+          <p className="text-xs muted m-0 mt-0.5">
+            Öffnet das volle Fenster für tiefgehende Recherche, Modellauswahl, Kontext-Inspektion und automatisches Speichern im Unternehmensgedächtnis.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setIsModalOpen(true)}
+          className="btn-primary text-xs font-bold py-2.5 px-6 flex items-center gap-2"
+        >
+          🚀 Recherche-Workspace in Vollbild öffnen
+        </button>
+      </div>
+
       {/* Top Card & Form */}
       <div className="p-6 rounded-2xl border border-[var(--line)] bg-[color-mix(in_oklab,white_75%,transparent)] shadow-sm space-y-5">
         <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--line)] pb-4">
@@ -117,7 +160,7 @@ export function ResearchAgentWorkspace() {
               </span>
             </div>
             <h2 className="section-title text-xl font-bold text-[var(--ink)] m-0 flex items-center gap-2">
-              <span>🔎</span> Recherche-Agent Cockpit
+              <span>🔎</span> Recherche-Agent Vorschau
             </h2>
             <p className="text-xs muted mt-1 leading-relaxed m-0">
               Multi-Hop Dual-Retrieval: Durchsucht gleichzeitig das lokale Company Brain & das Internet via SearXNG (IP-anonymisiert).
@@ -153,14 +196,14 @@ export function ResearchAgentWorkspace() {
             {/* Model Selector */}
             <div>
               <label className="mono text-[11px] uppercase muted block mb-1 font-bold">
-                Modell auswählen
+                Modell auswählen (Lagebild)
               </label>
               <select
                 value={selectedModel}
                 onChange={(e) => setSelectedModel(e.target.value)}
                 className="w-full p-2.5 rounded-xl border border-[var(--line)] bg-white text-xs font-mono text-[var(--ink)] focus:outline-none"
               >
-                {AVAILABLE_MODELS.map((m) => (
+                {LAGEBILD_MODELS.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.label}
                   </option>
@@ -439,7 +482,12 @@ export function ResearchAgentWorkspace() {
             </div>
           </div>
         </div>
-      )}
+      {/* FULLSCREEN POPUP MODAL */}
+      <ResearchAgentModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        initialQuery={query}
+      />
     </div>
   );
 }

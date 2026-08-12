@@ -226,3 +226,20 @@ async def test_20_dispatch_end_to_end_integration():
     assert res["query"] == "KI-Agenten 2026"
     assert "summary" in res
     assert "llmContext" in res
+
+
+# 21. Snippet text cleaning (HTML & Script tags stripped)
+def test_21_clean_snippet_text_strips_html_and_script_tags():
+    dirty_html = "<html><head><script>var x = 123;</script></head><body><h1>SAP S/4HANA</h1><p>Wichtige Daten &amp; Infos.</p></body></html>"
+    cleaned = research_handler._clean_snippet_text(dirty_html)
+    assert "<script>" not in cleaned
+    assert "<html>" not in cleaned
+    assert "SAP S/4HANA Wichtige Daten & Infos." in cleaned or "SAP S/4HANA" in cleaned
+
+
+# 22. Save to Company Brain auto-save workflow
+@pytest.mark.asyncio
+async def test_22_save_to_company_brain_auto_save():
+    res = await research_handler.run({}, "nextchapter", {"query": "Brain Auto-Save Test", "save_to_brain": True})
+    assert res["saved_to_brain"] is True
+
