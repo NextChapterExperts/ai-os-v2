@@ -217,9 +217,11 @@ export function ResearchAgentModal({
       setProgressStep(4);
       setProgressPercent(100);
 
-      if (!res.ok) throw new Error(`Dispatch Fehler: HTTP ${res.status}`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || data.message || `Dispatch Fehler: HTTP ${res.status}`);
+      }
 
-      const data = await res.json();
       if (data.error && !data.answer) throw new Error(data.error);
 
       setResult(data);

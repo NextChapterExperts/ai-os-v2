@@ -259,15 +259,18 @@ async def run(context_bundle: dict[str, Any], tenant_id: str, params: dict[str, 
         llm_response_text = _build_deep_research_synthesis(query, depth, all_sources, local_sources, web_sources, refinement_feedback)
     else:
         try:
-            completion_res = await chat_completion(
-                messages=messages,
-                tenant_id=tenant_id,
-                model=model_override,
-                compute_mode=compute_mode,
-                produced_by="research-agent",
-                temperature=0.2,
-                max_tokens=600,
-                persist=True,
+            completion_res = await asyncio.wait_for(
+                chat_completion(
+                    messages=messages,
+                    tenant_id=tenant_id,
+                    model=model_override,
+                    compute_mode=compute_mode,
+                    produced_by="research-agent",
+                    temperature=0.2,
+                    max_tokens=600,
+                    persist=True,
+                ),
+                timeout=10.0,
             )
             llm_response_text = completion_res.get("choices", [{}])[0].get("message", {}).get("content", "")
             
@@ -282,8 +285,8 @@ async def run(context_bundle: dict[str, Any], tenant_id: str, params: dict[str, 
             resp_lower = (llm_response_text or "").lower()
             if not llm_response_text or len(llm_response_text) < 40 or any(rt in resp_lower for rt in refusal_triggers):
                 llm_response_text = _build_deep_research_synthesis(query, depth, all_sources, local_sources, web_sources, refinement_feedback)
-        except Exception as exc:
-            log.warning("Memory Gateway chat_completion failed in research handler: %s", exc)
+        except (Exception, asyncio.TimeoutError) as exc:
+            log.warning("Memory Gateway chat_completion failed or timed out in research handler: %s", exc)
             llm_response_text = _build_deep_research_synthesis(query, depth, all_sources, local_sources, web_sources, refinement_feedback)
 
     # Build Prompt Inspection Payload for UI Modal
