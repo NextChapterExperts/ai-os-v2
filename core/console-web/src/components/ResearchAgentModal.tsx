@@ -448,40 +448,77 @@ export function ResearchAgentModal({
               )}
             </div>
 
-            {/* Context Chunks Viewer */}
+            {/* Context & Source Chunks Viewer */}
             {showContextViewer && result.sources && result.sources.length > 0 && (
-              <div className="p-8 rounded-2xl border border-[var(--line)] bg-white space-y-5 shadow-xs">
-                <h2 className="section-title text-lg font-bold text-[var(--ink)] m-0 flex items-center gap-2">
-                  <span>📖</span> Geladene Kontext-Abschnitte ({result.sources.length})
-                </h2>
-                <div className="space-y-4">
+              <div className="p-8 rounded-2xl border border-[var(--line)] bg-white space-y-6 shadow-xs">
+                <div className="flex items-center justify-between border-b border-[var(--line)] pb-4">
+                  <div>
+                    <h2 className="section-title text-lg font-bold text-[var(--ink)] m-0 flex items-center gap-2">
+                      <span>📖</span> Gefundene Quellen & Nachweise ({result.sources.length})
+                    </h2>
+                    <p className="text-xs muted m-0 mt-0.5 font-sans">
+                      Klicken Sie auf den Button einer Quelle, um das Original im Browser aufzurufen.
+                    </p>
+                  </div>
+                  <span className="badge" data-variant="curated">
+                    {result.anonymity_active ? "🛡️ SearXNG Proxy Aktiv" : "🌐 Direkt"}
+                  </span>
+                </div>
+
+                <div className="space-y-5">
                   {result.sources.map((src, idx) => {
                     const cleanSnippet = cleanTextSnippet(src.snippet);
+                    const isWeb = src.source_type === "web_searxng";
+                    const trustScore = src.trust_score ? Math.round(src.trust_score * 100) : 85;
+
                     return (
                       <div
                         key={idx}
-                        className="p-5 rounded-xl border border-[var(--line)] bg-[color-mix(in_oklab,white_98%,transparent)] text-xs space-y-2 hover:border-[var(--line-strong)] transition-all"
+                        className="p-6 rounded-2xl border border-[var(--line)] bg-[color-mix(in_oklab,white_98%,transparent)] space-y-4 hover:border-[var(--line-strong)] transition-all shadow-2xs"
                       >
-                        <div className="flex items-center justify-between gap-3">
-                          {src.url ? (
+                        {/* Header Badge Row */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--line)] pb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-full bg-[var(--signal)] text-white text-xs font-bold font-mono flex items-center justify-center">
+                              #{idx + 1}
+                            </span>
+                            <span className="badge" data-variant={isWeb ? "curated" : "graph"}>
+                              {isWeb ? "🌐 Web (SearXNG Anonym)" : "🧠 Company Brain"}
+                            </span>
+                            <span className="badge" data-variant="ok">
+                              Vertrauen: {trustScore}%
+                            </span>
+                          </div>
+
+                          {src.url && (
                             <a
                               href={src.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="font-bold text-[var(--signal)] hover:underline truncate text-sm"
+                              className="px-4 py-1.5 rounded-xl bg-[color-mix(in_oklab,var(--signal)_10%,white)] border border-[var(--signal)] text-[var(--signal)] font-bold text-xs hover:bg-[var(--signal)] hover:text-white transition-all inline-flex items-center gap-1.5 no-underline"
                             >
-                              {src.title || "Quelle"}
+                              <span>🌐 Originalquelle im Browser öffnen</span>
+                              <span>↗</span>
                             </a>
-                          ) : (
-                            <span className="font-bold text-[var(--ink)] text-sm">{src.title || "Quelle"}</span>
                           )}
-                          <span className="badge" data-variant="graph">
-                            {src.source_type === "local_brain" ? "🧠 Company Brain" : "🌐 Web (SearXNG)"}
-                          </span>
                         </div>
-                        <p className="text-xs text-[var(--ink)] leading-relaxed m-0 font-sans">
+
+                        {/* Title & Domain URL */}
+                        <div className="space-y-1">
+                          <h3 className="text-base font-bold text-[var(--ink)] m-0 leading-snug">
+                            {src.title || "Recherche-Quelle"}
+                          </h3>
+                          {src.url && (
+                            <div className="mono text-xs text-[var(--signal)] truncate">
+                              🔗 {src.url}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Formatted Text Snippet Box */}
+                        <div className="p-4 rounded-xl bg-white border border-[var(--line)] text-xs text-[var(--ink)] leading-relaxed font-sans whitespace-pre-wrap">
                           {cleanSnippet || "Kein Textinhalt verfügbar."}
-                        </p>
+                        </div>
                       </div>
                     );
                   })}
