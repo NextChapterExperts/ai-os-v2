@@ -50,10 +50,70 @@ function cleanTextSnippet(text?: string): string {
   let s = String(text);
   s = s.replace(/<(script|style|svg)[^>]*>.*?<\/\1>/gis, "");
   s = s.replace(/<[^>]+>/g, " ");
-  s = s.replace(/(?:var|let|const|function)\s+\w+\s*=.*?;/g, " ");
-  s = s.replace(/&\w+;/g, " ");
-  s = s.replace(/\s+/g, " ").trim();
   return s;
+}
+
+function renderMarkdownReport(text: string) {
+  if (!text) return null;
+  const lines = text.split("\n");
+  return (
+    <div className="space-y-3 font-sans text-sm text-[var(--ink)] leading-relaxed">
+      {lines.map((line, idx) => {
+        const trimmed = line.trim();
+        if (!trimmed) return <div key={idx} className="h-2" />;
+        if (trimmed === "---") {
+          return <hr key={idx} className="border-t border-[var(--line)] my-4" />;
+        }
+        if (trimmed.startsWith("### ")) {
+          return (
+            <h3 key={idx} className="text-base font-bold text-[var(--ink)] mt-5 mb-2 flex items-center gap-2">
+              {trimmed.replace(/^###\s+/, "")}
+            </h3>
+          );
+        }
+        if (trimmed.startsWith("## ")) {
+          return (
+            <h2 key={idx} className="text-lg font-bold text-[var(--ink)] mt-6 mb-2">
+              {trimmed.replace(/^##\s+/, "")}
+            </h2>
+          );
+        }
+        if (trimmed.startsWith("# ")) {
+          return (
+            <h1 key={idx} className="text-xl font-bold text-[var(--ink)] mt-6 mb-3">
+              {trimmed.replace(/^#\s+/, "")}
+            </h1>
+          );
+        }
+
+        // Process bold text and citations inside paragraph / bullet lines
+        const parts = line.split(/(\[\d+\]|\*\*[^*]+\*\*)/g);
+        return (
+          <div key={idx} className={trimmed.startsWith("- ") ? "ml-4 flex items-start gap-2" : ""}>
+            {trimmed.startsWith("- ") ? <span className="text-[var(--signal)] font-bold">▸</span> : null}
+            <span>
+              {parts.map((part, pIdx) => {
+                if (/^\[\d+\]$/.test(part)) {
+                  return (
+                    <span
+                      key={pIdx}
+                      className="inline-flex items-center justify-center px-1.5 py-0.5 mx-0.5 rounded bg-[color-mix(in_oklab,var(--signal)_12%,white)] border border-[var(--signal)] text-[var(--signal)] font-mono font-bold text-[10px] align-baseline"
+                    >
+                      {part}
+                    </span>
+                  );
+                }
+                if (part.startsWith("**") && part.endsWith("**")) {
+                  return <strong key={pIdx}>{part.slice(2, -2)}</strong>;
+                }
+                return part.replace(/^- /, "");
+              })}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 export function ResearchAgentModal({
@@ -440,8 +500,8 @@ export function ResearchAgentModal({
               </div>
 
               {/* Formatted Report Content */}
-              <div className="p-7 rounded-2xl bg-[color-mix(in_oklab,white_96%,var(--ink))] border border-[var(--line)] text-sm text-[var(--ink)] leading-relaxed whitespace-pre-wrap font-sans space-y-4">
-                {summaryText || "Keine Synthese erzeugt."}
+              <div className="p-7 rounded-2xl bg-[color-mix(in_oklab,white_96%,var(--ink))] border border-[var(--line)] shadow-2xs">
+                {renderMarkdownReport(summaryText)}
               </div>
 
               {result.sub_questions && result.sub_questions.length > 0 && (
