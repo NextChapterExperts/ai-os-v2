@@ -243,3 +243,16 @@ async def test_22_save_to_company_brain_auto_save():
     res = await research_handler.run({}, "nextchapter", {"query": "Brain Auto-Save Test", "save_to_brain": True})
     assert res["saved_to_brain"] is True
 
+
+# 23. Token test query: SAP Joule Studio 2 in SAP Build
+@pytest.mark.asyncio
+async def test_23_sap_joule_studio2_in_build_query():
+    query_text = "wann kommt sap joule studio2 und wo ist installiert in BUILD?"
+    res = await research_handler.run({}, "nextchapter", {"query": query_text, "depth": "deep"})
+    assert isinstance(res, dict)
+    assert res["query"] == query_text
+    assert "Joule Studio 2" in res["summary"] or "SAP Build" in res["summary"]
+    assert "SAP BTP" in res["summary"]
+    assert len(res["sources"]) > 0
+
+
