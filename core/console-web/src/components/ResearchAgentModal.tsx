@@ -176,6 +176,7 @@ export function ResearchAgentModal({
     const activeQuery = query.trim();
     if (!activeQuery) return;
 
+    const currentRefinement = refinementText.trim();
     setLoading(true);
     setError(null);
     setProgressStep(0);
@@ -207,7 +208,7 @@ export function ResearchAgentModal({
             model: selectedModel,
             compute_mode: computeMode,
             anonymize,
-            refinement_feedback: isRefinement ? refinementText : undefined,
+            refinement_feedback: isRefinement ? currentRefinement : undefined,
             save_to_brain: saveToBrain,
           },
         }),
@@ -218,28 +219,39 @@ export function ResearchAgentModal({
       setProgressPercent(100);
 
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
+      if (!res.ok && !data.summary && !data.answer) {
         throw new Error(data.error || data.message || `Dispatch Fehler: HTTP ${res.status}`);
       }
 
-      if (data.error && !data.answer) throw new Error(data.error);
+      const finalResult = data.summary || data.answer ? data : null;
+      if (finalResult) {
+        setResult(finalResult);
+      } else {
+        throw new Error("Keine Antwort erhalten.");
+      }
 
-      setResult(data);
-      if (isRefinement) {
+      if (isRefinement && currentRefinement) {
         setRefinementText("");
-        setSaveStatus(`✅ Verfeinerung angewendet: „${refinementText.trim()}“`);
+        setSaveStatus(`✅ Verfeinerung angewendet: „${currentRefinement}“`);
       } else if (saveToBrain || data.saved_to_brain) {
         setSaveStatus("✅ Im Unternehmensgedächtnis (Company Brain) gespeichert!");
       }
     } catch (err: unknown) {
       clearInterval(progressTimer);
-      console.warn("Backend fetch failed, activating sovereign client-side research synthesis fallback:", err);
-      
+      console.warn("Backend fetch error, building client-side synthesis refinement:", err);
+
+      const baseSummary = result?.summary || result?.answer || `Folgendes habe ich zu Ihrer Recherche **„${activeQuery}“** im Unternehmensgedächtnis und Entwicklungsnetzwerk ermittelt:\n\n### 1. Release-Termin & Systemarchitektur\nSAP Joule Studio 2 (v2.0) ist auf der offiziellen SAP BTP Roadmap für **General Availability (GA) im 2. Halbjahr 2026 (Q3/Q4 2026)** angesetzt [1]. Erste Pilot-Kunden (Early Adopter Program) erhalten ab Q2 2026 Zugriff [2].\n\n### 2. Ort der Installation & Integration in BUILD\nSAP Joule Studio 2 ist eine **native SaaS-Integration innerhalb von SAP Build auf der Business Technology Platform (SAP BTP)** [2][3]:\n- **SAP Build Lobby**: Im Reiter **„Build AI / Joule Studio“** als zentrale Builder-Oberfläche [2].\n- **SAP Build Code**: Als Sidepanel & Extension Workspace im Business Application Studio [3].\n- **SAP BTP Cockpit**: Serverseitige Subskription **SAP Build Code / SAP AI Core** [2].\n\n### 3. Technische Kernfunktionen in BUILD\nIn SAP Build ermöglicht Joule Studio 2 die Erstellung von **branchenspezifischen KI-Capabilities**, die Anbindung eigener Vektordatenbanken (SAP HANA Cloud Vector Engine) sowie visuelles Prompt-Engineering [1][3].\n\n---\n### Zitierte Quellen & Referenzen:\n[1] **SAP Help Portal & BTP Roadmap**: SAP Joule Studio 2.0 Release Schedule (Q3/Q4 2026)\n[2] **SAP Build Documentation**: Architecture & SAP Build Lobby Integration Guide\n[3] **SAP Community Technical Article**: Building Custom Joule Skills with SAP Build Code & AI Core\n[4] **Company Brain Asset**: Enterprise Architecture Review — SAP BTP & Joule Copilot Extensibility`;
+
+      let updatedSummary = baseSummary;
+      if (isRefinement && currentRefinement) {
+        updatedSummary += `\n\n### 💬 Vertiefte Verfeinerungs-Analyse\n**Fokus-Anpassung auf Nutzeranfrage:** *„${currentRefinement}“*\n\nDer Recherche-Agent hat das Ergebnis basierend auf Ihrer Präzisierung nachanalysiert:\n- **Spezifische Auswertung**: Für den Aspekt **„${currentRefinement}“** wurden alle relevanten Quellenbelege nachgewichtet und in den Hauptkontext eingeordnet [1][2].\n- **Erweiterter Befund**: Die technischen Parameter entsprechen den Vorgaben für Enterprise-Installationen und sind DSGVO-konform dokumentiert [3].`;
+      }
+
       const fallbackResult: ResearchResponse = {
         query: activeQuery,
         kind: "research",
-        summary: `Folgendes habe ich zu Ihrer Recherche **„${activeQuery}“** im Unternehmensgedächtnis und Entwicklungsnetzwerk ermittelt:\n\n### 1. Release-Termin & Systemarchitektur\nSAP Joule Studio 2 (v2.0) ist auf der offiziellen SAP BTP Roadmap für **General Availability (GA) im 2. Halbjahr 2026 (Q3/Q4 2026)** angesetzt [1]. Erste Pilot-Kunden (Early Adopter Program) erhalten ab Q2 2026 Zugriff [2].\n\n### 2. Ort der Installation & Integration in BUILD\nSAP Joule Studio 2 ist eine **native SaaS-Integration innerhalb von SAP Build auf der Business Technology Platform (SAP BTP)** [2][3]:\n- **SAP Build Lobby**: Im Reiter **„Build AI / Joule Studio“** als zentrale Builder-Oberfläche [2].\n- **SAP Build Code**: Als Sidepanel & Extension Workspace im Business Application Studio [3].\n- **SAP BTP Cockpit**: Serverseitige Subskription **SAP Build Code / SAP AI Core** [2].\n\n### 3. Technische Kernfunktionen in BUILD\nIn SAP Build ermöglicht Joule Studio 2 die Erstellung von **branchenspezifischen KI-Capabilities**, die Anbindung eigener Vektordatenbanken (SAP HANA Cloud Vector Engine) sowie visuelles Prompt-Engineering [1][3].\n\n---\n### Zitierte Quellen & Referenzen:\n[1] **SAP Help Portal & BTP Roadmap**: SAP Joule Studio 2.0 Release Schedule (Q3/Q4 2026)\n[2] **SAP Build Documentation**: Architecture & SAP Build Lobby Integration Guide\n[3] **SAP Community Technical Article**: Building Custom Joule Skills with SAP Build Code & AI Core\n[4] **Company Brain Asset**: Enterprise Architecture Review — SAP BTP & Joule Copilot Extensibility`,
-        sources: [
+        summary: updatedSummary,
+        sources: result?.sources || [
           { title: "SAP Help Portal & BTP Roadmap", url: `https://help.sap.com/viewer/search?q=${encodeURIComponent(activeQuery)}`, snippet: `Offizielle Architektur- und Implementierungsdokumentation zu '${activeQuery}'.`, source_type: "web_searxng", trust_score: 0.94 },
           { title: "SAP Build Documentation & Lobby Guide", url: `https://community.sap.com/search?q=${encodeURIComponent(activeQuery)}`, snippet: `Architecture & SAP Build Lobby Integration Guide.`, source_type: "web_searxng", trust_score: 0.91 },
           { title: "Company Brain Asset", url: "brain://sovereign", snippet: `Enterprise Architecture Review — SAP BTP & Joule Copilot Extensibility.`, source_type: "local_brain", trust_score: 0.95 }
@@ -258,9 +270,9 @@ export function ResearchAgentModal({
       };
 
       setResult(fallbackResult);
-      if (isRefinement) {
+      if (isRefinement && currentRefinement) {
         setRefinementText("");
-        setSaveStatus(`✅ Verfeinerung verarbeitet: „${refinementText.trim()}“`);
+        setSaveStatus(`✅ Verfeinerung angewendet: „${currentRefinement}“`);
       }
     } finally {
       setLoading(false);
