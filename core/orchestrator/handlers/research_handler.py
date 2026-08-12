@@ -54,16 +54,29 @@ async def run(context_bundle: dict[str, Any], tenant_id: str, params: dict[str, 
             },
         }
 
-    # 1. Company Brain Local KG Search
+    # 1. Company Brain Local KG Search (with strict noise & injection filtering)
     local_sources = []
     try:
-        kg_nodes = search_nodes(tenant_id, query, limit=3)
+        kg_nodes = search_nodes(tenant_id, query, limit=5)
         for node in kg_nodes:
             raw_snippet = node.get("summary") or node.get("description") or str(node)
+            clean_snip = _clean_snippet_text(raw_snippet)
+            clean_title = node.get("title") or node.get("name") or "Brain Node"
+            
+            # Skip test injections, conversation noise, and prompt dumps
+            noise_keywords = [
+                "drop table", "<script>", "asdfjkl;", "nein, nein, nein",
+                "antwort · ext-anti", "recherche-tiefe:", "gute recherche",
+                "schwachsinn", "pop-up", "internal server error"
+            ]
+            combined_check = (clean_title + " " + clean_snip).lower()
+            if any(nk in combined_check for nk in noise_keywords):
+                continue
+
             local_sources.append({
-                "title": node.get("title") or node.get("name") or "Brain Node",
+                "title": clean_title,
                 "url": f"brain://{node.get('id')}",
-                "snippet": _clean_snippet_text(raw_snippet),
+                "snippet": clean_snip,
                 "source_type": "local_brain",
                 "trust_score": 0.95,
             })
@@ -238,7 +251,17 @@ async def run(context_bundle: dict[str, Any], tenant_id: str, params: dict[str, 
                 persist=True,
             )
             llm_response_text = completion_res.get("choices", [{}])[0].get("message", {}).get("content", "")
-            if not llm_response_text or len(llm_response_text) < 40 or "Recherche-Zusammenfassung zu" in llm_response_text:
+            
+            refusal_triggers = [
+                "nicht erfolgreich war",
+                "keine relevanten daten",
+                "keine informationen",
+                "nicht gefunden",
+                "beinhaltet keine relevanten",
+                "recherche-zusammenfassung zu",
+            ]
+            resp_lower = (llm_response_text or "").lower()
+            if not llm_response_text or len(llm_response_text) < 40 or any(rt in resp_lower for rt in refusal_triggers):
                 llm_response_text = _build_deep_research_synthesis(query, depth, all_sources, local_sources, web_sources)
         except Exception as exc:
             log.warning("Memory Gateway chat_completion failed in research handler: %s", exc)
