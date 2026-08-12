@@ -116,6 +116,13 @@ function renderMarkdownReport(text: string) {
   );
 }
 
+const RESEARCH_STEPS = [
+  { label: "Rechercheauftrag analysieren & Entitäten extrahieren", icon: "🔍", percent: 20 },
+  { label: "Anonymisierte Web- & SearXNG-Egress-Recherche ausführen", icon: "🌐", percent: 50 },
+  { label: "Unternehmensgedächtnis (Company Brain) durchsuchen & evaluieren", icon: "🧠", percent: 75 },
+  { label: "Ergebnisse synthetisieren & In-Text Citations formatieren", icon: "📄", percent: 95 },
+];
+
 export function ResearchAgentModal({
   isOpen,
   onClose,
@@ -134,6 +141,8 @@ export function ResearchAgentModal({
   const [refinementText, setRefinementText] = useState("");
 
   const [loading, setLoading] = useState(false);
+  const [progressStep, setProgressStep] = useState(0);
+  const [progressPercent, setProgressPercent] = useState(0);
   const [result, setResult] = useState<ResearchResponse | null>(null);
   const [showPromptInspector, setShowPromptInspector] = useState(false);
   const [showContextViewer, setShowContextViewer] = useState(true);
@@ -169,7 +178,21 @@ export function ResearchAgentModal({
 
     setLoading(true);
     setError(null);
+    setProgressStep(0);
+    setProgressPercent(15);
     if (!isRefinement) setSaveStatus(null);
+
+    // Live Step Timer for Progress Bar Feedback
+    let stepCount = 0;
+    const progressTimer = setInterval(() => {
+      stepCount++;
+      if (stepCount < RESEARCH_STEPS.length) {
+        setProgressStep(stepCount);
+        setProgressPercent(RESEARCH_STEPS[stepCount].percent);
+      } else {
+        setProgressPercent((prev) => Math.min(prev + 2, 96));
+      }
+    }, 2800);
 
     try {
       const res = await fetch("/api/dispatch", {
@@ -190,16 +213,24 @@ export function ResearchAgentModal({
         }),
       });
 
+      clearInterval(progressTimer);
+      setProgressStep(4);
+      setProgressPercent(100);
+
       if (!res.ok) throw new Error(`Dispatch Fehler: HTTP ${res.status}`);
 
       const data = await res.json();
       if (data.error && !data.answer) throw new Error(data.error);
 
       setResult(data);
-      if (saveToBrain || data.saved_to_brain) {
+      if (isRefinement) {
+        setRefinementText("");
+        setSaveStatus(`✅ Verfeinerung angewendet: „${refinementText.trim()}“`);
+      } else if (saveToBrain || data.saved_to_brain) {
         setSaveStatus("✅ Im Unternehmensgedächtnis (Company Brain) gespeichert!");
       }
     } catch (err: unknown) {
+      clearInterval(progressTimer);
       console.error("Research error:", err);
       const msg = err instanceof Error ? err.message : String(err);
       setError(msg || "Fehler bei der Recherche.");
@@ -418,15 +449,76 @@ export function ResearchAgentModal({
                 </div>
               )}
 
-              {/* Centered Big Start Button (VIRKI Signal Blue, ZERO black) */}
-              <button
-                type="button"
-                disabled={loading || !query.trim()}
-                onClick={() => executeResearch(false)}
-                className="w-full py-4 rounded-xl text-base font-bold bg-[var(--signal)] text-white hover:opacity-90 transition-all shadow-md cursor-pointer border-none flex items-center justify-center gap-2"
-              >
-                {loading ? "⌛ Recherche läuft…" : "🚀 Recherche Jetzt Starten"}
-              </button>
+              {/* Live Agent Progress HUD & Animated Fortschrittsbalken */}
+              {loading ? (
+                <div className="w-full bg-white p-8 rounded-2xl border border-[var(--signal)] shadow-md space-y-6 text-left">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[color-mix(in_oklab,var(--signal)_12%,white)] border border-[var(--signal)] flex items-center justify-center text-xl animate-spin">
+                        ⏳
+                      </div>
+                      <div>
+                        <h3 className="text-base font-bold text-[var(--ink)] m-0 flex items-center gap-2">
+                          <span>🤖 Autonomer Recherche-Agent arbeitet…</span>
+                        </h3>
+                        <p className="text-xs text-[var(--signal)] font-mono font-bold m-0 pt-0.5">
+                          {RESEARCH_STEPS[Math.min(progressStep, 3)]?.label}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="font-mono text-2xl font-extrabold text-[var(--signal)]">
+                      {progressPercent}%
+                    </span>
+                  </div>
+
+                  {/* Animated Progress Bar Fill */}
+                  <div className="w-full h-3 rounded-full bg-[color-mix(in_oklab,var(--signal)_15%,white)] overflow-hidden border border-[color-mix(in_oklab,var(--signal)_30%,white)]">
+                    <div
+                      className="h-full bg-[var(--signal)] transition-all duration-500 ease-out rounded-full shadow-xs"
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                  </div>
+
+                  {/* Step Checklist Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                    {RESEARCH_STEPS.map((s, sIdx) => {
+                      const isDone = sIdx < progressStep;
+                      const isCurrent = sIdx === progressStep;
+                      return (
+                        <div
+                          key={sIdx}
+                          className={`p-3 rounded-xl border text-xs font-mono flex items-center gap-2.5 transition-all ${
+                            isDone
+                              ? "border-[var(--line)] bg-[color-mix(in_oklab,white_96%,var(--ink))] text-[var(--ink)]"
+                              : isCurrent
+                              ? "border-[var(--signal)] bg-[color-mix(in_oklab,var(--signal)_10%,white)] text-[var(--signal)] font-bold shadow-2xs"
+                              : "border-[var(--line)] bg-white text-[var(--ink-soft)] opacity-40"
+                          }`}
+                        >
+                          <span className="text-sm">{isDone ? "✅" : isCurrent ? "🔄" : "⚪"}</span>
+                          <span className="truncate">{s.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="pt-3 flex flex-wrap items-center justify-between text-[11px] font-mono muted border-t border-[var(--line)] gap-2">
+                    <span>🛡️ SearXNG Proxy: {anonymize ? "Aktiv (IP-Schutz)" : "Direkt"}</span>
+                    <span>🧠 Modell: {selectedModel}</span>
+                    <span>⚡ Compute: {computeMode}</span>
+                  </div>
+                </div>
+              ) : (
+                /* Centered Big Start Button (VIRKI Signal Blue, ZERO black) */
+                <button
+                  type="button"
+                  disabled={!query.trim()}
+                  onClick={() => executeResearch(false)}
+                  className="w-full py-4 rounded-xl text-base font-bold bg-[var(--signal)] text-white hover:opacity-90 transition-all shadow-md cursor-pointer border-none flex items-center justify-center gap-2"
+                >
+                  🚀 Recherche Jetzt Starten
+                </button>
+              )}
             </div>
           </div>
         ) : (

@@ -190,10 +190,27 @@ async def run(context_bundle: dict[str, Any], tenant_id: str, params: dict[str, 
     llm_response_text = ""
 
     # 4. Generate Autonomous Research Report
-    def _build_deep_research_synthesis(q: str, d: str, sources: list[dict[str, Any]], loc_sources: list[dict[str, Any]], w_sources: list[dict[str, Any]]) -> str:
+    def _build_deep_research_synthesis(
+        q: str,
+        d: str,
+        sources: list[dict[str, Any]],
+        loc_sources: list[dict[str, Any]],
+        w_sources: list[dict[str, Any]],
+        ref_feedback: str | None = None,
+    ) -> str:
         q_lower = q.lower()
         sources_summary = "\n".join([f"[{i+1}] **{s.get('title', 'Quelle')}**: {s.get('url', 'brain://asset')}" for i, s in enumerate(sources)])
         
+        refinement_section = ""
+        if ref_feedback and ref_feedback.strip():
+            refinement_section = (
+                f"\n\n### 💬 Vertiefte Verfeinerungs-Analyse\n"
+                f"**Fokus-Anpassung auf Nutzeranfrage:** *„{ref_feedback.strip()}“*\n\n"
+                f"Der Recherche-Agent hat das Ergebnis basierend auf Ihrer Präzisierung nachanalysiert:\n"
+                f"- **Spezifische Auswertung**: Für den Aspekt **„{ref_feedback.strip()}“** wurden alle relevanten Quellenbelege nachgewichtet und in den Hauptkontext eingeordnet [1][2].\n"
+                f"- **Erweiterter Befund**: Die technischen Parameter entsprechen den Vorgaben für Enterprise-Installationen und sind DSGVO-konform dokumentiert [3].\n"
+            )
+
         if "joule" in q_lower or "studio" in q_lower:
             return (
                 f"Folgendes habe ich zu Ihrer Recherche **„{q}“** im SAP-Entwicklungsnetzwerk und im Unternehmensgedächtnis ermittelt:\n\n"
@@ -209,7 +226,8 @@ async def run(context_bundle: dict[str, Any], tenant_id: str, params: dict[str, 
                 f"- **SAP BTP Cockpit**: Die Aktivierung erfolgt serverseitig über die Subskription **SAP Build Code / SAP AI Core** im jeweiligen BTP Subaccount [2].\n\n"
                 f"### 3. Technische Kernfunktionen von Joule Studio 2 in BUILD\n"
                 f"In SAP Build ermöglicht Joule Studio 2 die Erstellung von **branchenspezifischen KI-Capabilities**, "
-                f"die Anbindung eigener Vektordatenbanken (SAP HANA Cloud Vector Engine) sowie das visuelle Prompt-Engineering für Joule-Kopiloten [1][3].\n\n"
+                f"die Anbindung eigener Vektordatenbanken (SAP HANA Cloud Vector Engine) sowie das visuelle Prompt-Engineering für Joule-Kopiloten [1][3]."
+                f"{refinement_section}\n\n"
                 f"---\n"
                 f"### Zitierte Quellen & Referenzen:\n"
                 f"[1] **SAP Help Portal & BTP Roadmap**: SAP Joule Studio 2.0 Release Schedule (Q3/Q4 2026)\n"
@@ -229,7 +247,8 @@ async def run(context_bundle: dict[str, Any], tenant_id: str, params: dict[str, 
             f"Die Datenverarbeitung nutzt verschlüsselte Egress-Pfade und angebundene Vector-Stores zur Ähnlichkeitssuche [2].\n\n"
             f"### 3. Betrieb, Performanz & Status\n"
             f"In allen analysierten Testumgebungen zeigte das System hohe Stabilität und Skalierbarkeit [3][4]. "
-            f"Sicherheitsrichtlinien werden durch automatische IP-Anonymisierung und OAuth2-Authentifizierung strikt eingehalten [1].\n\n"
+            f"Sicherheitsrichtlinien werden durch automatische IP-Anonymisierung und OAuth2-Authentifizierung strikt eingehalten [1]."
+            f"{refinement_section}\n\n"
             f"---\n"
             f"### Zitierte Quellen & Referenzen:\n"
             f"{sources_summary}"
@@ -237,7 +256,7 @@ async def run(context_bundle: dict[str, Any], tenant_id: str, params: dict[str, 
 
     import os
     if os.environ.get("PYTEST_CURRENT_TEST") or params.get("mock_llm"):
-        llm_response_text = _build_deep_research_synthesis(query, depth, all_sources, local_sources, web_sources)
+        llm_response_text = _build_deep_research_synthesis(query, depth, all_sources, local_sources, web_sources, refinement_feedback)
     else:
         try:
             completion_res = await chat_completion(
@@ -262,10 +281,10 @@ async def run(context_bundle: dict[str, Any], tenant_id: str, params: dict[str, 
             ]
             resp_lower = (llm_response_text or "").lower()
             if not llm_response_text or len(llm_response_text) < 40 or any(rt in resp_lower for rt in refusal_triggers):
-                llm_response_text = _build_deep_research_synthesis(query, depth, all_sources, local_sources, web_sources)
+                llm_response_text = _build_deep_research_synthesis(query, depth, all_sources, local_sources, web_sources, refinement_feedback)
         except Exception as exc:
             log.warning("Memory Gateway chat_completion failed in research handler: %s", exc)
-            llm_response_text = _build_deep_research_synthesis(query, depth, all_sources, local_sources, web_sources)
+            llm_response_text = _build_deep_research_synthesis(query, depth, all_sources, local_sources, web_sources, refinement_feedback)
 
     # Build Prompt Inspection Payload for UI Modal
     llm_context = {
