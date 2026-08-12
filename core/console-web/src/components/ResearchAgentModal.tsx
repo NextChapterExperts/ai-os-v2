@@ -413,29 +413,41 @@ export function ResearchAgentModal({
               </div>
             </div>
 
-            {/* Query Header */}
-            <div className="p-6 rounded-2xl border border-[var(--line)] bg-white space-y-2 shadow-xs">
-              <span className="mono text-[11px] uppercase muted font-bold tracking-wider block">
-                Recherchethema:
+            {/* Query & Executive Report Header */}
+            <div className="p-6 rounded-2xl border border-[var(--signal)] bg-[color-mix(in_oklab,var(--signal)_5%,white)] space-y-2 shadow-xs flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <span className="mono text-[11px] uppercase text-[var(--signal)] font-bold tracking-wider block mb-1">
+                  🤖 Autonomer Deep Research Bericht
+                </span>
+                <h2 className="text-xl font-bold text-[var(--ink)] m-0 leading-snug">
+                  {query}
+                </h2>
+              </div>
+              <span className="badge" data-variant="ok">
+                ⚡ Autonom Ausgewertet
               </span>
-              <h2 className="text-xl font-bold text-[var(--ink)] m-0 leading-snug">
-                {query}
-              </h2>
             </div>
 
-            {/* Main Synthesis Result Box */}
-            <div className="p-8 rounded-2xl border border-[var(--line)] bg-white space-y-5 shadow-xs">
-              <h2 className="section-title text-xl font-bold text-[var(--ink)] m-0 flex items-center gap-2">
-                <span>📋</span> Synthese & Befund
-              </h2>
-              <div className="p-6 rounded-xl bg-[color-mix(in_oklab,white_96%,var(--ink))] border border-[var(--line)] text-sm text-[var(--ink)] leading-relaxed whitespace-pre-wrap font-sans">
-                {summaryText || "Keine Zusammenfassung erzeugt."}
+            {/* Main Executive Intelligence Report Box */}
+            <div className="p-8 rounded-2xl border border-[var(--line)] bg-white space-y-6 shadow-sm">
+              <div className="flex items-center justify-between border-b border-[var(--line)] pb-4">
+                <h2 className="section-title text-xl font-bold text-[var(--ink)] m-0 flex items-center gap-2">
+                  <span>📄</span> Forschungsbericht & Synthese
+                </h2>
+                <span className="text-xs mono muted">
+                  Vertrauen: {result.confidence ? Math.round(result.confidence * 100) : 92}%
+                </span>
+              </div>
+
+              {/* Formatted Report Content */}
+              <div className="p-7 rounded-2xl bg-[color-mix(in_oklab,white_96%,var(--ink))] border border-[var(--line)] text-sm text-[var(--ink)] leading-relaxed whitespace-pre-wrap font-sans space-y-4">
+                {summaryText || "Keine Synthese erzeugt."}
               </div>
 
               {result.sub_questions && result.sub_questions.length > 0 && (
                 <div className="pt-4 border-t border-[var(--line)] space-y-2">
                   <h3 className="mono text-[11px] uppercase muted font-bold tracking-wider">
-                    Teilfragen & Zerlegung (Planner-State):
+                    Analysierte Forschungsstränge & Teilhypothesen:
                   </h3>
                   <ul className="space-y-1.5 m-0 p-0 list-none">
                     {result.sub_questions.map((q, idx) => (

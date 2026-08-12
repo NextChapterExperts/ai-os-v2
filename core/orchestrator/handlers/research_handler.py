@@ -144,19 +144,24 @@ async def run(context_bundle: dict[str, Any], tenant_id: str, params: dict[str, 
 
     all_sources = local_sources + web_sources
 
-    # 3. Construct System Prompt & User Prompt for Prompt Inspector
+    # 3. Construct System Prompt & User Prompt for Autonomous Research Agent
     system_prompt = (
-        "Du bist ein hochpräziser AI-OS v2 Recherche-Agent.\n"
-        "Regeln (Leitprinzipien P1–P19):\n"
-        "1. Analysiere das Thema sachlich, objektiv und strukturieren den Befund.\n"
-        "2. Anonymität: Externe Webanfragen werden über SearXNG & Egress-Proxy geroutet.\n"
-        "3. Kennzeichne Quellen klar (Company Brain vs. Web-SearXNG).\n"
+        "Du bist ein autonomer AI-OS v2 Deep Research Agent.\n"
+        "Deine Aufgabe ist es NICHT, eine einfache Linkliste auszugeben, sondern als autonomer Agent das Thema vollständig im Internet und im Unternehmensgedächtnis zu recherchieren, Quellen auszuwerten, weiter zu recherchieren und eine umfassende Zusammenfassung zu erstellen.\n\n"
+        "Regeln für den Bericht:\n"
+        "1. Starte direkt mit einer zusammenfassenden Einleitung: 'Folgendes habe ich zu Ihrer Anfrage gefunden:'\n"
+        "2. Füge an JEDER Kernaussage und an jedem Absatz direkt In-Text Quellennachweise in eckigen Klammern ein, z.B. [1], [2].\n"
+        "3. Strukturiere den Bericht in übersichtliche Abschnitte (Systemumgebung, Integration, Betrieb, Vergleiche).\n"
+        "4. Führe am Ende des Berichts die zitierten Quellen nummeriert auf.\n"
     )
 
-    user_prompt = f"Thema: {query}\nRecherche-Tiefe: {depth}\n"
+    user_prompt = (
+        f"Rechercheauftrag: {query}\n"
+        f"Recherche-Tiefe: {depth.upper()} (Multi-Hop Autonomer Modus)\n"
+    )
     if refinement_feedback:
-        user_prompt += f"Nutzer-Verfeinerung: {refinement_feedback}\n"
-    user_prompt += f"Gefundene lokale/Web-Quellen: {len(all_sources)}"
+        user_prompt += f"Nutzer-Fokus & Verfeinerung: {refinement_feedback}\n"
+    user_prompt += f"Verfügbare evakuierte Quellen-Evidenz: {len(all_sources)} Dokumente ({len(local_sources)} Company Brain, {len(web_sources)} Web-SearXNG)."
 
     # Prompt Inspector Context
     full_prompt_text = f"=== SYSTEM PROMPT ===\n{system_prompt}\n=== USER PROMPT ===\n{user_prompt}"
@@ -171,14 +176,25 @@ async def run(context_bundle: dict[str, Any], tenant_id: str, params: dict[str, 
     model_used = str(model_override or "qwen2.5-coder:14b")
     llm_response_text = ""
 
-    # Fast test path when running in pytest environment
+    # Fast test path when running in pytest environment or mock mode
     import os
     if os.environ.get("PYTEST_CURRENT_TEST") or params.get("mock_llm"):
+        sources_summary = "\n".join([f"[{i+1}] **{s.get('title', 'Quelle')}**: {s.get('url', 'brain://asset')}" for i, s in enumerate(all_sources)])
         llm_response_text = (
-            f"Recherche-Zusammenfassung zu '{query}':\n"
-            f"- Tiefe: {depth.upper()}\n"
-            f"- Quellen: {len(all_sources)} analysiert ({len(local_sources)} lokal, {len(web_sources)} Web-SearXNG).\n"
-            f"- Anonymisiertes Egress-Routing aktiv."
+            f"Folgendes habe ich zu Ihrer Recherche **„{query}“** im Unternehmensgedächtnis und Internet gefunden:\n\n"
+            f"### 1. Zusammenfassung & Systemarchitektur\n"
+            f"Das Modul bzw. Thema **„{query}“** ist als zentrale Lösung für Enterprise-Deployments ausgelegt [1]. "
+            f"Sämtliche Komponenten sind mandantenfähig und für hochparallele Verarbeitung optimiert [2].\n\n"
+            f"### 2. Integration & Einsatzumgebung (z.B. SAP BTP / Cloud)\n"
+            f"Die Bereitstellung und Ausführung erfolgt typischerweise auf der SAP Business Technology Platform (SAP BTP) "
+            f"in Verbindung mit isolierten Kyma/Cloud Foundry Laufzeitumgebungen und REST-Schnittstellen [1][3]. "
+            f"Die Datenverarbeitung nutzt verschlüsselte Egress-Pfade und angebundene Vector-Stores zur Ähnlichkeitssuche [2].\n\n"
+            f"### 3. Betrieb, Performanz & Status\n"
+            f"In allen analysierten Testumgebungen zeigte das System hohe Stabilität und Skalierbarkeit [3][4]. "
+            f"Sicherheitsrichtlinien werden durch automatische IP-Anonymisierung und OAuth2-Authentifizierung strikt eingehalten [1].\n\n"
+            f"---\n"
+            f"### Zitierte Quellen & Referenzen:\n"
+            f"{sources_summary}"
         )
     else:
         try:
