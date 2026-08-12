@@ -9,12 +9,17 @@ def route_intent(raw: str, params: dict[str, Any] | None = None) -> str:
     params = params or {}
     if params.get("force_intent"):
         return str(params["force_intent"])
+    if params.get("intent") in {"research", "research:query"}:
+        return "research"
 
     text = (raw or "").strip()
     lower = text.lower()
 
     if text in {"ping", "health"}:
         return "ping"
+
+    if text in {"research", "recherche", "research:query"}:
+        return "research"
 
     # 0. Workflow triggers
     if any(k in lower for k in ("recherche", "recherchiere", "internet suche", "web-suche", "web suche", "research")):
