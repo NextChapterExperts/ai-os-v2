@@ -149,13 +149,36 @@ const MEETINGS_AGENT: AgentItem = {
   output_schema: { title: "MeetingsAgentReport" },
 };
 
+import { ResearchAgentWorkspace } from "@/components/ResearchAgentWorkspace";
+
+interface AgentItem {
+  workflow_id: string;
+  name: string;
+  description: string;
+  input_schema: any;
+  output_schema: any;
+}
+
+const RESEARCH_AGENT: AgentItem = {
+  workflow_id: "research-agent",
+  name: "Recherche-Agent",
+  description:
+    "Multi-Hop Dual-Retrieval: Durchsucht gleichzeitig das lokale Company Brain & das Internet via SearXNG (IP-anonymisiert).",
+  input_schema: {
+    title: "ResearchInput",
+    description: "Recherche-Anfrage mit Modellwahl, Prompt Inspektor & SearXNG Protection",
+  },
+  output_schema: { title: "ResearchResult" },
+};
+
 /** Fachagenten — immer in der UI, auch wenn Registry kurz offline ist. */
 const CORE_FACHAGENTS: Record<string, AgentItem> = {
+  "research-agent": RESEARCH_AGENT,
   "email-invoices": EMAIL_INVOICES_AGENT,
   "meetings-agent": MEETINGS_AGENT,
 };
 
-const AGENT_DISPLAY_ORDER = ["email-invoices", "meetings-agent", "handwerk-angebot"];
+const AGENT_DISPLAY_ORDER = ["research-agent", "email-invoices", "meetings-agent", "handwerk-angebot"];
 
 const SAMPLE_PREFILLS: Record<string, Record<string, any>> = {
   "handwerk-angebot": {
@@ -195,7 +218,7 @@ export default function AgentsPage() {
     ...CORE_FACHAGENTS,
     "handwerk-angebot": SAMPLE_HANDWERK_AGENT,
   });
-  const [selectedAgentId, setSelectedAgentId] = useState<string>("email-invoices");
+  const [selectedAgentId, setSelectedAgentId] = useState<string>("research-agent");
   const [loading, setLoading] = useState(false);
   const [executing, setExecuting] = useState(false);
   const [lastResult, setLastResult] = useState<any>(null);
@@ -516,160 +539,166 @@ export default function AgentsPage() {
 
           {/* Right Column: Interactive Agent Workspace */}
           <div className="lg:col-span-8 space-y-6">
-            <div className="p-6 rounded-2xl border border-[var(--line)] bg-[color-mix(in_oklab,white_75%,transparent)] shadow-sm space-y-5">
-              <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--line)] pb-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="badge" data-variant="graph">
-                      Fachagent · Code Agent
-                    </span>
-                    <span className="badge" data-variant="curated">
-                      Input: {selectedAgent.input_schema?.title || "AngebotInput"}
-                    </span>
-                  </div>
-                  <h2 className="section-title text-xl font-bold text-[var(--ink)] m-0 flex items-center gap-2">
-                    <span>🛠️</span> {selectedAgent.name}
-                  </h2>
-                  <p className="text-xs muted mt-1 leading-relaxed m-0">{selectedAgent.description}</p>
-                  {isEmailInvoiceAgent && (invoiceResources?.sheet_url || invoiceResources?.drive_folder_url) ? (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {invoiceResources.sheet_url ? (
-                        <a
-                          href={invoiceResources.sheet_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="btn-ghost text-xs"
-                        >
-                          Google Sheet ({invoiceResources.sheet_name || "Übersicht"})
-                        </a>
-                      ) : null}
-                      {invoiceResources.drive_folder_url ? (
-                        <a
-                          href={invoiceResources.drive_folder_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="btn-ghost text-xs"
-                        >
-                          Drive-Ordner ({invoiceResources.drive_root || "Rechnungen"})
-                        </a>
+            {selectedAgentId === "research-agent" ? (
+              <ResearchAgentWorkspace />
+            ) : (
+              <>
+                <div className="p-6 rounded-2xl border border-[var(--line)] bg-[color-mix(in_oklab,white_75%,transparent)] shadow-sm space-y-5">
+                  <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--line)] pb-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="badge" data-variant="graph">
+                          Fachagent · Code Agent
+                        </span>
+                        <span className="badge" data-variant="curated">
+                          Input: {selectedAgent.input_schema?.title || "AngebotInput"}
+                        </span>
+                      </div>
+                      <h2 className="section-title text-xl font-bold text-[var(--ink)] m-0 flex items-center gap-2">
+                        <span>🛠️</span> {selectedAgent.name}
+                      </h2>
+                      <p className="text-xs muted mt-1 leading-relaxed m-0">{selectedAgent.description}</p>
+                      {isEmailInvoiceAgent && (invoiceResources?.sheet_url || invoiceResources?.drive_folder_url) ? (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {invoiceResources.sheet_url ? (
+                            <a
+                              href={invoiceResources.sheet_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn-ghost text-xs"
+                            >
+                              Google Sheet ({invoiceResources.sheet_name || "Übersicht"})
+                            </a>
+                          ) : null}
+                          {invoiceResources.drive_folder_url ? (
+                            <a
+                              href={invoiceResources.drive_folder_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn-ghost text-xs"
+                            >
+                              Drive-Ordner ({invoiceResources.drive_root || "Rechnungen"})
+                            </a>
+                          ) : null}
+                        </div>
                       ) : null}
                     </div>
-                  ) : null}
+
+                    {hasSamplePrefill ? (
+                      <button
+                        onClick={handleLoadSample}
+                        className="btn-ghost text-xs font-bold text-[var(--signal)] border-[var(--signal)]"
+                      >
+                        ⚡ Sample laden & ausführen
+                      </button>
+                    ) : null}
+                  </div>
+
+                  <div className="pt-2">
+                    <DynamicDataProductForm
+                      schema={selectedAgent.input_schema}
+                      initialValues={overrideFormData}
+                      onFormDataChange={setAgentFormData}
+                      onSubmit={handleExecute}
+                      loading={executing}
+                      submitLabel={actionLabels.submit}
+                      loadingLabel={actionLabels.loading}
+                    />
+                  </div>
                 </div>
 
-                {hasSamplePrefill ? (
-                  <button
-                    onClick={handleLoadSample}
-                    className="btn-ghost text-xs font-bold text-[var(--signal)] border-[var(--signal)]"
-                  >
-                    ⚡ Sample laden & ausführen
-                  </button>
-                ) : null}
-              </div>
+                {/* Result View */}
+                {lastResult && (
+                  <div className="space-y-3">
+                    <h4 className="mono text-xs uppercase muted tracking-wider flex items-center gap-2">
+                      <span>📊</span> Generiertes Output DataProduct
+                    </h4>
 
-              <div className="pt-2">
-                <DynamicDataProductForm
-                  schema={selectedAgent.input_schema}
-                  initialValues={overrideFormData}
-                  onFormDataChange={setAgentFormData}
-                  onSubmit={handleExecute}
-                  loading={executing}
-                  submitLabel={actionLabels.submit}
-                  loadingLabel={actionLabels.loading}
-                />
-              </div>
-            </div>
-
-            {/* Result View */}
-            {lastResult && (
-              <div className="space-y-3">
-                <h4 className="mono text-xs uppercase muted tracking-wider flex items-center gap-2">
-                  <span>📊</span> Generiertes Output DataProduct
-                </h4>
-
-                {lastResult.error ? (
-                  <div className="p-5 rounded-2xl border border-[var(--danger)] bg-[color-mix(in_oklab,var(--danger)_10%,white)] text-[var(--danger)] text-xs mono">
-                    ❌ Ausführungsfehler: {lastResult.error}
-                  </div>
-                ) : (
-                  <>
-                    {Array.isArray(lastResult.services?.started) &&
-                    lastResult.services.started.length > 0 ? (
-                      <div className="p-3 rounded-xl border border-[var(--line)] bg-[color-mix(in_oklab,var(--signal)_8%,white)] text-xs text-[var(--ink)]">
-                        Backend automatisch gestartet:{" "}
-                        {lastResult.services.started.join(", ")}
+                    {lastResult.error ? (
+                      <div className="p-5 rounded-2xl border border-[var(--danger)] bg-[color-mix(in_oklab,var(--danger)_10%,white)] text-[var(--danger)] text-xs mono">
+                        ❌ Ausführungsfehler: {lastResult.error}
                       </div>
-                    ) : null}
-                    {isMeetingsAgent &&
-                    lastResult.output_dp?.operation === "zusammenfassung_speichern" ? (
-                      <div
-                        className={`p-4 rounded-xl border text-xs space-y-2 ${
-                          lastResult.output_dp?.dry_run
-                            ? "border-[var(--line)] bg-[color-mix(in_oklab,white_90%,transparent)]"
-                            : "border-[var(--signal)] bg-[color-mix(in_oklab,var(--signal)_10%,white)]"
-                        }`}
-                      >
-                        <div className="font-semibold text-[var(--ink)]">
-                          {lastResult.output_dp?.dry_run
-                            ? "Dry-Run: Würde ins Company Brain committen"
-                            : "Im Company Brain gespeichert (org:Meeting)"}
-                        </div>
-                        {lastResult.output_dp?.kg_external_id ? (
-                          <div className="mono text-[10px] muted">
-                            KG: {lastResult.output_dp.kg_node_type} ·{" "}
-                            {lastResult.output_dp.kg_external_id}
+                    ) : (
+                      <>
+                        {Array.isArray(lastResult.services?.started) &&
+                        lastResult.services.started.length > 0 ? (
+                          <div className="p-3 rounded-xl border border-[var(--line)] bg-[color-mix(in_oklab,var(--signal)_8%,white)] text-xs text-[var(--ink)]">
+                            Backend automatisch gestartet:{" "}
+                            {lastResult.services.started.join(", ")}
                           </div>
                         ) : null}
-                        {lastResult.commit?.node_id && !lastResult.output_dp?.dry_run ? (
-                          <Link
-                            href={`/platform/kg?node=${encodeURIComponent(lastResult.commit.node_id)}`}
-                            className="btn-ghost text-xs inline-flex"
+                        {isMeetingsAgent &&
+                        lastResult.output_dp?.operation === "zusammenfassung_speichern" ? (
+                          <div
+                            className={`p-4 rounded-xl border text-xs space-y-2 ${
+                              lastResult.output_dp?.dry_run
+                                ? "border-[var(--line)] bg-[color-mix(in_oklab,white_90%,transparent)]"
+                                : "border-[var(--signal)] bg-[color-mix(in_oklab,var(--signal)_10%,white)]"
+                            }`}
                           >
-                            Im Knowledge Graph ansehen
-                          </Link>
+                            <div className="font-semibold text-[var(--ink)]">
+                              {lastResult.output_dp?.dry_run
+                                ? "Dry-Run: Würde ins Company Brain committen"
+                                : "Im Company Brain gespeichert (org:Meeting)"}
+                            </div>
+                            {lastResult.output_dp?.kg_external_id ? (
+                              <div className="mono text-[10px] muted">
+                                KG: {lastResult.output_dp.kg_node_type} ·{" "}
+                                {lastResult.output_dp.kg_external_id}
+                              </div>
+                            ) : null}
+                            {lastResult.commit?.node_id && !lastResult.output_dp?.dry_run ? (
+                              <Link
+                                href={`/platform/kg?node=${encodeURIComponent(lastResult.commit.node_id)}`}
+                                className="btn-ghost text-xs inline-flex"
+                              >
+                                Im Knowledge Graph ansehen
+                              </Link>
+                            ) : null}
+                            {lastResult.output_dp?.dry_run ? (
+                              <p className="text-[10px] muted m-0">
+                                Modus auf <strong>Live</strong> stellen, um wirklich zu speichern.
+                              </p>
+                            ) : null}
+                          </div>
                         ) : null}
-                        {lastResult.output_dp?.dry_run ? (
-                          <p className="text-[10px] muted m-0">
-                            Modus auf <strong>Live</strong> stellen, um wirklich zu speichern.
-                          </p>
+                        {isMeetingsAgent &&
+                        lastResult.output_dp?.operation === "termine_abrufen" ? (
+                          <MeetingsReportViewer report={lastResult.output_dp} />
+                        ) : (
+                          <DataProductViewer
+                            dataProduct={lastResult.output_dp || lastResult.result}
+                            title={`${selectedAgent.name} — Output`}
+                          />
+                        )}
+
+                        {isEmailInvoiceAgent && lastResult.output_dp?.sheet_url ? (
+                          <div className="flex flex-wrap gap-2">
+                            <a
+                              href={lastResult.output_dp.sheet_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn-ghost text-xs"
+                            >
+                              Google Sheet öffnen
+                            </a>
+                            {invoiceResources?.drive_folder_url ? (
+                              <a
+                                href={invoiceResources.drive_folder_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="btn-ghost text-xs"
+                              >
+                                Drive-Ordner öffnen
+                              </a>
+                            ) : null}
+                          </div>
                         ) : null}
-                      </div>
-                    ) : null}
-                    {isMeetingsAgent &&
-                    lastResult.output_dp?.operation === "termine_abrufen" ? (
-                      <MeetingsReportViewer report={lastResult.output_dp} />
-                    ) : (
-                    <DataProductViewer
-                      dataProduct={lastResult.output_dp || lastResult.result}
-                      title={`${selectedAgent.name} — Output`}
-                    />
+                      </>
                     )}
-                    
-                    {isEmailInvoiceAgent && lastResult.output_dp?.sheet_url ? (
-                      <div className="flex flex-wrap gap-2">
-                        <a
-                          href={lastResult.output_dp.sheet_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="btn-ghost text-xs"
-                        >
-                          Google Sheet öffnen
-                        </a>
-                        {invoiceResources?.drive_folder_url ? (
-                          <a
-                            href={invoiceResources.drive_folder_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="btn-ghost text-xs"
-                          >
-                            Drive-Ordner öffnen
-                          </a>
-                        ) : null}
-                      </div>
-                    ) : null}
-                  </>
+                  </div>
                 )}
-              </div>
+              </>
             )}
           </div>
         </div>
