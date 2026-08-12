@@ -39,13 +39,26 @@ export async function POST(req: Request) {
     },
   };
 
+  let res: Response;
   try {
-    const res = await fetch(`${ORCHESTRATOR_URL}/v1/dispatch`, {
+    res = await fetch(`${ORCHESTRATOR_URL}/v1/dispatch`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(120_000),
     });
+  } catch (firstErr) {
+    try {
+      res = await fetch("http://localhost:8091/v1/dispatch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(120_000),
+      });
+    } catch {
+      throw firstErr;
+    }
+  }
     const rawText = await res.text();
     let data: Record<string, unknown> = {};
     try {
