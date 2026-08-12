@@ -15,19 +15,27 @@ type DispatchBody = {
 };
 
 export async function POST(req: Request) {
-  const body = (await req.json()) as DispatchBody;
-  const query = (body.query ?? body.intent ?? "").toString().trim();
+  let body: DispatchBody = {};
+  try {
+    body = (await req.json()) as DispatchBody;
+  } catch {
+    return NextResponse.json({ error: "Ungültiges JSON-Format" }, { status: 400 });
+  }
+
+  const activeParams = body.params ?? {};
+  const query = (activeParams.query ?? body.query ?? body.intent ?? "").toString().trim();
+  const intent = body.intent || query;
   if (!query) {
     return NextResponse.json({ error: "query required" }, { status: 400 });
   }
 
   const payload = {
-    intent: query,
+    intent,
     tenant_id: body.tenant_id ?? "nextchapter",
     params: {
       query,
       intent_text: query,
-      ...(body.params ?? {}),
+      ...activeParams,
     },
   };
 
@@ -53,27 +61,34 @@ export async function POST(req: Request) {
       );
     }
 
-    const result = data.result ?? {};
+    const resultObj = typeof data.result === "object" && data.result !== null ? (data.result as Record<string, unknown>) : {};
     return NextResponse.json({
-      query,
-      kind: result.kind ?? "ask",
-      answer: result.answer,
-      mode: result.mode ?? data.intent,
-      detail: result.detail ?? false,
-      projectId: result.projectId,
-      model: result.model,
-      sources: result.sources ?? [],
-      sourceCount: result.sourceCount ?? 0,
-      curatedCount: result.curatedCount,
-      rawFileCount: result.rawFileCount,
-      graphCount: result.graphCount,
-      episodicCount: result.episodicCount,
-      federated: result.federated,
-      memoryBackend: result.memoryBackend,
+      query: resultObj.query ?? query,
+      kind: resultObj.kind ?? "ask",
+      summary: resultObj.summary ?? resultObj.answer ?? "",
+      answer: resultObj.answer ?? resultObj.summary ?? "",
+      mode: resultObj.mode ?? data.intent,
+      detail: resultObj.detail ?? false,
+      projectId: resultObj.projectId,
+      model: resultObj.model ?? resultObj.model_used,
+      model_used: resultObj.model_used ?? resultObj.model,
+      sources: resultObj.sources ?? [],
+      sourceCount: resultObj.sourceCount ?? (Array.isArray(resultObj.sources) ? resultObj.sources.length : 0),
+      confidence: resultObj.confidence,
+      anonymity_active: resultObj.anonymity_active,
+      sub_questions: resultObj.sub_questions,
+      llmContext: resultObj.llmContext,
+      saved_to_brain: resultObj.saved_to_brain,
+      curatedCount: resultObj.curatedCount,
+      rawFileCount: resultObj.rawFileCount,
+      graphCount: resultObj.graphCount,
+      episodicCount: resultObj.episodicCount,
+      federated: resultObj.federated,
+      memoryBackend: resultObj.memoryBackend,
       intent: data.intent,
-      runId: data.run_id ?? result.runId,
-      hasContext: result.hasContext ?? Boolean(data.run_id),
-      contextCharCount: result.contextCharCount,
+      runId: data.run_id ?? resultObj.runId,
+      hasContext: resultObj.hasContext ?? Boolean(data.run_id),
+      contextCharCount: resultObj.contextCharCount,
       context_bundle: data.context_bundle,
       stats: memoryStats(),
     });
