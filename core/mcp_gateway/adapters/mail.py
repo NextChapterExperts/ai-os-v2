@@ -127,7 +127,7 @@ def mail_preview_invoices(args: dict[str, Any]) -> dict[str, Any]:
 
 @register("mail", "run_invoices")
 def mail_run_invoices(args: dict[str, Any]) -> dict[str, Any]:
-    if not google_auth.secrets_configured():
+    if args.get("dry_run") and not google_auth.secrets_configured():
         return {
             "ok": True,
             "dry_run": True,
@@ -136,6 +136,14 @@ def mail_run_invoices(args: dict[str, Any]) -> dict[str, Any]:
             "written": 0,
             "invoices": [],
             "message": "Google OAuth nicht konfiguriert",
+        }
+    if args.get("dry_run"):
+        return {
+            "ok": True,
+            "dry_run": True,
+            "candidates": 0,
+            "written": 0,
+            "invoices": [],
         }
     try:
         from core.google.invoice.pipeline import run_invoice_pipeline

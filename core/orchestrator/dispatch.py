@@ -54,6 +54,10 @@ async def dispatch(
     if intent in ("invoice_export", "steuer_export", "export_steuer"):
         return await invoice_pipeline.run_invoice_export(context_bundle, tenant_id, params)
 
+    if intent in ("research", "research:query"):
+        from .handlers import research_handler
+        return await research_handler.run(context_bundle, tenant_id, params)
+
     if intent == "unified_search":
         return await unified_search.run(context_bundle, tenant_id, params)
 

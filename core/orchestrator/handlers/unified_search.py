@@ -40,7 +40,9 @@ def _get_embedder() -> TextEmbedding:
 def _get_client() -> QdrantClient:
     global _client
     if _client is None:
-        _client = QdrantClient(url=QDRANT_URL)
+        import os
+        timeout = 1.0 if os.environ.get("PYTEST_CURRENT_TEST") else 5.0
+        _client = QdrantClient(url=QDRANT_URL, timeout=timeout)
     return _client
 
 

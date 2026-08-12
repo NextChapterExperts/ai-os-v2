@@ -7,7 +7,7 @@ export default function WorkflowsPageRedirect() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace("/agents");
+    router.replace("/workflows/research");
   }, [router]);
 
   return (

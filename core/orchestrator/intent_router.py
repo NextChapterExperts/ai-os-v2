@@ -17,6 +17,9 @@ def route_intent(raw: str, params: dict[str, Any] | None = None) -> str:
         return "ping"
 
     # 0. Workflow triggers
+    if any(k in lower for k in ("recherche", "recherchiere", "internet suche", "web-suche", "web suche", "research")):
+        return "research"
+
     if any(k in lower for k in ("angebot ersteller", "angebot erstellen", "handwerk angebot", "handwerker angebot", "erstelle angebot", "erstelle ein angebot")):
         return "handwerk_angebot"
 

@@ -32,16 +32,16 @@ echo -e "\n${YELLOW}[2/4] Führe Pytest-Suite aus (Unit, Memory, Graph, API)...$
 # Fachagenten-Regression (Email + Meetings) — grundlegende Contract-Fehler sofort sichtbar
 echo -e "${BLUE}  → Fachagenten-Gates (Platform Gate + Meetings-Agent)...${NC}"
 if [ -x ".venv/bin/pytest" ]; then
-    .venv/bin/pytest tests/test_platform_gate.py tests/test_meetings_agent.py tests/test_meetings_calendar_sync.py tests/test_email_agent.py -v -m "not integration" --tb=short
+    PYTHONPATH=. .venv/bin/pytest tests/test_platform_gate.py tests/test_research_agent.py tests/test_meetings_agent.py tests/test_meetings_calendar_sync.py tests/test_email_agent.py -v -m "not integration" --tb=short
 else
-    python3 -m pytest tests/test_platform_gate.py tests/test_meetings_agent.py tests/test_meetings_calendar_sync.py tests/test_email_agent.py -v -m "not integration" --tb=short
+    PYTHONPATH=. python3 -m pytest tests/test_platform_gate.py tests/test_research_agent.py tests/test_meetings_agent.py tests/test_meetings_calendar_sync.py tests/test_email_agent.py -v -m "not integration" --tb=short
 fi
 
 echo -e "${BLUE}  → Vollständige Pytest-Suite...${NC}"
 if [ -x ".venv/bin/pytest" ]; then
-    .venv/bin/pytest tests/ -v -m "not integration"
+    PYTHONPATH=. .venv/bin/pytest tests/ -v -m "not integration"
 else
-    python3 -m pytest tests/ -v -m "not integration"
+    PYTHONPATH=. python3 -m pytest tests/ -v -m "not integration"
 fi
 echo -e "${GREEN}✓ Pytest-Suite erfolgreich abgeschlossen${NC}"
 
