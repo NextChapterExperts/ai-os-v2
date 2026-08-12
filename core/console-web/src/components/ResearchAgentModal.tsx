@@ -157,21 +157,27 @@ export function ResearchAgentModal({
     }, 300);
   };
 
+  const handleNewResearch = () => {
+    setResult(null);
+    setError(null);
+    setSaveStatus(null);
+  };
+
   const currentModelMeta = LAGEBILD_MODELS.find((m) => m.id === selectedModel);
   const promptDetails: PromptContext | null = (result?.llmContext?.prompt as PromptContext) ?? null;
   const summaryText = result?.summary || result?.answer || "";
 
   const modalJSX = (
-    <div className="fixed inset-0 top-0 left-0 right-0 bottom-0 z-[99999] bg-[var(--canvas)] flex flex-col w-full h-full min-h-screen overflow-hidden">
-      {/* Window Top Toolbar */}
-      <header className="px-6 py-4 border-b border-[var(--line)] bg-white flex items-center justify-between gap-4 shrink-0 shadow-xs">
+    <div className="fixed inset-0 top-0 left-0 right-0 bottom-0 z-[99999] bg-[var(--canvas)] flex flex-col w-full h-full min-h-screen overflow-hidden rise">
+      {/* Top Header Toolbar */}
+      <header className="px-8 py-4 border-b border-[var(--line)] bg-white flex items-center justify-between gap-4 shrink-0 shadow-xs">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-[color-mix(in_oklab,var(--signal)_10%,white)] border border-[var(--signal)] flex items-center justify-center text-xl">
             🔎
           </div>
           <div>
             <h1 className="text-lg font-bold text-[var(--ink)] m-0 leading-tight">
-              Recherche-Agent Workspace (Vollbild)
+              Recherche-Agent Workspace
             </h1>
             <p className="text-xs muted m-0 font-sans">
               Multi-Hop Dual-Retrieval: Company Brain & SearXNG IP-Anonymisiert
@@ -190,11 +196,21 @@ export function ResearchAgentModal({
             </span>
           )}
 
-          {/* Primary Action Button */}
+          {result && (
+            <button
+              type="button"
+              onClick={handleNewResearch}
+              className="px-4 py-2 rounded-xl text-xs font-bold border border-[var(--line)] bg-white text-[var(--ink)] hover:bg-[color-mix(in_oklab,white_90%,var(--ink))] transition-all"
+            >
+              🔄 Neue Recherche
+            </button>
+          )}
+
+          {/* Primary Action Button (VIRKI Signal Blue, NO pitch black) */}
           <button
             type="button"
             onClick={handleSaveAndClose}
-            className="btn-primary text-xs font-bold py-2.5 px-5 flex items-center gap-2"
+            className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[var(--signal)] text-white hover:opacity-90 transition-all shadow-xs flex items-center gap-2 cursor-pointer border-none"
           >
             💾 Speichern & Schließen
           </button>
@@ -210,320 +226,343 @@ export function ResearchAgentModal({
         </div>
       </header>
 
-      {/* Main Workspace Body: Full Viewport 2-Column Split */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden bg-[color-mix(in_oklab,white_98%,transparent)]">
-        {/* Left Column (Width: 4/12) — Parameters & Search Trigger */}
-        <aside className="lg:col-span-4 p-6 border-r border-[var(--line)] bg-white overflow-y-auto space-y-6">
-          {/* Search Query Textarea */}
-          <div className="space-y-2">
-            <label className="mono text-[11px] uppercase muted font-bold block tracking-wider">
-              Recherchethema / Anfrage
-            </label>
-            <textarea
-              rows={5}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Geben Sie hier das Thema ein, z. B. SAP S/4HANA Migration Performance im Vergleich zu Oracle Cloud ERP 2026..."
-              className="w-full p-4 rounded-xl border border-[var(--line)] bg-white text-sm text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--signal)] font-sans leading-relaxed shadow-xs"
-            />
-          </div>
-
-          {/* Model Selector (Exact Lagebild Models) */}
-          <div className="space-y-2">
-            <label className="mono text-[11px] uppercase muted font-bold block tracking-wider">
-              Modell auswählen (Lagebild / OpenRouter)
-            </label>
-            <select
-              value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
-              className="w-full p-3 rounded-xl border border-[var(--line)] bg-white text-xs font-mono text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--signal)]"
-            >
-              {LAGEBILD_MODELS.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
-            {currentModelMeta && (
-              <p className="text-[11px] text-[var(--ink-soft)] italic m-0 pt-1 leading-snug">
-                💡 {currentModelMeta.desc}
+      {/* Main Workspace Body */}
+      <div className="flex-1 overflow-y-auto bg-[color-mix(in_oklab,white_98%,transparent)]">
+        {!result ? (
+          /* Initial State: Clean Centered Input Hero Layout */
+          <div className="max-w-3xl mx-auto py-12 px-6 space-y-8 flex flex-col items-center justify-center min-h-[calc(100vh-140px)]">
+            <div className="text-center space-y-2">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[color-mix(in_oklab,var(--signal)_12%,white)] border border-[var(--signal)] text-3xl mb-2">
+                🔎
+              </div>
+              <h2 className="text-2xl font-bold text-[var(--ink)] m-0">
+                Was möchten Sie recherchieren?
+              </h2>
+              <p className="text-sm muted max-w-xl mx-auto leading-relaxed">
+                Der Recherche-Agent durchsucht Ihr lokales Unternehmensgedächtnis und führt bei Bedarf eine anonymisierte Web-Recherche via SearXNG durch.
               </p>
-            )}
-          </div>
-
-          {/* Depth Selector */}
-          <div className="space-y-2">
-            <label className="mono text-[11px] uppercase muted font-bold block tracking-wider">
-              Recherche-Tiefe
-            </label>
-            <div className="flex p-1 rounded-xl border border-[var(--line)] bg-[color-mix(in_oklab,white_95%,var(--ink))] gap-1">
-              <button
-                type="button"
-                onClick={() => setDepth("quick")}
-                className={`flex-1 text-xs py-2 font-bold rounded-lg transition-all ${
-                  depth === "quick"
-                    ? "bg-[var(--signal)] text-white shadow-xs"
-                    : "text-[var(--ink-soft)] hover:text-[var(--ink)]"
-                }`}
-              >
-                ⚡ Quick (30s)
-              </button>
-              <button
-                type="button"
-                onClick={() => setDepth("deep")}
-                className={`flex-1 text-xs py-2 font-bold rounded-lg transition-all ${
-                  depth === "deep"
-                    ? "bg-[var(--signal)] text-white shadow-xs"
-                    : "text-[var(--ink-soft)] hover:text-[var(--ink)]"
-                }`}
-              >
-                🔬 Deep (Multi-Hop)
-              </button>
             </div>
-          </div>
 
-          {/* Compute Mode */}
-          <div className="space-y-2">
-            <label className="mono text-[11px] uppercase muted font-bold block tracking-wider">
-              Compute-Modus
-            </label>
-            <select
-              value={computeMode}
-              onChange={(e) => setComputeMode(e.target.value)}
-              className="w-full p-3 rounded-xl border border-[var(--line)] bg-white text-xs font-mono text-[var(--ink)] focus:outline-none"
-            >
-              <option value="sovereign">Sovereign (Lokal LAN)</option>
-              <option value="balanced">Balanced Hybrid</option>
-              <option value="premium">Premium Cloud API</option>
-            </select>
-          </div>
-
-          {/* Anonymization Toggle */}
-          <div className="space-y-2">
-            <label className="mono text-[11px] uppercase muted font-bold block tracking-wider">
-              Anonymisierung & IP-Schutz
-            </label>
-            <button
-              type="button"
-              onClick={() => setAnonymize(!anonymize)}
-              className={`w-full p-3 rounded-xl border text-xs font-mono text-left flex items-center justify-between transition-all ${
-                anonymize
-                  ? "border-[var(--signal)] bg-[color-mix(in_oklab,var(--signal)_8%,white)] text-[var(--ink)]"
-                  : "border-[var(--line)] bg-white muted"
-              }`}
-            >
-              <span>{anonymize ? "🛡️ SearXNG Proxy: Aktiv" : "🌐 Direkt-Modus"}</span>
-              <span className="badge" data-variant={anonymize ? "curated" : "raw"}>
-                {anonymize ? "Anonym" : "Direkt"}
-              </span>
-            </button>
-          </div>
-
-          {/* Start Search Button */}
-          <button
-            type="button"
-            disabled={loading || !query.trim()}
-            onClick={() => executeResearch(false)}
-            className="w-full btn-primary text-xs font-bold py-3.5 text-center shadow-xs"
-          >
-            {loading ? "⌛ Recherchiere…" : "🚀 Recherche Starten"}
-          </button>
-        </aside>
-
-        {/* Right Column (Width: 8/12) — Result View, Context & Interactive Dialog */}
-        <main className="lg:col-span-8 p-8 overflow-y-auto space-y-6 bg-[color-mix(in_oklab,white_97%,transparent)]">
-          {error && (
-            <div className="p-4 rounded-xl border border-[var(--danger)] bg-[color-mix(in_oklab,var(--danger)_10%,white)] text-[var(--danger)] text-xs mono">
-              ❌ Fehler: {error}
-            </div>
-          )}
-
-          {result ? (
-            <div className="space-y-6">
-              {/* Metadata Bar */}
-              <div className="p-4 rounded-2xl border border-[var(--line)] bg-white flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs">
-                <div className="flex flex-wrap items-center gap-3 mono">
-                  <span className="badge" data-variant="graph">
-                    Modell: {result.model || result.model_used || selectedModel}
-                  </span>
-                  <span className="badge" data-variant="curated">
-                    Quellen: {result.sources?.length || 0}
-                  </span>
-                  {result.confidence ? (
-                    <span className="badge" data-variant="ok">
-                      Vertrauen: {Math.round(result.confidence * 100)}%
-                    </span>
-                  ) : null}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowContextViewer(!showContextViewer)}
-                    className="btn-ghost text-xs mono"
-                  >
-                    {showContextViewer ? "🙈 Kontext verbergen" : "👁️ Kontext anzeigen"}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowPromptInspector(!showPromptInspector)}
-                    className="btn-ghost text-xs mono text-[var(--signal)] border-[var(--signal)]"
-                  >
-                    📄 Prompt Inspektor
-                  </button>
-                </div>
+            {/* Centered Input Card */}
+            <div className="w-full bg-white p-8 rounded-2xl border border-[var(--line)] shadow-sm space-y-6">
+              <div className="space-y-2">
+                <label className="mono text-[11px] uppercase muted font-bold block tracking-wider text-left">
+                  Recherchethema / Anfrage
+                </label>
+                <textarea
+                  rows={4}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="z. B. SAP S/4HANA Migration Performance im Vergleich zu Oracle Cloud ERP 2026..."
+                  className="w-full p-4 rounded-xl border border-[var(--line)] bg-white text-base text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--signal)] font-sans leading-relaxed shadow-xs"
+                />
               </div>
 
-              {/* Main Synthesis Result Box */}
-              <div className="p-7 rounded-2xl border border-[var(--line)] bg-white space-y-4 shadow-xs">
-                <h2 className="section-title text-lg font-bold text-[var(--ink)] m-0 flex items-center gap-2">
-                  <span>📋</span> Synthese & Befund
-                </h2>
-                <div className="p-5 rounded-xl bg-[color-mix(in_oklab,white_96%,var(--ink))] border border-[var(--line)] text-sm text-[var(--ink)] leading-relaxed whitespace-pre-wrap font-sans">
-                  {summaryText || "Keine Zusammenfassung erzeugt."}
-                </div>
-
-                {result.sub_questions && result.sub_questions.length > 0 && (
-                  <div className="pt-4 border-t border-[var(--line)] space-y-2">
-                    <h3 className="mono text-[11px] uppercase muted font-bold tracking-wider">
-                      Teilfragen & Zerlegung (Planner-State):
-                    </h3>
-                    <ul className="space-y-1.5 m-0 p-0 list-none">
-                      {result.sub_questions.map((q, idx) => (
-                        <li key={idx} className="text-xs text-[var(--ink)] flex items-start gap-2">
-                          <span className="text-[var(--signal)] font-bold">▸</span> {q}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-
-              {/* Context Chunks Viewer */}
-              {showContextViewer && result.sources && result.sources.length > 0 && (
-                <div className="p-7 rounded-2xl border border-[var(--line)] bg-white space-y-4 shadow-xs">
-                  <h2 className="section-title text-base font-bold text-[var(--ink)] m-0 flex items-center gap-2">
-                    <span>📖</span> Geladene Kontext-Abschnitte ({result.sources.length})
-                  </h2>
-                  <div className="space-y-3">
-                    {result.sources.map((src, idx) => {
-                      const cleanSnippet = cleanTextSnippet(src.snippet);
-                      return (
-                        <div
-                          key={idx}
-                          className="p-4 rounded-xl border border-[var(--line)] bg-[color-mix(in_oklab,white_98%,transparent)] text-xs space-y-2 hover:border-[var(--line-strong)] transition-all"
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            {src.url ? (
-                              <a
-                                href={src.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="font-bold text-[var(--signal)] hover:underline truncate text-sm"
-                              >
-                                {src.title || "Quelle"}
-                              </a>
-                            ) : (
-                              <span className="font-bold text-[var(--ink)] text-sm">{src.title || "Quelle"}</span>
-                            )}
-                            <span className="badge" data-variant="graph">
-                              {src.source_type === "local_brain" ? "🧠 Company Brain" : "🌐 Web (SearXNG)"}
-                            </span>
-                          </div>
-                          <p className="text-xs text-[var(--ink)] leading-relaxed m-0 font-sans">
-                            {cleanSnippet || "Kein Textinhalt verfügbar."}
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Interactive Refinement Box */}
-              <div className="p-7 rounded-2xl border border-[var(--line)] bg-[color-mix(in_oklab,var(--signal)_5%,white)] space-y-3 shadow-xs">
-                <h3 className="text-sm font-bold text-[var(--ink)] m-0 flex items-center gap-2">
-                  <span>💬</span> Interaktiver Dialog & Verfeinerung
-                </h3>
-                <p className="text-xs muted m-0">
-                  Möchtest du bestimmte Punkte vertiefen oder eine korrigierte Suchrichtung eingeben?
-                </p>
-                <div className="flex gap-3 pt-1">
-                  <input
-                    type="text"
-                    value={refinementText}
-                    onChange={(e) => setRefinementText(e.target.value)}
-                    placeholder="z. B. Fokussiere dich auf Lizenzaspekte und erstelle einen Tabellenvergleich..."
-                    className="flex-1 p-3 rounded-xl border border-[var(--line)] bg-white text-xs text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--signal)]"
-                    onKeyDown={(e) => e.key === "Enter" && executeResearch(true)}
-                  />
-                  <button
-                    type="button"
-                    disabled={loading || !refinementText.trim()}
-                    onClick={() => executeResearch(true)}
-                    className="btn-ghost text-xs font-bold text-[var(--signal)] border-[var(--signal)] px-4"
+              {/* Options Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+                {/* Model Selector */}
+                <div className="space-y-2 text-left">
+                  <label className="mono text-[11px] uppercase muted font-bold block tracking-wider">
+                    Modell auswählen (Lagebild)
+                  </label>
+                  <select
+                    value={selectedModel}
+                    onChange={(e) => setSelectedModel(e.target.value)}
+                    className="w-full p-3 rounded-xl border border-[var(--line)] bg-white text-xs font-mono text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--signal)]"
                   >
-                    Verfeinern
-                  </button>
+                    {LAGEBILD_MODELS.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.label}
+                      </option>
+                    ))}
+                  </select>
+                  {currentModelMeta && (
+                    <p className="text-[11px] text-[var(--ink-soft)] italic m-0 pt-0.5 leading-snug">
+                      💡 {currentModelMeta.desc}
+                    </p>
+                  )}
                 </div>
-              </div>
 
-              {/* Prompt Inspector Modal Sub-View */}
-              {showPromptInspector && (
-                <div className="p-6 rounded-2xl border border-[var(--line)] bg-white text-[var(--ink)] text-xs mono space-y-4 shadow-sm">
-                  <div className="flex items-center justify-between border-b border-[var(--line)] pb-3">
-                    <h3 className="font-bold text-[var(--signal)] m-0 text-sm">📄 Prompt Inspektor Context</h3>
+                {/* Depth Selector */}
+                <div className="space-y-2 text-left">
+                  <label className="mono text-[11px] uppercase muted font-bold block tracking-wider">
+                    Recherche-Tiefe
+                  </label>
+                  <div className="flex p-1 rounded-xl border border-[var(--line)] bg-[color-mix(in_oklab,white_95%,var(--ink))] gap-1">
                     <button
                       type="button"
-                      onClick={() => setShowPromptInspector(false)}
-                      className="btn-ghost text-xs mono"
+                      onClick={() => setDepth("quick")}
+                      className={`flex-1 text-xs py-2.5 font-bold rounded-lg transition-all ${
+                        depth === "quick"
+                          ? "bg-[var(--signal)] text-white shadow-xs"
+                          : "text-[var(--ink-soft)] hover:text-[var(--ink)]"
+                      }`}
                     >
-                      ✕ Schließen
+                      ⚡ Quick (30s)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDepth("deep")}
+                      className={`flex-1 text-xs py-2.5 font-bold rounded-lg transition-all ${
+                        depth === "deep"
+                          ? "bg-[var(--signal)] text-white shadow-xs"
+                          : "text-[var(--ink-soft)] hover:text-[var(--ink)]"
+                      }`}
+                    >
+                      🔬 Deep (Multi-Hop)
                     </button>
                   </div>
+                </div>
 
-                  <div className="grid grid-cols-2 gap-3 p-3 rounded-xl border border-[var(--line)] bg-[color-mix(in_oklab,white_95%,var(--ink))] text-[11px]">
-                    <div>
-                      <span className="muted">Zeichen:</span>{" "}
-                      <strong>{promptDetails?.contextCharCount || 0} Zeichen</strong>
-                    </div>
-                    <div>
-                      <span className="muted">Tokens:</span>{" "}
-                      <strong>~{promptDetails?.token_estimate || 0} Tokens</strong>
-                    </div>
-                  </div>
+                {/* Compute Mode */}
+                <div className="space-y-2 text-left">
+                  <label className="mono text-[11px] uppercase muted font-bold block tracking-wider">
+                    Compute-Modus
+                  </label>
+                  <select
+                    value={computeMode}
+                    onChange={(e) => setComputeMode(e.target.value)}
+                    className="w-full p-3 rounded-xl border border-[var(--line)] bg-white text-xs font-mono text-[var(--ink)] focus:outline-none"
+                  >
+                    <option value="sovereign">Sovereign (Lokal LAN)</option>
+                    <option value="balanced">Balanced Hybrid</option>
+                    <option value="premium">Premium Cloud API</option>
+                  </select>
+                </div>
 
-                  <div>
-                    <div className="text-[var(--signal)] font-bold mb-1.5 uppercase text-[10px] tracking-wider">System Prompt:</div>
-                    <pre className="p-3 rounded-xl border border-[var(--line)] bg-[color-mix(in_oklab,white_97%,transparent)] text-[11px] whitespace-pre-wrap overflow-x-auto m-0 text-[var(--ink)]">
-                      {promptDetails?.system || "Kein System-Prompt erfasst."}
-                    </pre>
-                  </div>
+                {/* Anonymization Toggle */}
+                <div className="space-y-2 text-left">
+                  <label className="mono text-[11px] uppercase muted font-bold block tracking-wider">
+                    Anonymisierung & IP-Schutz
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setAnonymize(!anonymize)}
+                    className={`w-full p-3 rounded-xl border text-xs font-mono text-left flex items-center justify-between transition-all ${
+                      anonymize
+                        ? "border-[var(--signal)] bg-[color-mix(in_oklab,var(--signal)_8%,white)] text-[var(--ink)]"
+                        : "border-[var(--line)] bg-white muted"
+                    }`}
+                  >
+                    <span>{anonymize ? "🛡️ SearXNG Proxy: Aktiv" : "🌐 Direkt-Modus"}</span>
+                    <span className="badge" data-variant={anonymize ? "curated" : "raw"}>
+                      {anonymize ? "Anonym" : "Direkt"}
+                    </span>
+                  </button>
+                </div>
+              </div>
 
-                  <div>
-                    <div className="text-[var(--signal)] font-bold mb-1.5 uppercase text-[10px] tracking-wider">User Prompt:</div>
-                    <pre className="p-3 rounded-xl border border-[var(--line)] bg-[color-mix(in_oklab,white_97%,transparent)] text-[11px] whitespace-pre-wrap overflow-x-auto m-0 text-[var(--ink)]">
-                      {promptDetails?.user || "Kein User-Prompt erfasst."}
-                    </pre>
-                  </div>
+              {error && (
+                <div className="p-4 rounded-xl border border-[var(--danger)] bg-[color-mix(in_oklab,var(--danger)_10%,white)] text-[var(--danger)] text-xs mono">
+                  ❌ Fehler: {error}
+                </div>
+              )}
+
+              {/* Centered Big Start Button (VIRKI Signal Blue, ZERO black) */}
+              <button
+                type="button"
+                disabled={loading || !query.trim()}
+                onClick={() => executeResearch(false)}
+                className="w-full py-4 rounded-xl text-base font-bold bg-[var(--signal)] text-white hover:opacity-90 transition-all shadow-md cursor-pointer border-none flex items-center justify-center gap-2"
+              >
+                {loading ? "⌛ Recherche läuft…" : "🚀 Recherche Jetzt Starten"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* Result View Layout: Full-Width Centered Reader Layout */
+          <div className="max-w-5xl mx-auto py-10 px-8 space-y-8">
+            {error && (
+              <div className="p-4 rounded-xl border border-[var(--danger)] bg-[color-mix(in_oklab,var(--danger)_10%,white)] text-[var(--danger)] text-xs mono">
+                ❌ Fehler: {error}
+              </div>
+            )}
+
+            {/* Metadata Bar */}
+            <div className="p-4 rounded-2xl border border-[var(--line)] bg-white flex flex-wrap items-center justify-between gap-4 text-xs shadow-xs">
+              <div className="flex flex-wrap items-center gap-3 mono">
+                <span className="badge" data-variant="graph">
+                  Modell: {result.model || result.model_used || selectedModel}
+                </span>
+                <span className="badge" data-variant="curated">
+                  Quellen: {result.sources?.length || 0}
+                </span>
+                {result.confidence ? (
+                  <span className="badge" data-variant="ok">
+                    Vertrauen: {Math.round(result.confidence * 100)}%
+                  </span>
+                ) : null}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowContextViewer(!showContextViewer)}
+                  className="px-3 py-1.5 rounded-lg border border-[var(--line)] bg-white text-xs mono text-[var(--ink)] hover:bg-[color-mix(in_oklab,white_90%,var(--ink))]"
+                >
+                  {showContextViewer ? "🙈 Kontext verbergen" : "👁️ Kontext anzeigen"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowPromptInspector(!showPromptInspector)}
+                  className="px-3 py-1.5 rounded-lg border border-[var(--signal)] bg-[color-mix(in_oklab,var(--signal)_10%,white)] text-xs mono text-[var(--signal)] font-bold hover:bg-[var(--signal)] hover:text-white transition-all"
+                >
+                  📄 Prompt Inspektor
+                </button>
+              </div>
+            </div>
+
+            {/* Query Header */}
+            <div className="p-6 rounded-2xl border border-[var(--line)] bg-white space-y-2 shadow-xs">
+              <span className="mono text-[11px] uppercase muted font-bold tracking-wider block">
+                Recherchethema:
+              </span>
+              <h2 className="text-xl font-bold text-[var(--ink)] m-0 leading-snug">
+                {query}
+              </h2>
+            </div>
+
+            {/* Main Synthesis Result Box */}
+            <div className="p-8 rounded-2xl border border-[var(--line)] bg-white space-y-5 shadow-xs">
+              <h2 className="section-title text-xl font-bold text-[var(--ink)] m-0 flex items-center gap-2">
+                <span>📋</span> Synthese & Befund
+              </h2>
+              <div className="p-6 rounded-xl bg-[color-mix(in_oklab,white_96%,var(--ink))] border border-[var(--line)] text-sm text-[var(--ink)] leading-relaxed whitespace-pre-wrap font-sans">
+                {summaryText || "Keine Zusammenfassung erzeugt."}
+              </div>
+
+              {result.sub_questions && result.sub_questions.length > 0 && (
+                <div className="pt-4 border-t border-[var(--line)] space-y-2">
+                  <h3 className="mono text-[11px] uppercase muted font-bold tracking-wider">
+                    Teilfragen & Zerlegung (Planner-State):
+                  </h3>
+                  <ul className="space-y-1.5 m-0 p-0 list-none">
+                    {result.sub_questions.map((q, idx) => (
+                      <li key={idx} className="text-xs text-[var(--ink)] flex items-start gap-2">
+                        <span className="text-[var(--signal)] font-bold">▸</span> {q}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </div>
-          ) : (
-            <div className="h-full flex flex-col items-center justify-center text-center p-12 muted">
-              <span className="text-5xl mb-4">🔎</span>
-              <h2 className="text-base font-bold text-[var(--ink)] m-0">Geben Sie ein Thema ein und starten Sie die Recherche.</h2>
-              <p className="text-xs max-w-md mt-2 leading-relaxed">
-                Der Recherche-Agent durchsucht Ihr Unternehmensgedächtnis (Company Brain) und führt bei Bedarf eine anonyme Web-Suche via SearXNG durch.
+
+            {/* Context Chunks Viewer */}
+            {showContextViewer && result.sources && result.sources.length > 0 && (
+              <div className="p-8 rounded-2xl border border-[var(--line)] bg-white space-y-5 shadow-xs">
+                <h2 className="section-title text-lg font-bold text-[var(--ink)] m-0 flex items-center gap-2">
+                  <span>📖</span> Geladene Kontext-Abschnitte ({result.sources.length})
+                </h2>
+                <div className="space-y-4">
+                  {result.sources.map((src, idx) => {
+                    const cleanSnippet = cleanTextSnippet(src.snippet);
+                    return (
+                      <div
+                        key={idx}
+                        className="p-5 rounded-xl border border-[var(--line)] bg-[color-mix(in_oklab,white_98%,transparent)] text-xs space-y-2 hover:border-[var(--line-strong)] transition-all"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          {src.url ? (
+                            <a
+                              href={src.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="font-bold text-[var(--signal)] hover:underline truncate text-sm"
+                            >
+                              {src.title || "Quelle"}
+                            </a>
+                          ) : (
+                            <span className="font-bold text-[var(--ink)] text-sm">{src.title || "Quelle"}</span>
+                          )}
+                          <span className="badge" data-variant="graph">
+                            {src.source_type === "local_brain" ? "🧠 Company Brain" : "🌐 Web (SearXNG)"}
+                          </span>
+                        </div>
+                        <p className="text-xs text-[var(--ink)] leading-relaxed m-0 font-sans">
+                          {cleanSnippet || "Kein Textinhalt verfügbar."}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Interactive Refinement Box */}
+            <div className="p-8 rounded-2xl border border-[var(--line)] bg-[color-mix(in_oklab,var(--signal)_5%,white)] space-y-4 shadow-xs">
+              <h3 className="text-base font-bold text-[var(--ink)] m-0 flex items-center gap-2">
+                <span>💬</span> Interaktiver Dialog & Verfeinerung
+              </h3>
+              <p className="text-xs muted m-0">
+                Möchtest du bestimmte Punkte vertiefen oder eine korrigierte Suchrichtung eingeben?
               </p>
+              <div className="flex gap-3 pt-1">
+                <input
+                  type="text"
+                  value={refinementText}
+                  onChange={(e) => setRefinementText(e.target.value)}
+                  placeholder="z. B. Fokussiere dich auf Lizenzaspekte und erstelle einen Tabellenvergleich..."
+                  className="flex-1 p-3.5 rounded-xl border border-[var(--line)] bg-white text-xs text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--signal)]"
+                  onKeyDown={(e) => e.key === "Enter" && executeResearch(true)}
+                />
+                <button
+                  type="button"
+                  disabled={loading || !refinementText.trim()}
+                  onClick={() => executeResearch(true)}
+                  className="px-5 py-3.5 rounded-xl text-xs font-bold border border-[var(--signal)] bg-[color-mix(in_oklab,var(--signal)_10%,white)] text-[var(--signal)] hover:bg-[var(--signal)] hover:text-white transition-all cursor-pointer"
+                >
+                  Verfeinern
+                </button>
+              </div>
             </div>
-          )}
-        </main>
+
+            {/* Prompt Inspector Sub-View */}
+            {showPromptInspector && (
+              <div className="p-8 rounded-2xl border border-[var(--line)] bg-white text-[var(--ink)] text-xs mono space-y-5 shadow-sm">
+                <div className="flex items-center justify-between border-b border-[var(--line)] pb-3">
+                  <h3 className="font-bold text-[var(--signal)] m-0 text-sm">📄 Prompt Inspektor Context</h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowPromptInspector(false)}
+                    className="btn-ghost text-xs mono"
+                  >
+                    ✕ Schließen
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 p-4 rounded-xl border border-[var(--line)] bg-[color-mix(in_oklab,white_95%,var(--ink))] text-xs">
+                  <div>
+                    <span className="muted">Zeichen:</span>{" "}
+                    <strong>{promptDetails?.contextCharCount || 0} Zeichen</strong>
+                  </div>
+                  <div>
+                    <span className="muted">Tokens:</span>{" "}
+                    <strong>~{promptDetails?.token_estimate || 0} Tokens</strong>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-[var(--signal)] font-bold mb-2 uppercase text-[10px] tracking-wider">System Prompt:</div>
+                  <pre className="p-4 rounded-xl border border-[var(--line)] bg-[color-mix(in_oklab,white_97%,transparent)] text-xs whitespace-pre-wrap overflow-x-auto m-0 text-[var(--ink)]">
+                    {promptDetails?.system || "Kein System-Prompt erfasst."}
+                  </pre>
+                </div>
+
+                <div>
+                  <div className="text-[var(--signal)] font-bold mb-2 uppercase text-[10px] tracking-wider">User Prompt:</div>
+                  <pre className="p-4 rounded-xl border border-[var(--line)] bg-[color-mix(in_oklab,white_97%,transparent)] text-[11px] whitespace-pre-wrap overflow-x-auto m-0 text-[var(--ink)]">
+                    {promptDetails?.user || "Kein User-Prompt erfasst."}
+                  </pre>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Footer Bar */}
-      <footer className="px-6 py-3 border-t border-[var(--line)] bg-white flex items-center justify-between shrink-0">
+      <footer className="px-8 py-3.5 border-t border-[var(--line)] bg-white flex items-center justify-between shrink-0">
         <span className="text-xs muted font-mono">
           {result?.saved_to_brain
             ? "✅ Ergebnisse im Unternehmensgedächtnis gesichert."
