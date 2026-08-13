@@ -261,10 +261,8 @@ export function ResearchAgentModal({
     if (isOpen && initialQuery && initialQuery.trim() && !hasAutoStarted.current) {
       hasAutoStarted.current = true;
       setQuery(initialQuery);
-      // Auto-trigger research on modal open
-      setTimeout(() => {
-        executeResearch(false);
-      }, 100);
+      // Auto-trigger research on modal open using initialQuery directly
+      executeResearch(false, false, initialQuery);
     }
     if (!isOpen) {
       hasAutoStarted.current = false;
@@ -285,8 +283,8 @@ export function ResearchAgentModal({
 
   if (!isOpen || !mounted) return null;
 
-  const executeResearch = async (isRefinement = false, saveToBrain = false) => {
-    const activeQuery = query.trim();
+  const executeResearch = async (isRefinement = false, saveToBrain = false, queryOverride?: string) => {
+    const activeQuery = (queryOverride !== undefined ? queryOverride : query).trim();
     if (!activeQuery) return;
 
     const currentRefinement = refinementText.trim();

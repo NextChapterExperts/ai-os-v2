@@ -119,35 +119,7 @@ export function ResearchAgentWorkspace() {
 
   return (
     <div className="space-y-6">
-      {/* Fullscreen Pop-up Launcher Banner */}
-      <div className="p-5 rounded-2xl border border-[var(--signal)] bg-[color-mix(in_oklab,var(--signal)_8%,white)] shadow-sm flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="badge" data-variant="graph">
-              Vollbild-Arbeitsfenster
-            </span>
-            <span className="badge" data-variant="curated">
-              Company Brain Auto-Save
-            </span>
-          </div>
-          <h3 className="section-title text-base font-bold text-[var(--ink)] m-0">
-            Recherche in großem Arbeitsfenster (Pop-up) ausführen
-          </h3>
-          <p className="text-xs muted m-0 mt-0.5">
-            Öffnet das volle Fenster für tiefgehende Recherche, Modellauswahl, Kontext-Inspektion und automatisches Speichern im Unternehmensgedächtnis.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setIsModalOpen(true)}
-          className="btn-primary text-xs font-bold py-2.5 px-6 flex items-center gap-2"
-        >
-          🚀 Recherche-Workspace in Vollbild öffnen
-        </button>
-      </div>
-
-      {/* Top Card & Form */}
+      {/* Search Input Mask Card */}
       <div className="p-6 rounded-2xl border border-[var(--line)] bg-[color-mix(in_oklab,white_75%,transparent)] shadow-sm space-y-5">
         <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--line)] pb-4">
           <div>
