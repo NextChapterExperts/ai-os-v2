@@ -59,92 +59,9 @@ export default function PrototypeStartPage() {
   const suggestedAgentId = detectSuggestedAgent(searchQuery);
 
   return (
-    <div className="min-h-screen bg-[var(--paper)] text-[var(--ink)] font-sans">
-      {/* 1. TOP HEADER & MODE SWITCHER */}
-      <header className="border-b border-[var(--line)] bg-[color-mix(in_oklab,white_80%,transparent)] backdrop-blur-md sticky top-0 z-50 px-6 py-3.5">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          {/* Brand Logo & Back to Main Link */}
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="btn-ghost text-xs inline-flex items-center gap-1.5 muted hover:text-[var(--ink)]"
-              title="Zurück zur aktuellen Console"
-            >
-              <IconArrowLeft size={14} />
-              <span>Zurück zur Konsole</span>
-            </Link>
-            <div className="h-4 w-px bg-[var(--line)]" />
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-base tracking-tight text-[var(--ink)]">
-                AI-OS <span className="text-[var(--signal)]">Virki</span>
-              </span>
-              <span className="badge" data-variant="graph">
-                Prototyp V2
-              </span>
-            </div>
-          </div>
-
-          {/* DUAL MODE SWITCHER (Anwendermodus vs. Admin-Modus) */}
-          <div className="flex items-center gap-2 bg-[color-mix(in_oklab,white_90%,var(--ink))] p-1 rounded-xl border border-[var(--line)] shadow-xs">
-            <button
-              type="button"
-              onClick={() => setMode("user")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all inline-flex items-center gap-1.5 cursor-pointer ${
-                mode === "user"
-                  ? "bg-white text-[var(--ink)] shadow-sm ring-1 ring-[var(--line)]"
-                  : "text-[var(--ink-soft)] hover:text-[var(--ink)]"
-              }`}
-            >
-              <IconUserCheck size={15} className={mode === "user" ? "text-[var(--signal)]" : ""} />
-              <span>Anwendermodus</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setMode("admin")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all inline-flex items-center gap-1.5 cursor-pointer ${
-                mode === "admin"
-                  ? "bg-slate-900 text-white shadow-sm ring-1 ring-slate-700"
-                  : "text-[var(--ink-soft)] hover:text-[var(--ink)]"
-              }`}
-            >
-              <IconSettings size={15} className={mode === "admin" ? "text-indigo-400" : ""} />
-              <span>Admin-Modus</span>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* 2. ADMIN-MODUS SUB-HEADER BANNER (Nur sichtbar im Admin-Modus) */}
-      {mode === "admin" && (
-        <div className="bg-slate-900 text-slate-200 border-b border-slate-800 px-6 py-3 text-xs animate-in slide-in-from-top duration-200">
-          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-2 font-mono">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-              <span className="font-bold text-white uppercase tracking-wider">
-                Plattform & Dev Lagebild Aktiv
-              </span>
-            </div>
-            <div className="flex flex-wrap items-center gap-4 text-[11px] font-mono text-slate-300">
-              <Link href="/platform" className="hover:text-white underline flex items-center gap-1">
-                <IconCpu size={13} />
-                <span>Services Status</span>
-              </Link>
-              <Link href="/platform" className="hover:text-white underline flex items-center gap-1">
-                <IconTerminal size={13} />
-                <span>MCP Gateway (8 Tools)</span>
-              </Link>
-              <Link href="/platform" className="hover:text-white underline flex items-center gap-1">
-                <IconDatabase size={13} />
-                <span>Knowledge Graph & Storage</span>
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 3. MAIN WORKSPACE CONTAINER */}
-      <main className="max-w-6xl mx-auto px-4 py-8 space-y-10">
+    <div className="text-[var(--ink)] font-sans">
+      {/* MAIN WORKSPACE CONTAINER */}
+      <main className="max-w-6xl mx-auto px-0 py-4 space-y-10">
         {/* RADIAL NAVIGATION WHEEL & CENTRAL SEARCH AGENT */}
         <section className="space-y-4">
           <RadialNavigationWheel
