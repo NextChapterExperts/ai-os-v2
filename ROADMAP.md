@@ -3325,6 +3325,14 @@ git show roadmap/2026-08-03-p4-email-invoices --stat
 - **PGE Trinity Sandbox Executor (Option 2 - P15):** `core/orchestrator/sandbox_executor.py` führt risikobehaftete Tools/Skripte (Risikoklassen `YELLOW` und `ORANGE`) in ephemeren, hochisolierten Docker MicroVM Sandboxes aus. Risikoklasse `RED` wird vom Gatekeeper blockiert.
 - **Erweiterte Testsuite:** `tests/test_mcp_docker.py`, `tests/test_sandbox_executor.py` und `tests/test_docker_integration_edge_cases.py` (227 Pytests + 19 Memory Cases + 7 Compute Cases = 100% PASS).
 
+## Stand & Changelog (2026-08-13 — Isoliertes Navigationsrad & Anwendermodus Prototyp)
+
+- **Release-Tag:** `roadmap/2026-08-13-p4-radial-navigation-prototype`
+- **Isolierter Prototyp (`/prototype`):** Standalone-Prototyp der neuen Startseite mit Anwendermodus / Admin-Modus Umschaltung, isoliert von der bestehenden Hauptseite.
+- **Radial Navigation Wheel (Navigationsrad):** Interaktives Radial-Menü mit Tabler-Icons für 5 Fachagenten (Handwerker-Angebot, E-Mail-Rechnungen, Blog-Erstellung, Zeitmanagement/Meetings, Deep Research) mit intelligenter Intent-Erkennung.
+- **Erhaltene Search Features:** Vollständige Integration der Modellauswahl (Qwen, DeepSeek, Mistral, Hermes), IP-Schutz Toggle & Recherche-Features im zentralen Suchfeld.
+- **Master Testsuite:** 100% grün (0 Failed).
+
 ---
 
 ## Stand & Changelog (2026-08-13 — Systemweite Tabler-Icons, SearXNG UX & IP-Schutz Klärung)
