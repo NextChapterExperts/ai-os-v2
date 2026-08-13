@@ -21,7 +21,11 @@ export default function LoginPage() {
     setError(null);
     const user = loginUser(u, p);
     if (user) {
-      router.push("/");
+      if (typeof window !== "undefined") {
+        window.location.href = "/";
+      } else {
+        router.push("/");
+      }
     } else {
       setError("Ungültige Anmeldedaten. Bitte verwenden Sie peter/peter oder admin/admin.");
     }

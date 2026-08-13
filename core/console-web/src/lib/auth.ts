@@ -25,12 +25,25 @@ export const VALID_CREDENTIALS: Record<string, { pass: string; name: string; rol
 const AUTH_USER_KEY = "aios_auth_user";
 const AUTH_ROLE_KEY = "aios_auth_role";
 
-export function getStoredAuth(): AuthUser | null {
-  if (typeof window === "undefined") return null;
+export function getStoredAuth(): AuthUser {
+  if (typeof window === "undefined") {
+    return {
+      username: "peter",
+      name: "Peter Alexander",
+      role: "user",
+      personId: "person:peter-alexander",
+    };
+  }
   const username = localStorage.getItem(AUTH_USER_KEY);
   const role = localStorage.getItem(AUTH_ROLE_KEY) as UserRole | null;
   if (!username || !role || !VALID_CREDENTIALS[username]) {
-    return null;
+    // Default Fallback: peter (Endanwender)
+    return {
+      username: "peter",
+      name: "Peter Alexander",
+      role: "user",
+      personId: "person:peter-alexander",
+    };
   }
   const cred = VALID_CREDENTIALS[username];
   return {

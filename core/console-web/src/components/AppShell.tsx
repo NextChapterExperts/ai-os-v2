@@ -54,7 +54,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const handleLogout = () => {
     logoutUser();
-    router.push("/login");
+    if (typeof window !== "undefined") {
+      window.location.href = "/login";
+    } else {
+      router.push("/login");
+    }
   };
 
   if (isLoginPage) {
