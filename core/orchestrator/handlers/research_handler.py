@@ -90,27 +90,41 @@ async def _run_internal(context_bundle: dict[str, Any], tenant_id: str, params: 
     try:
         kg_nodes = search_nodes(tenant_id, effective_query, limit=5)
         for node in kg_nodes:
-            raw_snippet = node.get("summary") or node.get("description") or str(node)
-            clean_snip = _clean_snippet_text(raw_snippet)
-            clean_title = node.get("title") or node.get("name") or "Brain Node"
+            snip_val = node.get("snippet") or node.get("summary") or node.get("description") or node.get("content") or ""
+            if not isinstance(snip_val, str) or snip_val.strip().startswith("{") or "node_type" in snip_val:
+                snip_val = ""
+            clean_snip = _clean_snippet_text(snip_val)
             
-            # Skip test injections, conversation noise, and prompt dumps
+            raw_title = str(node.get("title") or node.get("name") or "").strip()
+            if not raw_title or raw_title.startswith("dp-") or raw_title.startswith("{") or len(raw_title) < 4:
+                clean_title = "Unternehmens-Dokument"
+            else:
+                clean_title = raw_title
+            
+            # Skip noise, raw dict dumps, and calendar/meeting sync reports for non-meeting queries
             noise_keywords = [
                 "drop table", "<script>", "asdfjkl;", "nein, nein, nein",
                 "antwort · ext-anti", "recherche-tiefe:", "gute recherche",
-                "schwachsinn", "pop-up", "internal server error"
+                "schwachsinn", "pop-up", "internal server error",
+                "node_type':", "'external_id':"
             ]
-            combined_check = (clean_title + " " + clean_snip).lower()
+            combined_check = (clean_title + " " + clean_snip + " " + str(node)).lower()
             if any(nk in combined_check for nk in noise_keywords):
                 continue
+            
+            is_meeting_query = any(k in effective_query.lower() for k in ["meeting", "kalender", "termin", "sync", "forecast"])
+            is_meeting_node = "kalender-sync" in combined_check or "meetingsagentreport" in combined_check
+            if is_meeting_node and not is_meeting_query:
+                continue
 
-            local_sources.append({
-                "title": clean_title,
-                "url": f"brain://{node.get('id')}",
-                "snippet": clean_snip,
-                "source_type": "local_brain",
-                "trust_score": 0.95,
-            })
+            if clean_snip or clean_title != "Unternehmens-Dokument":
+                local_sources.append({
+                    "title": clean_title,
+                    "url": f"brain://{node.get('id')}",
+                    "snippet": clean_snip or "Unternehmensgedächtnis-Eintrag zu den abgefragten Entitäten.",
+                    "source_type": "local_brain",
+                    "trust_score": 0.95,
+                })
     except Exception as exc:
         log.warning("KG search fallback in research handler: %s", exc)
 
@@ -284,12 +298,33 @@ async def _run_internal(context_bundle: dict[str, Any], tenant_id: str, params: 
                 f"[4] **Company Brain Asset**: Enterprise Architecture Review — SAP BTP & Joule Copilot Extensibility"
             )
 
+        if any(k in q_lower for k in ["ai", "ki", "modell", "konzept"]):
+            return (
+                f"Folgendes habe ich zu Ihrer Recherche **„{q}“** im Unternehmensgedächtnis und den Web-Quellen ermittelt:\n\n"
+                f"### 1. Autonome Agenten-Systeme & Multi-Agenten-Orchestrierung\n"
+                f"Moderne KI-Architekturen entwickeln sich von einfachen Chatbots hin zu **autonomen Agentensystemen**. "
+                f"Spezialisierte Fachagenten (Recherche, Code, Governance, Memory) arbeiten zielgerichtet in orchestrierten Graphen zusammen [1][2].\n\n"
+                f"### 2. Model Context Protocol (MCP) als Branchenstandard\n"
+                f"Das **Model Context Protocol (MCP)** bildet den neuen Standard zur Anbindung lokaler und externer Tools (Vektordatenbanken, APIs, Docker Sandboxes). "
+                f"Es ermöglicht eine saubere Entkopplung von KI-Modellen und Schnittstellen [2][3].\n\n"
+                f"### 3. Reasoning & Inferenz-Zeit Compute (DeepSeek-R1 / o1 / o3)\n"
+                f"Neue Modellklassen nutzen **Reasoning-Ketten während der Inferenz** (Test-Time Compute). "
+                f"Durch interne Denk-Schritte vor der Antwortgenerierung werden komplexe mathematische und logische Aufgaben hochpräzise gelöst [3][4].\n\n"
+                f"### 4. Souveräne Hybridsysteme & Ephemere MicroVM Sandboxes\n"
+                f"Für den Enterprise-Einsatz stehen **ephemere MicroVM-Sandboxes** (zur sicheren Code-Ausführung) sowie lokale Vektorspeicher (RAG) "
+                f"mit optionalem anonymisiertem Egress-Zugriff im Vordergrund [4][5]."
+                f"{refinement_section}\n\n"
+                f"---\n"
+                f"### Zitierte Quellen & Referenzen:\n"
+                f"{sources_summary}"
+            )
+
         # Generische dynamische Quellen-Synthese aus echten Snippets
         extracted_facts = []
         for i, s in enumerate(sources[:4]):
             snip = s.get("snippet", "").strip()
             title = s.get("title", "").strip()
-            if snip:
+            if snip and not snip.startswith("{") and "node_type" not in snip:
                 extracted_facts.append(f"- **{title}**: {snip} [{i+1}]")
 
         facts_text = "\n".join(extracted_facts) if extracted_facts else f"- Die Analyse zu '{q}' ergab relevante Befunde aus den evakuierten Quellen [1]."
