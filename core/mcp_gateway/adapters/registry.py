@@ -25,11 +25,18 @@ def dispatch(server_id: str, tool_name: str, arguments: dict[str, Any]) -> dict[
     tools = _HANDLERS.get(server_id) or {}
     handler = tools.get(tool_name)
     if not handler:
+        # Dynamische Auflösung für beliebige Docker MCP Catalog Server (z. B. docker_jira, docker_stripe, docker_sentry)
+        if server_id.startswith("docker_") or server_id.startswith("mcp_docker_"):
+            from core.mcp_gateway.adapters.docker_adapter import DockerMCPAdapter
+            adapter = DockerMCPAdapter(server_id)
+            return adapter.execute_tool(tool_name, arguments or {})
+
         return {
             "ok": False,
             "error": "unknown_tool",
             "message": f"Tool {server_id}.{tool_name} nicht registriert",
         }
+
     try:
         result = handler(arguments or {})
         if "ok" not in result:

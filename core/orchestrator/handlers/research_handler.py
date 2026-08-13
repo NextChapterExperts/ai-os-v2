@@ -111,25 +111,22 @@ async def _run_internal(context_bundle: dict[str, Any], tenant_id: str, params: 
         encoded_query = urllib.parse.quote(query)
         clean_q = query.strip()
         
-        # Try live HTTP search via SearXNG or construct high-quality web result cards
+        # Try live HTTP search via SearXNG or web_search MCP adapter fallback
         try:
-            import urllib.request
-            searx_url = f"http://127.0.0.1:8080/search?q={encoded_query}&format=json"
-            req = urllib.request.Request(searx_url, headers={"User-Agent": "AIOS-v2-Egress/2.0"})
-            with urllib.request.urlopen(req, timeout=2.5) as resp:
-                if resp.status == 200:
-                    data = json.loads(resp.read().decode("utf-8"))
-                    results = data.get("results", [])
-                    for r in results[:4]:
-                        web_sources.append({
-                            "title": r.get("title") or f"Web: {clean_q}",
-                            "url": r.get("url") or f"https://searxng.local/search?q={encoded_query}",
-                            "snippet": _clean_snippet_text(r.get("content") or r.get("snippet") or clean_q),
-                            "source_type": "web_searxng",
-                            "trust_score": round(float(r.get("score") or 0.88), 2),
-                        })
-        except Exception:
-            pass
+            from core.mcp_gateway.adapters.web_search import execute_web_search
+            ws_res = execute_web_search({"q": query, "num": 5, "anonymize": anonymize, "tenant_id": tenant_id})
+            if ws_res.get("ok") and ws_res.get("results"):
+                for r in ws_res["results"]:
+                    web_sources.append({
+                        "title": r.get("title") or f"Web: {clean_q}",
+                        "url": r.get("url") or f"https://searxng.local/search?q={encoded_query}",
+                        "snippet": _clean_snippet_text(r.get("snippet") or clean_q),
+                        "source_type": "web_searxng",
+                        "trust_score": round(float(r.get("trust_score") or 0.88), 2),
+                    })
+        except Exception as ws_err:
+            log.warning("Web search adapter call in research handler failed: %s", ws_err)
+
 
         # Fallback to structured, domain-specific web source cards if live SearXNG JSON API endpoint is offline
         if not web_sources:

@@ -57,3 +57,16 @@ def test_docker_mcp_all_catalog_servers_dispatchable():
                 assert res["ok"] is True, f"Dispatch fehlgeschlagen für {server_id}.{tool_name}"
     finally:
         del os.environ["MOCK_DOCKER_MCP"]
+
+
+def test_dynamic_docker_mcp_discovery():
+    """Testet dynamischen Dispatch für Server aus dem Docker Catalog, die nicht statisch gelistet sind."""
+    os.environ["MOCK_DOCKER_MCP"] = "1"
+    try:
+        res = dispatch("docker_jira", "create_ticket", {"summary": "Dynamic Test", "tenant_id": "nextchapter"})
+        assert res["ok"] is True
+        assert res["server"] == "docker_jira"
+        assert res["tool"] == "create_ticket"
+    finally:
+        del os.environ["MOCK_DOCKER_MCP"]
+
