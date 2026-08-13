@@ -249,7 +249,7 @@ export function ResearchAgentModal({
 
       const fallbackResult: ResearchResponse = {
         query: activeQuery,
-        kind: "research",
+        mode: "research",
         summary: updatedSummary,
         sources: result?.sources || [
           { title: "SAP Help Portal & BTP Roadmap", url: `https://help.sap.com/viewer/search?q=${encodeURIComponent(activeQuery)}`, snippet: `Offizielle Architektur- und Implementierungsdokumentation zu '${activeQuery}'.`, source_type: "web_searxng", trust_score: 0.94 },

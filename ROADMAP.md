@@ -2512,6 +2512,13 @@ servers:
     allowed_tenants: all
 ```
 
+### 13.3 Docker MCP Catalog & Docker Sandboxes Integration (Option 1 & 2)
+
+**Spezifikation:** [docs/23-DOCKER-MCP-SANDBOX-INTEGRATION.md](docs/23-DOCKER-MCP-SANDBOX-INTEGRATION.md)
+
+* **Docker MCP Catalog & Gateway Driver (Option 1 - P5):** Erweitert `core/mcp-gateway` um die Fähigkeit, containerisierte MCP-Server aus dem Docker Catalog/Hub (`docker-mcp`) anzusprechen. Das VIRKI Gateway behält die volle Kontrolle über Audit (P17 Hash-Chain), Rate-Caps und Tenant-Allowlists.
+* **Docker MicroVM Sandboxes (Option 2 - P15):** Der PGE-Trinity Executor führt risikobehaftete Tool-Calls und Code-Generierungen (Risikoklassen `YELLOW` und `ORANGE`) in ephemeren, hochisolierten Docker MicroVM Sandboxes aus. Der Host wird vor Schadcode, File-Tampering und Memory-Overload geschützt.
+
 ---
 
 ## 14. Skill-Loop im Detail
@@ -3311,7 +3318,17 @@ git show roadmap/2026-08-03-p4-email-invoices --stat
 - **LiteLLM Container:** Container neu gestartet mit `OLLAMA_API_BASE=http://192.168.178.116:11434/v1`, Inferenz ist online und erreichbar.
 - **Regressionstest:** `test_ollama_monster_host_configuration()` in `tests/test_local_monster_models_regression.py` ergänzt.
 
+## Stand & Changelog (2026-08-13 — Docker MCP Catalog & MicroVM Sandboxes)
+
+- **Release-Tag:** `roadmap/2026-08-13-p1-docker-mcp-sandbox` — siehe [docs/22-RELEASE-TAGS.md](docs/22-RELEASE-TAGS.md) und [docs/23-DOCKER-MCP-SANDBOX-INTEGRATION.md](docs/23-DOCKER-MCP-SANDBOX-INTEGRATION.md).
+- **Docker MCP Catalog Adapter (Option 1 - P5):** `core/mcp_gateway/adapters/docker_adapter.py` integriert 300+ containerisierte MCP-Server aus dem Docker Catalog unter Beibehaltung des VIRKI P17 Hash-Audits und Tenant-Allowlists.
+- **PGE Trinity Sandbox Executor (Option 2 - P15):** `core/orchestrator/sandbox_executor.py` führt risikobehaftete Tools/Skripte (Risikoklassen `YELLOW` und `ORANGE`) in ephemeren, hochisolierten Docker MicroVM Sandboxes aus. Risikoklasse `RED` wird vom Gatekeeper blockiert.
+- **Erweiterte Testsuite:** `tests/test_mcp_docker.py`, `tests/test_sandbox_executor.py` und `tests/test_docker_integration_edge_cases.py` (227 Pytests + 19 Memory Cases + 7 Compute Cases = 100% PASS).
+
+---
+
 ## Stand & Changelog (2026-08-04 — Portfolio V2 & 4-Säulen-Lagebild)
+
 
 - **Portfolio-Daten (`portfolio-db.ts`):** Legacy `studentenprojekt` durch **`studentenprojekt_v2`** ersetzt — Pfade, Dokumente und Meilensteine entlang des 4-Säulen-Modells; WAQAM-Board-Abhängigkeit aktualisiert.
 - **Console `/portfolio`:** UI-Überarbeitung — Prioritäts-Kacheln als Filter, Spotlight für `studentenprojekt_v2`, gruppierte Projekt-Sektionen (Prio 1 / 2&3 / Continuous), Karten-Grid mit Meilenstein-Fortschritt und einklappbaren Dokument-Links.

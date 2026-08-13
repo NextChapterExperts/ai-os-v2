@@ -40,8 +40,10 @@ git push origin roadmap/2026-08-03-p4-email-invoices
 
 | Tag | Datum | Roadmap | Kurzbeschreibung | Commit |
 |-----|-------|---------|------------------|--------|
+| `roadmap/2026-08-13-p1-docker-mcp-sandbox` | 2026-08-13 | §13.3, P5, P15 | Docker MCP Catalog & Gateway Adapter, Docker MicroVM Sandboxes für PGE Trinity Executor | *(siehe `git show`)* |
 | `roadmap/2026-08-08-p1-model-gateway-context-fix` | 2026-08-08 | §6, §11, P11/P12/P19 | Ollama 60s Timeout & qwen3.6:27b Model Fix, Console UI Kontext-Länge & Link Restoration, FTS5 Stop-Word Filter & CAP Search Verification | *(siehe `git show`)* |
 | `roadmap/2026-08-03-p4-email-invoices` | 2026-08-03 | §9.3, §13 (mail MCP), §6b (Gemini-Drive teilw.), Gate 6–12 | Google-Plattformkern, email-agent, Console `/agents`, PDF/OCR-Extraktion, Backfill-Skript | *(siehe `git show`)* |
+
 
 ---
 
