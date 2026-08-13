@@ -2,6 +2,30 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import {
+  IconSearch,
+  IconShieldCheck,
+  IconGlobe,
+  IconBrain,
+  IconBolt,
+  IconMicroscope,
+  IconRocket,
+  IconLock,
+  IconFileText,
+  IconBook,
+  IconZoomCode,
+  IconExternalLink,
+  IconX,
+  IconRefresh,
+  IconDeviceFloppy,
+  IconBulb,
+  IconMessageDots,
+  IconLoader2,
+  IconSparkles,
+  IconCpu,
+  IconCheck,
+  IconInfoCircle,
+} from "@tabler/icons-react";
 
 interface SourceItem {
   title: string;
@@ -34,15 +58,15 @@ interface ResearchResponse {
 }
 
 const LAGEBILD_MODELS = [
-  { id: "auto", label: "✨ Auto-Router (Smart)", desc: "Analysiert Intent & wählt automatisch das optimale Monster-Modell" },
+  { id: "auto", label: "Auto-Router (Smart)", desc: "Analysiert Intent & wählt automatisch das optimale Monster-Modell" },
   { id: "qwen2.5-coder:14b", label: "Qwen 2.5 Coder 14B (Souverän & Schnelligkeit)", desc: "Ultra-schnelle lokale Inferenz (0.35s VRAM-Hit), Code, JSON & Tool-Calling" },
   { id: "deepseek-r1:32b", label: "DeepSeek-R1 32B (Reasoning & Logik)", desc: "Logik, Reasoning & komplexe Problemlösung (128k Kontext)" },
   { id: "mistral-nemo:12b", label: "Mistral Nemo 12B (Deutsche Texte)", desc: "E-Mails, Blogs & deutsche Texte (128k Kontext)" },
   { id: "hermes3:8b", label: "Hermes 3 8B (Multi-Agent)", desc: "Multi-Agenten Orchestrierung & Tool-Calling" },
   { id: "llama3.2-vision:11b", label: "Llama 3.2 Vision 11B (Vision/PDF)", desc: "OCR, Bild-, PDF- & Dokumentenanalyse" },
-  { id: "openrouter/balanced", label: "☁️ OpenRouter Cloud (Balanced)", desc: "Nemotron Super 120B — OpenRouter Cloud (262K Kontext)" },
-  { id: "openrouter/premium", label: "☁️ OpenRouter Cloud (Premium)", desc: "Nemotron Ultra 550B / Claude 3.5 — OpenRouter Frontier (1M Kontext)" },
-  { id: "openrouter/coding", label: "☁️ OpenRouter Cloud (Coding)", desc: "Qwen 2.5 Coder 32B Instruct — Agentic Coding" },
+  { id: "openrouter/balanced", label: "OpenRouter Cloud (Balanced)", desc: "Nemotron Super 120B — OpenRouter Cloud (262K Kontext)" },
+  { id: "openrouter/premium", label: "OpenRouter Cloud (Premium)", desc: "Nemotron Ultra 550B / Claude 3.5 — OpenRouter Frontier (1M Kontext)" },
+  { id: "openrouter/coding", label: "OpenRouter Cloud (Coding)", desc: "Qwen 2.5 Coder 32B Instruct — Agentic Coding" },
 ];
 
 function cleanTextSnippet(text?: string): string {
@@ -50,6 +74,9 @@ function cleanTextSnippet(text?: string): string {
   let s = String(text);
   s = s.replace(/<(script|style|svg)[^>]*>[\s\S]*?<\/\1>/gi, "");
   s = s.replace(/<[^>]+>/g, " ");
+  s = s.replace(/(?:var|let|const|function)\s+\w+\s*=.*?;/g, " ");
+  s = s.replace(/&\w+;/g, " ");
+  s = s.replace(/\s+/g, " ").trim();
   return s;
 }
 
@@ -69,8 +96,8 @@ function SourcePreviewModal({
         {/* Modal Header */}
         <div className="px-6 py-4 border-b border-[var(--line)] bg-[color-mix(in_oklab,white_95%,var(--ink))] flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-[color-mix(in_oklab,var(--signal)_12%,white)] border border-[var(--signal)] flex items-center justify-center text-lg shrink-0">
-              {isWeb ? "🌐" : "🧠"}
+            <div className="w-9 h-9 rounded-xl bg-[color-mix(in_oklab,var(--signal)_12%,white)] border border-[var(--signal)] flex items-center justify-center shrink-0">
+              {isWeb ? <IconGlobe size={20} className="text-[var(--signal)]" /> : <IconBrain size={20} className="text-[var(--signal)]" />}
             </div>
             <div className="min-w-0">
               <h3 className="text-sm font-bold text-[var(--ink)] m-0 truncate">
@@ -85,17 +112,19 @@ function SourcePreviewModal({
                 href={source.url}
                 target="_blank"
                 rel="noreferrer"
-                className="px-3.5 py-1.5 rounded-xl bg-[var(--signal)] text-white text-xs font-bold font-mono no-underline hover:opacity-90 transition-all flex items-center gap-1"
+                className="px-3.5 py-1.5 rounded-xl bg-[var(--signal)] text-white text-xs font-bold font-mono no-underline hover:opacity-90 transition-all inline-flex items-center gap-1.5"
               >
-                <span>Extern im Tab öffnen</span> ↗
+                <span>Extern im Tab öffnen</span>
+                <IconExternalLink size={14} />
               </a>
             )}
             <button
               type="button"
               onClick={onClose}
-              className="px-3.5 py-1.5 rounded-xl border border-[var(--line)] bg-white text-xs font-bold font-mono text-[var(--ink)] hover:bg-slate-100 transition-all cursor-pointer"
+              className="px-3.5 py-1.5 rounded-xl border border-[var(--line)] bg-white text-xs font-bold font-mono text-[var(--ink)] hover:bg-slate-100 transition-all cursor-pointer inline-flex items-center gap-1"
             >
-              ✕ Schließen
+              <IconX size={14} />
+              <span>Schließen</span>
             </button>
           </div>
         </div>
@@ -105,7 +134,8 @@ function SourcePreviewModal({
           <div className="p-4 rounded-xl bg-[color-mix(in_oklab,white_96%,var(--ink))] border border-[var(--line)] space-y-2">
             <div className="flex items-center justify-between text-xs font-mono">
               <span className="font-bold text-[var(--signal)] flex items-center gap-1.5">
-                <span>{isWeb ? "🌐 Web-Quelle (SearXNG Egress)" : "🧠 Company Brain Asset"}</span>
+                {isWeb ? <IconGlobe size={15} /> : <IconBrain size={15} />}
+                <span>{isWeb ? "Web-Quelle (SearXNG Egress)" : "Company Brain Asset"}</span>
               </span>
               <span className="muted">Vertrauen: {source.trust_score ? Math.round(source.trust_score * 100) : 88}%</span>
             </div>
@@ -118,14 +148,18 @@ function SourcePreviewModal({
           {isWeb ? (
             <div className="space-y-2">
               <div className="px-4 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center justify-between gap-2">
-                <span>ℹ️ <strong>Firefox / Browser-Hinweis:</strong> Falls die Zielwebsite das Einbetten im Pop-up blockiert (X-Frame-Options), nutzen Sie den Button:</span>
+                <span className="inline-flex items-center gap-1.5">
+                  <IconInfoCircle size={16} className="text-amber-700 shrink-0" />
+                  <span><strong>Firefox / Browser-Hinweis:</strong> Falls die Zielwebsite das Einbetten im Pop-up blockiert (X-Frame-Options), nutzen Sie den Button:</span>
+                </span>
                 <a
                   href={source.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-3 py-1 rounded-lg bg-[var(--signal)] text-white text-xs font-bold font-mono no-underline hover:opacity-90 transition-all shrink-0"
+                  className="px-3 py-1 rounded-lg bg-[var(--signal)] text-white text-xs font-bold font-mono no-underline hover:opacity-90 transition-all shrink-0 inline-flex items-center gap-1"
                 >
-                  Direkt im Tab öffnen ↗
+                  <span>Direkt im Tab öffnen</span>
+                  <IconExternalLink size={14} />
                 </a>
               </div>
               <div className="w-full h-[430px] rounded-xl border border-[var(--line)] overflow-hidden bg-slate-100 relative">
@@ -138,8 +172,9 @@ function SourcePreviewModal({
               </div>
             </div>
           ) : (
-            <div className="p-8 text-center muted text-xs font-mono border border-dashed border-[var(--line)] rounded-xl">
-              🧠 Dies ist ein internes Dokument aus dem Company Brain. Der Inhalt wurde ausgewertet und im Recherchebericht synthetisiert.
+            <div className="p-8 text-center muted text-xs font-mono border border-dashed border-[var(--line)] rounded-xl flex items-center justify-center gap-2">
+              <IconBrain size={18} />
+              <span>Dies ist ein internes Dokument aus dem Company Brain. Der Inhalt wurde ausgewertet und im Recherchebericht synthetisiert.</span>
             </div>
           )}
         </div>
@@ -230,10 +265,10 @@ function renderMarkdownReport(text: string, sources: SourceItem[] = [], onSelect
 
 
 const RESEARCH_STEPS = [
-  { label: "Rechercheauftrag analysieren & Entitäten extrahieren", icon: "🔍", percent: 20 },
-  { label: "Anonymisierte Web- & SearXNG-Egress-Recherche ausführen", icon: "🌐", percent: 50 },
-  { label: "Unternehmensgedächtnis (Company Brain) durchsuchen & evaluieren", icon: "🧠", percent: 75 },
-  { label: "Ergebnisse synthetisieren & In-Text Citations formatieren", icon: "📄", percent: 95 },
+  { label: "Rechercheauftrag analysieren & Entitäten extrahieren", icon: IconSearch, percent: 20 },
+  { label: "Anonymisierte Web- & SearXNG-Egress-Recherche ausführen", icon: IconGlobe, percent: 50 },
+  { label: "Unternehmensgedächtnis (Company Brain) durchsuchen & evaluieren", icon: IconBrain, percent: 75 },
+  { label: "Ergebnisse synthetisieren & In-Text Citations formatieren", icon: IconFileText, percent: 95 },
 ];
 
 export function ResearchAgentModal({
@@ -263,25 +298,24 @@ export function ResearchAgentModal({
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-
-  const hasAutoStarted = useRef(false);
+  const isAutoExecutingRef = useRef(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    if (isOpen && initialQuery && initialQuery.trim() && !hasAutoStarted.current) {
-      hasAutoStarted.current = true;
-      setQuery(initialQuery);
-      // Auto-trigger research on modal open using initialQuery directly
-      executeResearch(false, false, initialQuery);
-    }
-    if (!isOpen) {
-      hasAutoStarted.current = false;
+    if (isOpen && initialQuery && initialQuery.trim() && !result && !loading && !isAutoExecutingRef.current) {
+      isAutoExecutingRef.current = true;
+      executeResearch(false, false, initialQuery.trim());
     }
   }, [isOpen, initialQuery]);
 
+  useEffect(() => {
+    if (!isOpen) {
+      isAutoExecutingRef.current = false;
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -297,29 +331,36 @@ export function ResearchAgentModal({
   if (!isOpen || !mounted) return null;
 
   const executeResearch = async (isRefinement = false, saveToBrain = false, queryOverride?: string) => {
-    const activeQuery = (queryOverride !== undefined ? queryOverride : query).trim();
+    const activeQuery = (queryOverride || (isRefinement ? query : query.trim())).trim();
     if (!activeQuery) return;
 
-    const currentRefinement = refinementText.trim();
+    if (queryOverride) {
+      setQuery(queryOverride);
+    }
+
     setLoading(true);
     setError(null);
     setProgressStep(0);
-    setProgressPercent(15);
-    if (!isRefinement) setSaveStatus(null);
+    setProgressPercent(10);
 
-    // Live Step Timer for Progress Bar Feedback
-    let stepCount = 0;
     const progressTimer = setInterval(() => {
-      stepCount++;
-      if (stepCount < RESEARCH_STEPS.length) {
-        setProgressStep(stepCount);
-        setProgressPercent(RESEARCH_STEPS[stepCount].percent);
-      } else {
-        setProgressPercent((prev) => Math.min(prev + 2, 96));
-      }
-    }, 2800);
+      setProgressPercent((prev) => {
+        if (prev >= 90) {
+          clearInterval(progressTimer);
+          return 90;
+        }
+        const next = prev + Math.floor(Math.random() * 15) + 5;
+        if (next >= 30 && next < 60) setProgressStep(1);
+        else if (next >= 60 && next < 85) setProgressStep(2);
+        else if (next >= 85) setProgressStep(3);
+        return Math.min(next, 90);
+      });
+    }, 600);
 
     try {
+      const currentRefinement = isRefinement ? refinementText.trim() : undefined;
+      const effectiveQuery = currentRefinement ? `${activeQuery} ${currentRefinement}` : activeQuery;
+
       const res = await fetch("/api/dispatch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -327,20 +368,20 @@ export function ResearchAgentModal({
           intent: "research",
           tenant_id: "nextchapter",
           params: {
-            query: activeQuery,
+            query: effectiveQuery,
             depth,
             model: selectedModel,
             compute_mode: computeMode,
             anonymize,
-            refinement_feedback: isRefinement ? currentRefinement : undefined,
+            refinement_feedback: currentRefinement,
             save_to_brain: saveToBrain,
           },
         }),
       });
 
       clearInterval(progressTimer);
-      setProgressStep(4);
       setProgressPercent(100);
+      setProgressStep(3);
 
       const data = await res.json().catch(() => ({}));
 
@@ -371,9 +412,9 @@ export function ResearchAgentModal({
 
       if (isRefinement && currentRefinement) {
         setRefinementText("");
-        setSaveStatus(`✅ Verfeinerung angewendet: „${currentRefinement}“`);
+        setSaveStatus(`Verfeinerung angewendet: „${currentRefinement}“`);
       } else if (saveToBrain || data.saved_to_brain) {
-        setSaveStatus("✅ Im Unternehmensgedächtnis (Company Brain) gespeichert!");
+        setSaveStatus("Im Unternehmensgedächtnis (Company Brain) gespeichert!");
       }
     } catch (err: unknown) {
       clearInterval(progressTimer);
@@ -415,8 +456,8 @@ export function ResearchAgentModal({
       {/* Top Header Toolbar */}
       <header className="px-8 py-4 border-b border-[var(--line)] bg-white flex items-center justify-between gap-4 shrink-0 shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[color-mix(in_oklab,var(--signal)_10%,white)] border border-[var(--signal)] flex items-center justify-center text-xl">
-            🔎
+          <div className="w-10 h-10 rounded-xl bg-[color-mix(in_oklab,var(--signal)_10%,white)] border border-[var(--signal)] flex items-center justify-center shrink-0">
+            <IconSearch size={22} className="text-[var(--signal)]" />
           </div>
           <div>
             <h1 className="text-lg font-bold text-[var(--ink)] m-0 leading-tight">
@@ -429,13 +470,18 @@ export function ResearchAgentModal({
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="badge" data-variant={anonymize ? "curated" : "raw"}>
-            {anonymize ? "🛡️ SearXNG Proxy Aktiv" : "🌐 Direkt-Modus"}
+          <span
+            className="badge inline-flex items-center gap-1.5"
+            data-variant={anonymize ? "curated" : "raw"}
+          >
+            {anonymize ? <IconShieldCheck size={14} /> : <IconGlobe size={14} />}
+            <span>{anonymize ? "SearXNG Proxy Aktiv" : "Direkt-Modus"}</span>
           </span>
 
           {saveStatus && (
-            <span className="badge" data-variant="ok">
-              {saveStatus}
+            <span className="badge inline-flex items-center gap-1" data-variant="ok">
+              <IconCheck size={14} />
+              <span>{saveStatus}</span>
             </span>
           )}
 
@@ -443,28 +489,31 @@ export function ResearchAgentModal({
             <button
               type="button"
               onClick={handleNewResearch}
-              className="px-4 py-2 rounded-xl text-xs font-bold border border-[var(--line)] bg-white text-[var(--ink)] hover:bg-[color-mix(in_oklab,white_90%,var(--ink))] transition-all"
+              className="px-4 py-2 rounded-xl text-xs font-bold border border-[var(--line)] bg-white text-[var(--ink)] hover:bg-[color-mix(in_oklab,white_90%,var(--ink))] transition-all inline-flex items-center gap-1.5"
             >
-              🔄 Neue Recherche
+              <IconRefresh size={14} />
+              <span>Neue Recherche</span>
             </button>
           )}
 
-          {/* Primary Action Button (VIRKI Signal Blue, NO pitch black) */}
+          {/* Primary Action Button */}
           <button
             type="button"
             onClick={handleSaveAndClose}
-            className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[var(--signal)] text-white hover:opacity-90 transition-all shadow-xs flex items-center gap-2 cursor-pointer border-none"
+            className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[var(--signal)] text-white hover:opacity-90 transition-all shadow-xs inline-flex items-center gap-2 cursor-pointer border-none"
           >
-            💾 Speichern & Schließen
+            <IconDeviceFloppy size={16} />
+            <span>Speichern & Schließen</span>
           </button>
 
           {/* Close Action */}
           <button
             type="button"
             onClick={onClose}
-            className="btn-ghost text-xs mono px-3"
+            className="btn-ghost text-xs mono px-3 inline-flex items-center gap-1"
           >
-            ✕ Schließen
+            <IconX size={14} />
+            <span>Schließen</span>
           </button>
         </div>
       </header>
@@ -475,8 +524,8 @@ export function ResearchAgentModal({
           /* Initial State: Clean Centered Input Hero Layout */
           <div className="max-w-3xl mx-auto py-12 px-6 space-y-8 flex flex-col items-center justify-center min-h-[calc(100vh-140px)]">
             <div className="text-center space-y-2">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[color-mix(in_oklab,var(--signal)_12%,white)] border border-[var(--signal)] text-3xl mb-2">
-                🔎
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[color-mix(in_oklab,var(--signal)_12%,white)] border border-[var(--signal)] mb-2">
+                <IconSearch size={32} className="text-[var(--signal)]" />
               </div>
               <h2 className="text-2xl font-bold text-[var(--ink)] m-0">
                 Was möchten Sie recherchieren?
@@ -520,8 +569,9 @@ export function ResearchAgentModal({
                     ))}
                   </select>
                   {currentModelMeta && (
-                    <p className="text-[11px] text-[var(--ink-soft)] italic m-0 pt-0.5 leading-snug">
-                      💡 {currentModelMeta.desc}
+                    <p className="text-[11px] text-[var(--ink-soft)] italic m-0 pt-0.5 leading-snug flex items-center gap-1">
+                      <IconBulb size={13} className="text-[var(--signal)] shrink-0" />
+                      <span>{currentModelMeta.desc}</span>
                     </p>
                   )}
                 </div>
@@ -535,59 +585,48 @@ export function ResearchAgentModal({
                     <button
                       type="button"
                       onClick={() => setDepth("quick")}
-                      className={`flex-1 text-xs py-2.5 font-bold rounded-lg transition-all ${
+                      className={`flex-1 text-xs py-2.5 font-bold rounded-lg transition-all inline-flex items-center justify-center gap-1.5 ${
                         depth === "quick"
                           ? "bg-[var(--signal)] text-white shadow-xs"
                           : "text-[var(--ink-soft)] hover:text-[var(--ink)]"
                       }`}
                     >
-                      ⚡ Quick (30s)
+                      <IconBolt size={14} />
+                      <span>Quick (30s)</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setDepth("deep")}
-                      className={`flex-1 text-xs py-2.5 font-bold rounded-lg transition-all ${
+                      className={`flex-1 text-xs py-2.5 font-bold rounded-lg transition-all inline-flex items-center justify-center gap-1.5 ${
                         depth === "deep"
                           ? "bg-[var(--signal)] text-white shadow-xs"
                           : "text-[var(--ink-soft)] hover:text-[var(--ink)]"
                       }`}
                     >
-                      🔬 Deep (Multi-Hop)
+                      <IconMicroscope size={14} />
+                      <span>Deep (Multi-Hop)</span>
                     </button>
                   </div>
                 </div>
 
-                {/* Compute Mode */}
-                <div className="space-y-2 text-left">
-                  <label className="mono text-[11px] uppercase muted font-bold block tracking-wider">
-                    Compute-Modus
-                  </label>
-                  <select
-                    value={computeMode}
-                    onChange={(e) => setComputeMode(e.target.value)}
-                    className="w-full p-3 rounded-xl border border-[var(--line)] bg-white text-xs font-mono text-[var(--ink)] focus:outline-none"
-                  >
-                    <option value="sovereign">Sovereign (Lokal LAN)</option>
-                    <option value="balanced">Balanced Hybrid</option>
-                    <option value="premium">Premium Cloud API</option>
-                  </select>
-                </div>
-
                 {/* Anonymization Toggle */}
-                <div className="space-y-2 text-left">
+                <div className="space-y-2 text-left md:col-span-2">
                   <label className="mono text-[11px] uppercase muted font-bold block tracking-wider">
                     Anonymisierung & IP-Schutz
                   </label>
                   <button
                     type="button"
                     onClick={() => setAnonymize(!anonymize)}
-                    className={`w-full p-3 rounded-xl border text-xs font-mono text-left flex items-center justify-between transition-all ${
+                    className={`w-full p-3.5 rounded-xl border text-xs font-mono text-left flex items-center justify-between transition-all cursor-pointer ${
                       anonymize
                         ? "border-[var(--signal)] bg-[color-mix(in_oklab,var(--signal)_8%,white)] text-[var(--ink)]"
                         : "border-[var(--line)] bg-white muted"
                     }`}
                   >
-                    <span>{anonymize ? "🛡️ SearXNG Proxy: Aktiv" : "🌐 Direkt-Modus"}</span>
+                    <span className="inline-flex items-center gap-2">
+                      {anonymize ? <IconShieldCheck size={18} className="text-[var(--signal)]" /> : <IconGlobe size={18} />}
+                      <span>{anonymize ? "SearXNG Proxy: Aktiv (IP verborgen)" : "Direkt-Modus (Ohne Proxy)"}</span>
+                    </span>
                     <span className="badge" data-variant={anonymize ? "curated" : "raw"}>
                       {anonymize ? "Anonym" : "Direkt"}
                     </span>
@@ -596,8 +635,9 @@ export function ResearchAgentModal({
               </div>
 
               {error && (
-                <div className="p-4 rounded-xl border border-[var(--danger)] bg-[color-mix(in_oklab,var(--danger)_10%,white)] text-[var(--danger)] text-xs mono">
-                  ❌ Fehler: {error}
+                <div className="p-4 rounded-xl border border-[var(--danger)] bg-[color-mix(in_oklab,var(--danger)_10%,white)] text-[var(--danger)] text-xs mono flex items-center gap-2">
+                  <IconX size={16} />
+                  <span>Fehler: {error}</span>
                 </div>
               )}
 
@@ -606,12 +646,12 @@ export function ResearchAgentModal({
                 <div className="w-full bg-white p-8 rounded-2xl border border-[var(--signal)] shadow-md space-y-6 text-left">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-[color-mix(in_oklab,var(--signal)_12%,white)] border border-[var(--signal)] flex items-center justify-center text-xl animate-spin">
-                        ⏳
+                      <div className="w-10 h-10 rounded-xl bg-[color-mix(in_oklab,var(--signal)_12%,white)] border border-[var(--signal)] flex items-center justify-center">
+                        <IconLoader2 size={22} className="animate-spin text-[var(--signal)]" />
                       </div>
                       <div>
                         <h3 className="text-base font-bold text-[var(--ink)] m-0 flex items-center gap-2">
-                          <span>🤖 Autonomer Recherche-Agent arbeitet…</span>
+                          <span>Autonomer Recherche-Agent arbeitet…</span>
                         </h3>
                         <p className="text-xs text-[var(--signal)] font-mono font-bold m-0 pt-0.5">
                           {RESEARCH_STEPS[Math.min(progressStep, 3)]?.label}
@@ -636,6 +676,7 @@ export function ResearchAgentModal({
                     {RESEARCH_STEPS.map((s, sIdx) => {
                       const isDone = sIdx < progressStep;
                       const isCurrent = sIdx === progressStep;
+                      const StepIcon = s.icon;
                       return (
                         <div
                           key={sIdx}
@@ -647,7 +688,13 @@ export function ResearchAgentModal({
                               : "border-[var(--line)] bg-white text-[var(--ink-soft)] opacity-40"
                           }`}
                         >
-                          <span className="text-sm">{isDone ? "✅" : isCurrent ? "🔄" : "⚪"}</span>
+                          {isDone ? (
+                            <IconCheck size={16} className="text-emerald-600 shrink-0" />
+                          ) : isCurrent ? (
+                            <IconLoader2 size={16} className="animate-spin text-[var(--signal)] shrink-0" />
+                          ) : (
+                            <StepIcon size={16} className="shrink-0 muted" />
+                          )}
                           <span className="truncate">{s.label}</span>
                         </div>
                       );
@@ -655,20 +702,26 @@ export function ResearchAgentModal({
                   </div>
 
                   <div className="pt-3 flex flex-wrap items-center justify-between text-[11px] font-mono muted border-t border-[var(--line)] gap-2">
-                    <span>🛡️ SearXNG Proxy: {anonymize ? "Aktiv (IP-Schutz)" : "Direkt"}</span>
-                    <span>🧠 Modell: {selectedModel}</span>
-                    <span>⚡ Compute: {computeMode}</span>
+                    <span className="inline-flex items-center gap-1">
+                      <IconShieldCheck size={13} />
+                      <span>SearXNG Proxy: {anonymize ? "Aktiv (IP-Schutz)" : "Direkt"}</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <IconCpu size={13} />
+                      <span>Modell: {selectedModel}</span>
+                    </span>
                   </div>
                 </div>
               ) : (
-                /* Centered Big Start Button (VIRKI Signal Blue, ZERO black) */
+                /* Centered Big Start Button */
                 <button
                   type="button"
                   disabled={!query.trim()}
                   onClick={() => executeResearch(false)}
                   className="w-full py-4 rounded-xl text-base font-bold bg-[var(--signal)] text-white hover:opacity-90 transition-all shadow-md cursor-pointer border-none flex items-center justify-center gap-2"
                 >
-                  🚀 Recherche Jetzt Starten
+                  <IconRocket size={20} />
+                  <span>Recherche Jetzt Starten</span>
                 </button>
               )}
             </div>
@@ -677,8 +730,9 @@ export function ResearchAgentModal({
           /* Result View Layout: Full-Width Centered Reader Layout */
           <div className="max-w-5xl mx-auto py-10 px-8 space-y-8">
             {error && (
-              <div className="p-4 rounded-xl border border-[var(--danger)] bg-[color-mix(in_oklab,var(--danger)_10%,white)] text-[var(--danger)] text-xs mono">
-                ❌ Fehler: {error}
+              <div className="p-4 rounded-xl border border-[var(--danger)] bg-[color-mix(in_oklab,var(--danger)_10%,white)] text-[var(--danger)] text-xs mono flex items-center gap-2">
+                <IconX size={16} />
+                <span>Fehler: {error}</span>
               </div>
             )}
 
@@ -710,9 +764,10 @@ export function ResearchAgentModal({
                 <button
                   type="button"
                   onClick={() => setShowPromptInspector(!showPromptInspector)}
-                  className="px-3 py-1.5 rounded-lg border border-[var(--signal)] bg-[color-mix(in_oklab,var(--signal)_10%,white)] text-xs mono text-[var(--signal)] font-bold hover:bg-[var(--signal)] hover:text-white transition-all"
+                  className="px-3 py-1.5 rounded-lg border border-[var(--signal)] bg-[color-mix(in_oklab,var(--signal)_10%,white)] text-xs mono text-[var(--signal)] font-bold hover:bg-[var(--signal)] hover:text-white transition-all inline-flex items-center gap-1.5"
                 >
-                  📄 Prompt Inspektor
+                  <IconFileText size={14} />
+                  <span>Prompt Inspektor</span>
                 </button>
               </div>
             </div>
@@ -721,14 +776,15 @@ export function ResearchAgentModal({
             <div className="p-6 rounded-2xl border border-[var(--signal)] bg-[color-mix(in_oklab,var(--signal)_5%,white)] space-y-2 shadow-xs flex flex-wrap items-center justify-between gap-4">
               <div>
                 <span className="mono text-[11px] uppercase text-[var(--signal)] font-bold tracking-wider block mb-1">
-                  🤖 Autonomer Deep Research Bericht
+                  Autonomer Deep Research Bericht
                 </span>
                 <h2 className="text-xl font-bold text-[var(--ink)] m-0 leading-snug">
                   {query}
                 </h2>
               </div>
-              <span className="badge" data-variant="ok">
-                ⚡ Autonom Ausgewertet
+              <span className="badge inline-flex items-center gap-1" data-variant="ok">
+                <IconCheck size={14} />
+                <span>Autonom Ausgewertet</span>
               </span>
             </div>
 
@@ -736,7 +792,8 @@ export function ResearchAgentModal({
             <div className="p-8 rounded-2xl border border-[var(--line)] bg-white space-y-6 shadow-sm">
               <div className="flex items-center justify-between border-b border-[var(--line)] pb-4">
                 <h2 className="section-title text-xl font-bold text-[var(--ink)] m-0 flex items-center gap-2">
-                  <span>📄</span> Forschungsbericht & Synthese
+                  <IconFileText size={22} className="text-[var(--signal)]" />
+                  <span>Forschungsbericht & Synthese</span>
                 </h2>
                 <span className="text-xs mono muted">
                   Vertrauen: {result.confidence ? Math.round(result.confidence * 100) : 92}%
@@ -750,8 +807,9 @@ export function ResearchAgentModal({
 
               {result.sub_questions && result.sub_questions.length > 0 && (
                 <div className="pt-4 border-t border-[var(--line)] space-y-2">
-                  <h3 className="mono text-[11px] uppercase muted font-bold tracking-wider">
-                    Analysierte Forschungsstränge & Teilhypothesen:
+                  <h3 className="mono text-[11px] uppercase muted font-bold tracking-wider flex items-center gap-1.5">
+                    <IconBulb size={15} className="text-[var(--signal)]" />
+                    <span>Analysierte Forschungsstränge & Teilhypothesen:</span>
                   </h3>
                   <ul className="space-y-1.5 m-0 p-0 list-none">
                     {result.sub_questions.map((q, idx) => (
@@ -769,14 +827,16 @@ export function ResearchAgentModal({
                 <div className="flex items-center justify-between border-b border-[var(--line)] pb-4">
                   <div>
                     <h2 className="section-title text-lg font-bold text-[var(--ink)] m-0 flex items-center gap-2">
-                      <span>📖</span> Evaluierte Quellen & Nachweise ({result.sources.length})
+                      <IconBook size={20} className="text-[var(--signal)]" />
+                      <span>Evaluierte Quellen & Nachweise ({result.sources.length})</span>
                     </h2>
                     <p className="text-xs muted m-0 mt-0.5 font-sans">
                       Klicken Sie auf den Vorschau-Button einer Quelle, um den Inhalt im In-App Pop-up zu öffnen.
                     </p>
                   </div>
-                  <span className="badge" data-variant={result.anonymity_active ? "curated" : "raw"}>
-                    {result.anonymity_active ? "🛡️ SearXNG Proxy Aktiv" : "🌐 Direkt"}
+                  <span className="badge inline-flex items-center gap-1" data-variant={result.anonymity_active ? "curated" : "raw"}>
+                    {result.anonymity_active ? <IconShieldCheck size={14} /> : <IconGlobe size={14} />}
+                    <span>{result.anonymity_active ? "SearXNG Proxy Aktiv" : "Direkt"}</span>
                   </span>
                 </div>
 
@@ -800,8 +860,9 @@ export function ResearchAgentModal({
                             <span className="font-bold text-sm text-[var(--ink)] truncate">
                               {src.title || "Recherche-Quelle"}
                             </span>
-                            <span className="badge" data-variant={isWeb ? "curated" : "graph"}>
-                              {isWeb ? "🌐 Web" : "🧠 Brain"}
+                            <span className="badge inline-flex items-center gap-1" data-variant={isWeb ? "curated" : "graph"}>
+                              {isWeb ? <IconGlobe size={12} /> : <IconBrain size={12} />}
+                              <span>{isWeb ? "Web" : "Brain"}</span>
                             </span>
                             <span className="text-[11px] font-mono muted">
                               Vertrauen: {trustScore}%
@@ -816,19 +877,20 @@ export function ResearchAgentModal({
                           <button
                             type="button"
                             onClick={() => setActivePreviewSource(src)}
-                            className="px-4 py-2 rounded-xl bg-[color-mix(in_oklab,var(--signal)_10%,white)] border border-[var(--signal)] text-[var(--signal)] font-bold text-xs hover:bg-[var(--signal)] hover:text-white transition-all cursor-pointer flex items-center gap-1.5"
+                            className="px-4 py-2 rounded-xl bg-[color-mix(in_oklab,var(--signal)_10%,white)] border border-[var(--signal)] text-[var(--signal)] font-bold text-xs hover:bg-[var(--signal)] hover:text-white transition-all cursor-pointer inline-flex items-center gap-1.5"
                           >
-                            <span>🔍 Vorschau (Pop-up)</span>
+                            <IconZoomCode size={15} />
+                            <span>Vorschau (Pop-up)</span>
                           </button>
                           {src.url && isWeb && (
                             <a
                               href={src.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="px-3 py-2 rounded-xl border border-[var(--line)] bg-white text-[var(--ink)] font-bold text-xs hover:bg-slate-100 transition-all no-underline shrink-0"
+                              className="px-3 py-2 rounded-xl border border-[var(--line)] bg-white text-[var(--ink)] font-bold text-xs hover:bg-slate-100 transition-all no-underline shrink-0 inline-flex items-center justify-center"
                               title="In neuem Tab öffnen"
                             >
-                              <span>↗</span>
+                              <IconExternalLink size={15} />
                             </a>
                           )}
                         </div>
@@ -844,7 +906,8 @@ export function ResearchAgentModal({
             <div className="p-8 rounded-2xl border border-[var(--line)] bg-[color-mix(in_oklab,var(--signal)_5%,white)] space-y-5 shadow-xs">
               <div className="space-y-1 text-left">
                 <h3 className="text-base font-bold text-[var(--ink)] m-0 flex items-center gap-2">
-                  <span>💬</span> Interaktiver Dialog & Vertiefung
+                  <IconMessageDots size={20} className="text-[var(--signal)]" />
+                  <span>Interaktiver Dialog & Vertiefung</span>
                 </h3>
                 <p className="text-xs muted m-0">
                   Wähle eine vorgeschlagene Vertiefungsfrage aus oder gib eigene Wünsche ein:
@@ -854,8 +917,9 @@ export function ResearchAgentModal({
               {/* WebUI Suggested Questions Chips */}
               {result.sub_questions && result.sub_questions.length > 0 && (
                 <div className="space-y-2 text-left">
-                  <label className="mono text-[11px] uppercase text-[var(--signal)] font-bold block tracking-wider">
-                    💡 Empfohlene Folgefragen (Klick zum Übernehmen):
+                  <label className="mono text-[11px] uppercase text-[var(--signal)] font-bold tracking-wider flex items-center gap-1">
+                    <IconBulb size={14} />
+                    <span>Empfohlene Folgefragen (Klick zum Übernehmen):</span>
                   </label>
                   <div className="flex flex-wrap gap-2 text-left">
                     {result.sub_questions.map((sq, sqIdx) => (
@@ -865,6 +929,7 @@ export function ResearchAgentModal({
                         onClick={() => handleSelectSuggestedQuestion(sq)}
                         className="px-3.5 py-2 rounded-xl border border-[color-mix(in_oklab,var(--signal)_30%,white)] bg-white hover:bg-[color-mix(in_oklab,var(--signal)_10%,white)] hover:border-[var(--signal)] text-xs text-[var(--ink)] font-sans font-medium transition-all text-left shadow-2xs cursor-pointer flex items-center gap-1.5"
                       >
+                        <IconBulb size={14} className="text-[var(--signal)] shrink-0" />
                         <span>{sq}</span>
                       </button>
                     ))}
@@ -886,9 +951,10 @@ export function ResearchAgentModal({
                   type="button"
                   disabled={loading || !refinementText.trim()}
                   onClick={() => executeResearch(true)}
-                  className="px-5 py-3.5 rounded-xl text-xs font-bold border border-[var(--signal)] bg-[var(--signal)] text-white hover:opacity-90 transition-all cursor-pointer shadow-xs"
+                  className="px-5 py-3.5 rounded-xl text-xs font-bold border border-[var(--signal)] bg-[var(--signal)] text-white hover:opacity-90 transition-all cursor-pointer shadow-xs inline-flex items-center gap-1.5"
                 >
-                  🚀 Verfeinern
+                  <IconSparkles size={16} />
+                  <span>Verfeinern</span>
                 </button>
               </div>
             </div>
@@ -897,13 +963,17 @@ export function ResearchAgentModal({
             {showPromptInspector && (
               <div className="p-8 rounded-2xl border border-[var(--line)] bg-white text-[var(--ink)] text-xs mono space-y-5 shadow-sm">
                 <div className="flex items-center justify-between border-b border-[var(--line)] pb-3">
-                  <h3 className="font-bold text-[var(--signal)] m-0 text-sm">📄 Prompt Inspektor Context</h3>
+                  <h3 className="font-bold text-[var(--signal)] m-0 text-sm flex items-center gap-2">
+                    <IconFileText size={16} />
+                    <span>Prompt Inspektor Context</span>
+                  </h3>
                   <button
                     type="button"
                     onClick={() => setShowPromptInspector(false)}
-                    className="btn-ghost text-xs mono"
+                    className="btn-ghost text-xs mono inline-flex items-center gap-1"
                   >
-                    ✕ Schließen
+                    <IconX size={14} />
+                    <span>Schließen</span>
                   </button>
                 </div>
 
@@ -939,10 +1009,13 @@ export function ResearchAgentModal({
 
       {/* Footer Bar */}
       <footer className="px-8 py-3.5 border-t border-[var(--line)] bg-white flex items-center justify-between shrink-0">
-        <span className="text-xs muted font-mono">
-          {result?.saved_to_brain
-            ? "✅ Ergebnisse im Unternehmensgedächtnis gesichert."
-            : "💾 Ergebnisse werden beim Schließen automatisch im Company Brain gespeichert."}
+        <span className="text-xs muted font-mono inline-flex items-center gap-1.5">
+          <IconDeviceFloppy size={14} className="text-emerald-600" />
+          <span>
+            {result?.saved_to_brain
+              ? "Ergebnisse im Unternehmensgedächtnis gesichert."
+              : "Ergebnisse werden beim Schließen automatisch im Company Brain gespeichert."}
+          </span>
         </span>
       </footer>
 

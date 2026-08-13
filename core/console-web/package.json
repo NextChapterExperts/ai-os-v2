@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@tabler/icons-react": "^3.46.0",
     "better-sqlite3": "^13.0.1",
     "next": "15.3.4",
     "react": "^19.0.0",

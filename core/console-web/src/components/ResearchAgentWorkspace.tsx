@@ -1,7 +1,29 @@
-"use client";
-
 import React, { useState } from "react";
 import { ResearchAgentModal } from "@/components/ResearchAgentModal";
+import {
+  IconSearch,
+  IconShieldCheck,
+  IconShieldOff,
+  IconGlobe,
+  IconBrain,
+  IconBolt,
+  IconMicroscope,
+  IconRocket,
+  IconLock,
+  IconLockOpen,
+  IconFileText,
+  IconBook,
+  IconZoomCode,
+  IconExternalLink,
+  IconX,
+  IconRefresh,
+  IconDeviceFloppy,
+  IconBulb,
+  IconMessageDots,
+  IconLoader2,
+  IconSparkles,
+  IconCpu,
+} from "@tabler/icons-react";
 
 interface SourceItem {
   title: string;
@@ -35,15 +57,15 @@ interface ResearchResponse {
 }
 
 const LAGEBILD_MODELS = [
-  { id: "auto", label: "✨ Auto-Router (Smart)", desc: "Analysiert Intent & wählt automatisch das optimale Monster-Modell" },
+  { id: "auto", label: "Auto-Router (Smart)", desc: "Analysiert Intent & wählt automatisch das optimale Monster-Modell" },
   { id: "qwen2.5-coder:14b", label: "Qwen 2.5 Coder 14B (Souverän & Schnelligkeit)", desc: "Ultra-schnelle lokale Inferenz (0.35s VRAM-Hit), Code, JSON & Tool-Calling" },
   { id: "deepseek-r1:32b", label: "DeepSeek-R1 32B (Reasoning & Logik)", desc: "Logik, Reasoning & komplexe Problemlösung (128k Kontext)" },
   { id: "mistral-nemo:12b", label: "Mistral Nemo 12B (Deutsche Texte)", desc: "E-Mails, Blogs & deutsche Texte (128k Kontext)" },
   { id: "hermes3:8b", label: "Hermes 3 8B (Multi-Agent)", desc: "Multi-Agenten Orchestrierung & Tool-Calling" },
   { id: "llama3.2-vision:11b", label: "Llama 3.2 Vision 11B (Vision/PDF)", desc: "OCR, Bild-, PDF- & Dokumentenanalyse" },
-  { id: "openrouter/balanced", label: "☁️ OpenRouter Cloud (Balanced)", desc: "Nemotron Super 120B — OpenRouter Cloud (262K Kontext)" },
-  { id: "openrouter/premium", label: "☁️ OpenRouter Cloud (Premium)", desc: "Nemotron Ultra 550B / Claude 3.5 — OpenRouter Frontier (1M Kontext)" },
-  { id: "openrouter/coding", label: "☁️ OpenRouter Cloud (Coding)", desc: "Qwen 2.5 Coder 32B Instruct — Agentic Coding" },
+  { id: "openrouter/balanced", label: "OpenRouter Cloud (Balanced)", desc: "Nemotron Super 120B — OpenRouter Cloud (262K Kontext)" },
+  { id: "openrouter/premium", label: "OpenRouter Cloud (Premium)", desc: "Nemotron Ultra 550B / Claude 3.5 — OpenRouter Frontier (1M Kontext)" },
+  { id: "openrouter/coding", label: "OpenRouter Cloud (Coding)", desc: "Qwen 2.5 Coder 32B Instruct — Agentic Coding" },
 ];
 
 function cleanTextSnippet(text?: string): string {
@@ -128,14 +150,16 @@ export function ResearchAgentWorkspace() {
                 Fachagent · Recherche-Agent
               </span>
               <span
-                className="badge"
+                className="badge inline-flex items-center gap-1.5"
                 data-variant={anonymize ? "curated" : "raw"}
               >
-                {anonymize ? "🛡️ SearXNG IP-Schutz: Anonym (Proxy Aktiv)" : "🌐 IP-Schutz: Deaktiviert (Direkt-Modus)"}
+                {anonymize ? <IconShieldCheck size={14} /> : <IconGlobe size={14} />}
+                {anonymize ? "SearXNG IP-Schutz: Anonym (Proxy Aktiv)" : "IP-Schutz: Deaktiviert (Direkt-Modus)"}
               </span>
             </div>
             <h2 className="section-title text-xl font-bold text-[var(--ink)] m-0 flex items-center gap-2">
-              <span>🔎</span> Recherche-Agent
+              <IconSearch size={22} className="text-[var(--signal)]" />
+              <span>Recherche-Agent</span>
             </h2>
             <p className="text-xs muted mt-1 leading-relaxed m-0">
               Multi-Hop Dual-Retrieval: Durchsucht gleichzeitig das lokale Company Brain & das Internet via SearXNG.
@@ -147,18 +171,20 @@ export function ResearchAgentWorkspace() {
             <button
               type="button"
               onClick={() => setAnonymize(!anonymize)}
-              className={`px-3.5 py-2 rounded-xl border text-xs font-mono font-bold transition-all cursor-pointer ${
+              className={`px-3.5 py-2 rounded-xl border text-xs font-mono font-bold transition-all cursor-pointer inline-flex items-center gap-2 ${
                 anonymize
                   ? "border-[var(--signal)] bg-[color-mix(in_oklab,var(--signal)_10%,white)] text-[var(--signal)] shadow-xs"
                   : "border-[var(--line)] bg-white text-[var(--ink-soft)] hover:text-[var(--ink)]"
               }`}
             >
-              {anonymize ? "🛡️ IP-Schutz: Anonym (SearXNG Proxy)" : "🌐 IP-Schutz: Deaktiviert (Direkt-Modus)"}
+              {anonymize ? <IconShieldCheck size={16} /> : <IconGlobe size={16} />}
+              <span>{anonymize ? "IP-Schutz: Anonym (SearXNG Proxy)" : "IP-Schutz: Deaktiviert (Direkt-Modus)"}</span>
             </button>
-            <span className="text-[10px] font-mono muted">
+            <span className="text-[10px] font-mono muted flex items-center gap-1">
+              {anonymize ? <IconLock size={12} /> : <IconGlobe size={12} />}
               {anonymize
-                ? "🔒 Anonym: Egress über SearXNG Proxy — Ihre lokale IP bleibt verborgen."
-                : "🌐 Direkt: Direkte Verbindung vom lokalen System zu Zielwebseiten."}
+                ? "Anonym: Egress über SearXNG Proxy — Ihre lokale IP bleibt verborgen."
+                : "Direkt: Direkte Verbindung vom lokalen System zu Zielwebseiten."}
             </span>
           </div>
         </div>
@@ -207,40 +233,44 @@ export function ResearchAgentWorkspace() {
                 <button
                   type="button"
                   onClick={() => setDepth("quick")}
-                  className={`flex-1 text-xs py-1.5 font-bold rounded-lg transition-all ${
+                  className={`flex-1 text-xs py-1.5 font-bold rounded-lg transition-all inline-flex items-center justify-center gap-1.5 ${
                     depth === "quick"
                       ? "bg-[var(--signal)] text-white shadow-xs"
                       : "text-[var(--ink-soft)] hover:text-[var(--ink)]"
                   }`}
                 >
-                  ⚡ Quick (30s)
+                  <IconBolt size={14} />
+                  <span>Quick (30s)</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setDepth("deep")}
-                  className={`flex-1 text-xs py-1.5 font-bold rounded-lg transition-all ${
+                  className={`flex-1 text-xs py-1.5 font-bold rounded-lg transition-all inline-flex items-center justify-center gap-1.5 ${
                     depth === "deep"
                       ? "bg-[var(--signal)] text-white shadow-xs"
                       : "text-[var(--ink-soft)] hover:text-[var(--ink)]"
                   }`}
                 >
-                  🔬 Deep (Multi-Hop)
+                  <IconMicroscope size={14} />
+                  <span>Deep (Multi-Hop)</span>
                 </button>
               </div>
             </div>
           </div>
 
           <div className="pt-3 flex items-center justify-between border-t border-[var(--line)]">
-            <span className="mono text-xs muted">
-              Modell: <strong className="text-[var(--ink)]">{selectedModel}</strong>
+            <span className="mono text-xs muted flex items-center gap-1.5">
+              <IconCpu size={14} />
+              <span>Modell: <strong className="text-[var(--ink)]">{selectedModel}</strong></span>
             </span>
             <button
               type="button"
               disabled={!query.trim()}
               onClick={() => query.trim() && setIsModalOpen(true)}
-              className="btn-primary text-xs font-bold py-2.5 px-6"
+              className="btn-primary text-xs font-bold py-2.5 px-6 inline-flex items-center gap-2"
             >
-              🚀 Recherche Starten (im Pop-up)
+              <IconRocket size={16} />
+              <span>Recherche Starten (im Pop-up)</span>
             </button>
           </div>
         </div>
