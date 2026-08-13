@@ -21,8 +21,8 @@ import {
 } from "@tabler/icons-react";
 
 export default function PrototypeStartPage() {
-  // Active Agent State for Radial Wheel Navigation
-  const [activeAgentId, setActiveAgentId] = useState<string>("research");
+  // Active Agent State for Radial Wheel Navigation (Standard: Leer für pure Rad-Ansicht)
+  const [activeAgentId, setActiveAgentId] = useState<string>("");
 
   // Search input & model state
   const [searchQuery, setSearchQuery] = useState("");
@@ -158,114 +158,119 @@ export default function PrototypeStartPage() {
         </RadialNavigationWheel>
       </section>
 
-      {/* 2. AKTIVIERTER FACHAGENT WORKSPACE */}
-      <section className="max-w-6xl mx-auto space-y-6 pt-6 border-t border-slate-800">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-extrabold text-white uppercase tracking-wider m-0 flex items-center gap-2">
-            <span className="text-slate-400">Arbeitsbereich:</span>
-            <span className="text-cyan-400">
-              {RADIAL_AGENTS.find((a) => a.id === activeAgentId)?.name}
-            </span>
-          </h2>
-          <span className="font-mono text-xs text-slate-400">
-            Kategorie: {RADIAL_AGENTS.find((a) => a.id === activeAgentId)?.category}
-          </span>
-        </div>
+      {/* 2. FACHAGENT WORKSPACE MODAL / FULL VIEW (Nur aktiv bei expliziter Selektion) */}
+      {activeAgentId && (
+        <div className="max-w-6xl mx-auto space-y-6 pt-6 border-t border-slate-800">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-extrabold text-white uppercase tracking-wider m-0 flex items-center gap-2">
+              <span className="text-slate-400">Aktivierter Fachagent:</span>
+              <span className="text-cyan-400">
+                {RADIAL_AGENTS.find((a) => a.id === activeAgentId)?.name}
+              </span>
+            </h2>
+            <button
+              type="button"
+              onClick={() => setActiveAgentId("")}
+              className="text-xs font-mono text-slate-400 hover:text-white px-3 py-1 rounded-xl bg-slate-900 border border-slate-800 cursor-pointer"
+            >
+              Schließen ✕
+            </button>
+          </div>
 
-        {/* WORKSPACE CONTENT JE NACH SELEKTIERTEM KNOTEN */}
-        <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 backdrop-blur-md shadow-2xl">
-          {activeAgentId === "research" ? (
-            <ResearchAgentWorkspace />
-          ) : activeAgentId === "handwerker" ? (
-            <div className="space-y-6">
-              <DynamicDataProductForm
-                schema={{
-                  title: "Handwerker Angebot & Kalkulation",
-                  description: "Erstellt ein rechtssicheres Angebot mit Kundenansprache und Positionsliste.",
-                  properties: {
-                    kunden_name: { type: "string", title: "Kundenname / Firma", default: "Malerbetrieb Schulze GmbH" },
-                    projekt_titel: { type: "string", title: "Projekttitel", default: "Fassadenanstrich & Gerüstbau" },
-                    flaeche_qm: { type: "number", title: "Fläche in qm", default: 140 },
-                    stundensatz_eur: { type: "number", title: "Stundensatz (EUR)", default: 75 },
-                    material_pauschale_eur: { type: "number", title: "Materialpauschale (EUR)", default: 450 },
-                  },
-                  required: ["kunden_name", "projekt_titel"],
-                }}
-                onSubmit={(data) => {
-                  setLastOutput({
-                    dp_id: "dp-angebot-10492",
-                    produced_by: "handwerker-angebot-agent",
-                    kunden_name: data.kunden_name,
-                    projekt_titel: data.projekt_titel,
-                    gesamtsumme_eur: (data.flaeche_qm || 100) * 12 + (data.material_pauschale_eur || 300),
-                    angebotstext: `Sehr geehrte Damen und Herren von ${data.kunden_name},\n\nvielen Dank für Ihre Anfrage bezüglich "${data.projekt_titel}". Wir bieten Ihnen die qualifizierte Ausführung der Arbeiten zu unseren Standardkonditionen an.\n\nFläche: ${data.flaeche_qm} qm\nGesamtsumme netto: EUR ${((data.flaeche_qm || 100) * 12 + (data.material_pauschale_eur || 300)).toFixed(2)}`,
-                  });
-                }}
-                submitLabel="Angebot Kalkulieren & Erstellen"
-              />
+          <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 backdrop-blur-xl shadow-2xl">
+            {activeAgentId === "research" ? (
+              <ResearchAgentWorkspace />
+            ) : activeAgentId === "handwerker" ? (
+              <div className="space-y-6">
+                <DynamicDataProductForm
+                  schema={{
+                    title: "Handwerker Angebot & Kalkulation",
+                    description: "Erstellt ein rechtssicheres Angebot mit Kundenansprache und Positionsliste.",
+                    properties: {
+                      kunden_name: { type: "string", title: "Kundenname / Firma", default: "Malerbetrieb Schulze GmbH" },
+                      projekt_titel: { type: "string", title: "Projekttitel", default: "Fassadenanstrich & Gerüstbau" },
+                      flaeche_qm: { type: "number", title: "Fläche in qm", default: 140 },
+                      stundensatz_eur: { type: "number", title: "Stundensatz (EUR)", default: 75 },
+                      material_pauschale_eur: { type: "number", title: "Materialpauschale (EUR)", default: 450 },
+                    },
+                    required: ["kunden_name", "projekt_titel"],
+                  }}
+                  onSubmit={(data) => {
+                    setLastOutput({
+                      dp_id: "dp-angebot-10492",
+                      produced_by: "handwerker-angebot-agent",
+                      kunden_name: data.kunden_name,
+                      projekt_titel: data.projekt_titel,
+                      gesamtsumme_eur: (data.flaeche_qm || 100) * 12 + (data.material_pauschale_eur || 300),
+                      angebotstext: `Sehr geehrte Damen und Herren von ${data.kunden_name},\n\nvielen Dank für Ihre Anfrage bezüglich "${data.projekt_titel}". Wir bieten Ihnen die qualifizierte Ausführung der Arbeiten zu unseren Standardkonditionen an.\n\nFläche: ${data.flaeche_qm} qm\nGesamtsumme netto: EUR ${((data.flaeche_qm || 100) * 12 + (data.material_pauschale_eur || 300)).toFixed(2)}`,
+                    });
+                  }}
+                  submitLabel="Angebot Kalkulieren & Erstellen"
+                />
 
-              {lastOutput && <DataProductViewer dataProduct={lastOutput} title="Generiertes Handwerker-Angebot" />}
-            </div>
-          ) : activeAgentId === "email" ? (
-            <div className="space-y-6">
-              <FileUploadDropzone
-                onUploadSuccess={(res) => {
-                  setLastOutput({
-                    dp_id: res.asset_id || "dp-ingest-8812",
-                    produced_by: "file-ingest-pipeline",
-                    file_name: res.path || "Dokument.pdf",
-                    char_count: res.text_length || 1420,
-                    fts_status: "Indexed in SQLite memory.db",
-                    knowledge_graph_commit: "OrgKnowledgeAsset committed",
-                  });
-                }}
-              />
-              {lastOutput && <DataProductViewer dataProduct={lastOutput} title="Ingestion DataProduct Commit" />}
-            </div>
-          ) : activeAgentId === "blog" ? (
-            <div className="space-y-6">
-              <DynamicDataProductForm
-                schema={{
-                  title: "Blog & Content Engine",
-                  description: "Erstellt zielgruppengerechte KI-Artikel und Unternehmens-Posts.",
-                  properties: {
-                    thema: { type: "string", title: "Artikel-Thema", default: "Moderne KI-Konzepte für Handwerksbetriebe 2026" },
-                    zielgruppe: { type: "string", title: "Zielgruppe", default: "Geschäftsführer & Handwerksmeister" },
-                    tonfall: { type: "string", title: "Tonfall", enum: ["Professionell & Sachlich", "Inspirierend & Nahbar", "Kompakt & Direkt"] },
-                  },
-                  required: ["thema"],
-                }}
-                onSubmit={(data) => {
-                  setLastOutput({
-                    dp_id: "dp-blog-9921",
-                    produced_by: "blog-agent",
-                    titel: data.thema,
-                    zielgruppe: data.zielgruppe,
-                    artikel_text: `# ${data.thema}\n\nIn der heutigen Zeit stehen Handwerksbetriebe vor der Herausforderung, administrative Prozesse zu beschleunigen...\n\n- Automatisierte Angebotserstellung\n- Digitaler Rechnungsimport\n- Effiziente Terminplanung`,
-                  });
-                }}
-                submitLabel="Blogbeitrag Generieren"
-              />
-
-              {lastOutput && <DataProductViewer dataProduct={lastOutput} title="Generierter Blogbeitrag" />}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <h3 className="text-base font-bold text-white flex items-center gap-2 m-0">
-                <IconCalendar size={20} className="text-cyan-400" />
-                <span>Meeting- & Zeitmanagement Agent</span>
-              </h3>
-              <p className="text-xs text-slate-400 m-0">
-                Synchronisiert Google Calendar, analysiert freie Fokusblöcke und generiert Zusammenfassungen.
-              </p>
-              <div className="p-4 rounded-2xl border border-slate-800 bg-slate-950 text-xs font-mono text-cyan-300 space-y-2">
-                <div>Calendar Sync Status: 68 Termine synchronisiert</div>
-                <div>Nächster Freier Fokusblock: Morgen 14:00 - 16:30 Uhr</div>
+                {lastOutput && <DataProductViewer dataProduct={lastOutput} title="Generiertes Handwerker-Angebot" />}
               </div>
-            </div>
-          )}
+            ) : activeAgentId === "email" ? (
+              <div className="space-y-6">
+                <FileUploadDropzone
+                  onUploadSuccess={(res) => {
+                    setLastOutput({
+                      dp_id: res.asset_id || "dp-ingest-8812",
+                      produced_by: "file-ingest-pipeline",
+                      file_name: res.path || "Dokument.pdf",
+                      char_count: res.text_length || 1420,
+                      fts_status: "Indexed in SQLite memory.db",
+                      knowledge_graph_commit: "OrgKnowledgeAsset committed",
+                    });
+                  }}
+                />
+                {lastOutput && <DataProductViewer dataProduct={lastOutput} title="Ingestion DataProduct Commit" />}
+              </div>
+            ) : activeAgentId === "blog" ? (
+              <div className="space-y-6">
+                <DynamicDataProductForm
+                  schema={{
+                    title: "Blog & Content Engine",
+                    description: "Erstellt zielgruppengerechte KI-Artikel und Unternehmens-Posts.",
+                    properties: {
+                      thema: { type: "string", title: "Artikel-Thema", default: "Moderne KI-Konzepte für Handwerksbetriebe 2026" },
+                      zielgruppe: { type: "string", title: "Zielgruppe", default: "Geschäftsführer & Handwerksmeister" },
+                      tonfall: { type: "string", title: "Tonfall", enum: ["Professionell & Sachlich", "Inspirierend & Nahbar", "Kompakt & Direkt"] },
+                    },
+                    required: ["thema"],
+                  }}
+                  onSubmit={(data) => {
+                    setLastOutput({
+                      dp_id: "dp-blog-9921",
+                      produced_by: "blog-agent",
+                      titel: data.thema,
+                      zielgruppe: data.zielgruppe,
+                      artikel_text: `# ${data.thema}\n\nIn der heutigen Zeit stehen Handwerksbetriebe vor der Herausforderung, administrative Prozesse zu beschleunigen...\n\n- Automatisierte Angebotserstellung\n- Digitaler Rechnungsimport\n- Effiziente Terminplanung`,
+                    });
+                  }}
+                  submitLabel="Blogbeitrag Generieren"
+                />
+
+                {lastOutput && <DataProductViewer dataProduct={lastOutput} title="Generierter Blogbeitrag" />}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <h3 className="text-base font-bold text-white flex items-center gap-2 m-0">
+                  <IconCalendar size={20} className="text-cyan-400" />
+                  <span>Meeting- & Zeitmanagement Agent</span>
+                </h3>
+                <p className="text-xs text-slate-400 m-0">
+                  Synchronisiert Google Calendar, analysiert freie Fokusblöcke und generiert Zusammenfassungen.
+                </p>
+                <div className="p-4 rounded-2xl border border-slate-800 bg-slate-950 text-xs font-mono text-cyan-300 space-y-2">
+                  <div>Calendar Sync Status: 68 Termine synchronisiert</div>
+                  <div>Nächster Freier Fokusblock: Morgen 14:00 - 16:30 Uhr</div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      </section>
+      )}
     </div>
   );
 }

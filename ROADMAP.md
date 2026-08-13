@@ -3325,6 +3325,19 @@ git show roadmap/2026-08-03-p4-email-invoices --stat
 - **PGE Trinity Sandbox Executor (Option 2 - P15):** `core/orchestrator/sandbox_executor.py` führt risikobehaftete Tools/Skripte (Risikoklassen `YELLOW` und `ORANGE`) in ephemeren, hochisolierten Docker MicroVM Sandboxes aus. Risikoklasse `RED` wird vom Gatekeeper blockiert.
 - **Erweiterte Testsuite:** `tests/test_mcp_docker.py`, `tests/test_sandbox_executor.py` und `tests/test_docker_integration_edge_cases.py` (227 Pytests + 19 Memory Cases + 7 Compute Cases = 100% PASS).
 
+## Stand & Changelog (2026-08-13 — Fullscreen Navigationsrad & Reduzierte Startseite)
+
+- **Release-Tag:** `roadmap/2026-08-13-p4-radial-wheel-fullscreen`
+- **Fullscreen Navigationsrad (`RadialNavigationWheel.tsx`):**
+  - Radius von 230px auf **370px** erweitert für volle Bildschirmausnutzung.
+  - Vergrößerte Icon-Plaketten, Schriftgrößen & Neon-Glows für ein imposantes Cyberpunk-Gefühl.
+- **Reduktion der Startseite (`prototype/page.tsx`):**
+  - Entfernung der redundanten unteren Websearch-Box auf der Startseite.
+  - Direkter Absprung beim Klick auf den Deep Research Knotenkopf.
+- **Master Testsuite:** 100% grün (0 Failed).
+
+---
+
 ## Stand & Changelog (2026-08-13 — High-End Dark Neon Refactoring des Navigationsrads)
 
 - **Release-Tag:** `roadmap/2026-08-13-p4-radial-navigation-dark-neon`
