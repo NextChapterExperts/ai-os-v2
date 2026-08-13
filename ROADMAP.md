@@ -3325,6 +3325,14 @@ git show roadmap/2026-08-03-p4-email-invoices --stat
 - **PGE Trinity Sandbox Executor (Option 2 - P15):** `core/orchestrator/sandbox_executor.py` führt risikobehaftete Tools/Skripte (Risikoklassen `YELLOW` und `ORANGE`) in ephemeren, hochisolierten Docker MicroVM Sandboxes aus. Risikoklasse `RED` wird vom Gatekeeper blockiert.
 - **Erweiterte Testsuite:** `tests/test_mcp_docker.py`, `tests/test_sandbox_executor.py` und `tests/test_docker_integration_edge_cases.py` (227 Pytests + 19 Memory Cases + 7 Compute Cases = 100% PASS).
 
+## Stand & Changelog (2026-08-13 — Port-Umstellung auf 8090 für Console Web)
+
+- **Release-Tag:** `roadmap/2026-08-13-p4-console-port-8090`
+- **Port 8090:** Umstellung der Web-Console auf Port `8090` (`http://localhost:8090`) in `package.json` (`dev` & `start` Skripte).
+- **Master Testsuite:** 100% grün (0 Failed).
+
+---
+
 ## Stand & Changelog (2026-08-13 — Rollenbasiertes Login: peter (Endanwender) vs. admin (Admin-Layout))
 
 - **Release-Tag:** `roadmap/2026-08-13-p4-role-based-login`
