@@ -1,6 +1,6 @@
 # VIRKI AI-OS v2 — Integration von Docker MCP Catalog/Gateway & Docker Sandboxes
 
-> **Stand:** 2026-08-13 · **Status:** Konzeptionell freigabebereit (Warten auf Go)  
+> **Stand:** 2026-08-13 · **Status:** Vollständig umgesetzt, getestet & per Release-Tag freigegeben (`roadmap/2026-08-13-p1-docker-mcp-sandbox`)  
 > **Bezug:** [12-LEITPRINZIPIEN.md](12-LEITPRINZIPIEN.md) (P5, P15, P19) · [ROADMAP.md](../ROADMAP.md) (Kap. 11 & 13)
 
 ---
@@ -52,6 +52,23 @@ Durch die Docker-Integration bleibt VIRKIs Governance-Schicht als Oberboss erhal
 ### 2.2 Vorteile
 * **Reduktion des Entwicklungsaufwands um ~90 %:** Kein manuelles Schreiben von Python-Adaptern für Drittanbieter-APIs.
 * **Isolierte Runtimes:** Jedes MCP-Tool bringt sein eigenes Umfeld (Node.js, Go, Python) im Container mit — null Abweichungen ("Dependency-Hell") auf dem Server.
+
+### 2.3 Hybride MCP-Server Strategie (Interne Core MCPs vs. Docker Catalog)
+
+Für maximale Stabilität und Beibehaltung der VIRKI-Souveränität unterscheidet VIRKI strikt zwischen zwei Server-Kategorien:
+
+1. **Interne Core MCP Server (VIRKI-eigen):**  
+   * `kg`: Knowledge Graph Traversal & Search (`org:*` Nodes & Edges) — das Herzstück von **Muninn (Company Brain)**.
+   * `memory` / `qdrant_search`: Vektor-Suche (L1) und Letta Archival (L2/L3) der Platform-VM.
+   * `cms_git`: Content & Knowledge Asset Pipeline auf dem lokalen Dateisystem der VM.
+   * `console`: Push-Notifications an die Odin Console UI.
+   * `mail` / `calendar` / `drive`: Zentrale Google-OAuth-Integration (`core/google/auth.py`).
+
+2. **Externe Tools (Docker MCP Catalog):**  
+   * `docker_brave_search`: Web-Recherche und Scraping via Docker Container.
+   * `docker_postgres` / `docker_sqlite`: Generische Datenbank-Konnektoren.
+   * `docker_github` / `docker_slack` / `docker_jira`: DevOps- & Communication-Tools aus dem Hub.
+
 
 ---
 
