@@ -3325,6 +3325,18 @@ git show roadmap/2026-08-03-p4-email-invoices --stat
 - **PGE Trinity Sandbox Executor (Option 2 - P15):** `core/orchestrator/sandbox_executor.py` führt risikobehaftete Tools/Skripte (Risikoklassen `YELLOW` und `ORANGE`) in ephemeren, hochisolierten Docker MicroVM Sandboxes aus. Risikoklasse `RED` wird vom Gatekeeper blockiert.
 - **Erweiterte Testsuite:** `tests/test_mcp_docker.py`, `tests/test_sandbox_executor.py` und `tests/test_docker_integration_edge_cases.py` (227 Pytests + 19 Memory Cases + 7 Compute Cases = 100% PASS).
 
+## Stand & Changelog (2026-08-13 — Rollenbasiertes Login: peter (Endanwender) vs. admin (Admin-Layout))
+
+- **Release-Tag:** `roadmap/2026-08-13-p4-role-based-login`
+- **Login-System (`/login`):**
+  - **`peter` / `peter` (Endanwender):** Direkter Einstieg in die neue Hauptseite mit zentralem Search Agenten und interaktivem Navigationsrad (Radial Navigation Wheel) für alle Fachagenten. Keine technischen Plattform-Verwirrungen.
+  - **`admin` / `admin` (Administrator):** Voller Zugriff auf das bisherige technische Entwickler- & Plattform-Layout (`/platform`, MCP-Gateway, Knowledge Graph, Workflows, Audit-Logs).
+- **Session & Header Integration:**
+  - Anzeige des aktiven Benutzers und Rollen-Badges im Header inkl. Abmelden-Funktion (`Logout`).
+- **Master Testsuite:** 100% grün (0 Failed).
+
+---
+
 ## Stand & Changelog (2026-08-13 — Isoliertes Navigationsrad & Anwendermodus Prototyp)
 
 - **Release-Tag:** `roadmap/2026-08-13-p4-radial-navigation-prototype`

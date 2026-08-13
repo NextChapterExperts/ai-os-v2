@@ -40,6 +40,7 @@ git push origin roadmap/2026-08-03-p4-email-invoices
 
 | Tag | Datum | Roadmap | Kurzbeschreibung | Commit |
 |-----|-------|---------|------------------|--------|
+| `roadmap/2026-08-13-p4-role-based-login` | 2026-08-13 | §9, §10, Auth | Rollenbasiertes Login: peter/peter (Endanwender) vs. admin/admin (Admin-Layout) | *(siehe `git show`)* |
 | `roadmap/2026-08-13-p4-radial-navigation-prototype` | 2026-08-13 | §9, §10, UI | Isolierter Prototyp /prototype mit Anwendermodus & Navigationsrad | *(siehe `git show`)* |
 | `roadmap/2026-08-13-p4-tabler-icons-searxng-ux` | 2026-08-13 | §9, §10, UI | Systemweite Tabler-Icons, SearXNG UI Refactoring & IP-Schutz-Klarstellung | *(siehe `git show`)* |
 | `roadmap/2026-08-13-p1-docker-mcp-sandbox` | 2026-08-13 | §13.3, P5, P15 | Docker MCP Catalog & Gateway Adapter, Docker MicroVM Sandboxes für PGE Trinity Executor | *(siehe `git show`)* |

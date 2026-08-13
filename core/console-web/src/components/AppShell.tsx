@@ -1,10 +1,17 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { UserSelector } from "@/components/UserSelector";
+import { usePathname, useRouter } from "next/navigation";
+import { getStoredAuth, logoutUser, AuthUser } from "@/lib/auth";
+import { IconLogout, IconUserCheck, IconShieldLock } from "@tabler/icons-react";
 
-const NAV = [
+const USER_NAV = [
+  { href: "/", label: "Startseite & Suche" },
+  { href: "/agents", label: "Fachagenten" },
+] as const;
+
+const ADMIN_NAV = [
   { href: "/", label: "Lagebild" },
   { href: "/portfolio", label: "Projekte" },
   { href: "/agents", label: "Agenten" },
@@ -20,15 +27,39 @@ function matchLength(pathname: string, href: string): number {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  // Bei ueberlappenden Praefixen (z.B. /platform vs. /platform/kg) gewinnt
-  // die spezifischste Route, damit nicht beide Nav-Items gleichzeitig aktiv sind.
-  const bestMatch = NAV.reduce(
+  const router = useRouter();
+  const [auth, setAuth] = useState<AuthUser | null>(null);
+
+  useEffect(() => {
+    setAuth(getStoredAuth());
+
+    const handleAuthChange = () => {
+      setAuth(getStoredAuth());
+    };
+
+    window.addEventListener("aios-auth-changed", handleAuthChange);
+    return () => window.removeEventListener("aios-auth-changed", handleAuthChange);
+  }, []);
+
+  const isLoginPage = pathname === "/login";
+  const navItems = auth?.role === "admin" ? ADMIN_NAV : USER_NAV;
+
+  const bestMatch = navItems.reduce(
     (best, item) => {
       const len = matchLength(pathname, item.href);
       return len > best.len ? { href: item.href, len } : best;
     },
     { href: "", len: 0 },
   );
+
+  const handleLogout = () => {
+    logoutUser();
+    router.push("/login");
+  };
+
+  if (isLoginPage) {
+    return <main className="min-h-screen bg-[var(--paper)]">{children}</main>;
+  }
 
   return (
     <div className="shell-bg">
@@ -67,8 +98,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </p>
           </div>
         </div>
+
         <nav className="flex flex-wrap items-center gap-4 text-sm sm:gap-6 sm:text-base">
-          {NAV.map((item) => {
+          {navItems.map((item) => {
             const active = bestMatch.len > 0 && item.href === bestMatch.href;
             return (
               <Link
@@ -82,12 +114,32 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
+
         <div className="flex items-center gap-3 text-right text-xs text-ink-soft">
-          <UserSelector />
-          <div className="hidden lg:block">
-            <div className="mono">tenant · nextchapter</div>
-            <div className="mono">proj · VIRKI-OS</div>
-          </div>
+          {auth ? (
+            <div className="flex items-center gap-2 bg-[color-mix(in_oklab,white_85%,transparent)] border border-[var(--line)] rounded-xl px-2.5 py-1 text-xs">
+              {auth.role === "admin" ? (
+                <IconShieldLock size={14} className="text-amber-500" />
+              ) : (
+                <IconUserCheck size={14} className="text-[var(--signal)]" />
+              )}
+              <span className="font-bold text-[var(--ink)]">
+                {auth.username} ({auth.role === "admin" ? "Admin" : "Endanwender"})
+              </span>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="btn-ghost py-0.5 px-1.5 text-[11px] text-danger hover:underline inline-flex items-center gap-1 cursor-pointer"
+                title="Abmelden"
+              >
+                <IconLogout size={12} />
+              </button>
+            </div>
+          ) : (
+            <Link href="/login" className="btn-ghost text-xs font-bold text-[var(--signal)]">
+              Anmelden
+            </Link>
+          )}
         </div>
       </header>
       <main className="mx-auto w-full max-w-6xl px-5 pb-16 sm:px-8">{children}</main>

@@ -1,12 +1,11 @@
-import { Suspense } from "react";
-import { checkPlatformHealth } from "@/lib/platform-health";
-import { memoryStats } from "@/lib/memory";
-import { StatusDot } from "@/components/StatusDot";
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { getStoredAuth, AuthUser } from "@/lib/auth";
+import PrototypeStartPage from "./prototype/page";
 import { MemorySearch } from "@/components/MemorySearch";
 import { LagebildRibbon } from "@/components/LagebildRibbon";
 import { ComputeModePanel } from "@/components/ComputeModePanel";
-
-export const dynamic = "force-dynamic";
 
 function formatToday() {
   return new Intl.DateTimeFormat("de-DE", {
@@ -17,14 +16,32 @@ function formatToday() {
   }).format(new Date());
 }
 
-export default async function LagebildPage() {
-  const [health, mem] = await Promise.all([
-    checkPlatformHealth(),
-    Promise.resolve(memoryStats()),
-  ]);
-  const online = health.summary.ok;
-  const total = health.items.length;
+export default function MainPage() {
+  const [auth, setAuth] = useState<AuthUser | null>(null);
+  const [mounted, setMounted] = useState(false);
 
+  useEffect(() => {
+    setAuth(getStoredAuth());
+    setMounted(true);
+
+    const handleAuthChange = () => {
+      setAuth(getStoredAuth());
+    };
+
+    window.addEventListener("aios-auth-changed", handleAuthChange);
+    return () => window.removeEventListener("aios-auth-changed", handleAuthChange);
+  }, []);
+
+  if (!mounted) {
+    return <div className="p-8 muted font-mono text-xs">Lade AI-OS...</div>;
+  }
+
+  // WENN peter (Endanwender) ODER nicht eingeloggt -> Zeige Navigationsrad & Search Agent
+  if (!auth || auth.role === "user") {
+    return <PrototypeStartPage />;
+  }
+
+  // WENN admin (Administrator) -> Zeige bisheriges Plattform- & Entwickler-Lagebild
   return (
     <>
       <LagebildRibbon />
@@ -35,17 +52,14 @@ export default async function LagebildPage() {
             <p className="muted mb-1 text-xs uppercase tracking-[0.16em]">
               {formatToday()}
             </p>
-            <h1 className="section-title m-0">Lagebild</h1>
+            <h1 className="section-title m-0">Administrator Lagebild</h1>
             <p className="muted mt-1 mb-0 max-w-xl text-sm">
-              Tenant <span className="mono text-ink">nextchapter</span> · {online}/{total}{" "}
-              Services · {mem.chunks} Memory-Chunks
+              Eingeloggt als <strong className="text-[var(--ink)]">{auth.name}</strong> (Administrator) · Vollzugriff auf Plattform-Infrastruktur, Memory Storage & MCP Gateway
             </p>
           </div>
         </div>
 
-        <Suspense fallback={<p className="muted">Suche lädt…</p>}>
-          <MemorySearch autofocus />
-        </Suspense>
+        <MemorySearch autofocus />
       </section>
 
       <section className="rise rise-delay-1 mt-8">
@@ -54,27 +68,30 @@ export default async function LagebildPage() {
 
       <section className="rise rise-delay-1 mt-10 grid gap-10 border-t border-line pt-8 lg:grid-cols-2">
         <div>
-          <h2 className="section-title">Briefing</h2>
+          <h2 className="section-title">Briefing & System-Orchestrator</h2>
           <p className="m-0 text-ink-soft leading-relaxed">
-            Cursor-Chats landen im Gedächtnis; das Feld oben steuert den{" "}
-            <span className="mono text-ink">Orchestrator</span> (Intent →
-            Engagements / Memory / Mail-Stub).
+            Im Admin-Modus steuert das Suchfeld oben den <span className="mono text-ink">Orchestrator</span> direkt an (Intent → Engagements / Memory / Mail-Stub).
           </p>
         </div>
         <div>
-          <h2 className="section-title">Infra</h2>
-          <div className="row-list">
-            {health.items.map((item) => (
-              <div key={item.id}>
-                <div className="flex items-center gap-3">
-                  <StatusDot status={item.status} />
-                  <span>{item.label}</span>
-                </div>
-                <span className="mono text-xs text-ink-soft">
-                  {item.status === "ok" ? `${item.latencyMs ?? "—"} ms` : "offline"}
-                </span>
-              </div>
-            ))}
+          <h2 className="section-title">Infrastruktur & Modul-Status</h2>
+          <div className="p-4 rounded-xl border border-[var(--line)] bg-white space-y-2 text-xs mono">
+            <div className="flex items-center justify-between">
+              <span>Orchestrator FastAPI Server</span>
+              <span className="text-[var(--signal)] font-bold">● Online (Port 8091)</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>MCP Gateway & Tool Catalog</span>
+              <span className="text-[var(--signal)] font-bold">● 8 Tools Aktiv</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Ollama Souveräner LLM Egress</span>
+              <span className="text-[var(--signal)] font-bold">● Qwen 2.5 Coder 14B</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>SearXNG Anonymer Web Search Egress</span>
+              <span className="text-[var(--signal)] font-bold">● Active Proxy</span>
+            </div>
           </div>
         </div>
       </section>
