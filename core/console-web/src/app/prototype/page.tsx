@@ -54,9 +54,9 @@ export default function PrototypeStartPage() {
   const suggestedAgentId = detectSuggestedAgent(searchQuery);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans p-4 sm:p-6 space-y-10">
-      {/* 1. RADIAL NAVIGATION WHEEL & ZENTRALES SEARCH AGENT PANEL */}
-      <section className="max-w-6xl mx-auto space-y-4">
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans p-2 sm:p-6 space-y-10">
+      {/* 1. FULL-WIDTH RADIAL NAVIGATION WHEEL & ZENTRALES SEARCH AGENT PANEL */}
+      <section className="w-full max-w-[1500px] mx-auto space-y-4">
         <RadialNavigationWheel
           activeAgentId={activeAgentId}
           suggestedAgentId={suggestedAgentId}
@@ -66,17 +66,17 @@ export default function PrototypeStartPage() {
           }}
         >
           {/* ZENTRALE CYBER-SEARCH KARTE */}
-          <div className="p-6 rounded-3xl border border-cyan-500/30 bg-slate-900/90 shadow-[0_0_50px_rgba(6,182,212,0.15)] backdrop-blur-2xl space-y-5 transition-all">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
-                  <IconSearch size={18} />
+          <div className="p-7 rounded-3xl border border-cyan-500/30 bg-slate-900/90 shadow-[0_0_60px_rgba(6,182,212,0.18)] backdrop-blur-2xl space-y-6 transition-all">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3.5">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+                  <IconSearch size={22} />
                 </div>
-                <span className="font-bold text-sm tracking-wide text-white">
+                <span className="font-extrabold text-base tracking-wider text-white">
                   SEARCH AGENT <span className="text-cyan-400">SCHALTZENTRALE</span>
                 </span>
               </div>
-              <span className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 uppercase tracking-wider">
+              <span className="text-xs font-mono font-bold px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 uppercase tracking-widest">
                 Company Brain & Web
               </span>
             </div>
@@ -88,14 +88,14 @@ export default function PrototypeStartPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Wonach suchen Sie, Max? (z. B. 'Angebot Malerarbeiten Schulze' oder 'Rechnungen')"
-                className="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-400 text-white rounded-2xl px-4 py-3.5 text-xs placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-400 transition-all pr-12 shadow-inner"
+                className="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-400 text-white rounded-2xl px-5 py-4 text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition-all pr-14 shadow-inner"
               />
               <button
                 type="button"
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 hover:scale-105 transition-transform cursor-pointer font-bold"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 hover:scale-105 transition-transform cursor-pointer font-bold shadow-[0_0_15px_#06b6d4]"
                 title="Suche ausführen"
               >
-                <IconSearch size={16} />
+                <IconSearch size={18} />
               </button>
             </div>
 

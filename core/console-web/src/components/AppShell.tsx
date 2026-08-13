@@ -67,7 +67,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="shell-bg">
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-5 pt-5 pb-2 sm:px-8">
+      <header className="mx-auto flex w-full max-w-[1700px] items-center justify-between gap-4 px-6 pt-5 pb-2 sm:px-10">
         <div className="relative group/virki">
           <Link href="/" className="brand-mark no-underline flex items-center gap-2">
             <span className="text-xl sm:text-2xl text-signal group-hover/virki:scale-110 transition-transform font-bold" title="Wyrd-Key / Odins Raben">
@@ -146,7 +146,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           )}
         </div>
       </header>
-      <main className="mx-auto w-full max-w-6xl px-5 pb-16 sm:px-8">{children}</main>
+      <main className="mx-auto w-full max-w-[1700px] px-4 pb-16 sm:px-10">{children}</main>
     </div>
   );
 }

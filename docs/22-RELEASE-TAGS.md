@@ -40,6 +40,7 @@ git push origin roadmap/2026-08-03-p4-email-invoices
 
 | Tag | Datum | Roadmap | Kurzbeschreibung | Commit |
 |-----|-------|---------|------------------|--------|
+| `roadmap/2026-08-13-p4-radial-wheel-fullwidth` | 2026-08-13 | §9, §10, UI | Full-Width Screen Layout (440px Radius) & Hover-Erklärungen mit Klick-Absprung | *(siehe `git show`)* |
 | `roadmap/2026-08-13-p4-radial-wheel-fullscreen` | 2026-08-13 | §9, §10, UI | Fullscreen Navigationsrad (Radius 370px) & Entfernung der unteren festen Websearch-Box | *(siehe `git show`)* |
 | `roadmap/2026-08-13-p4-radial-navigation-dark-neon` | 2026-08-13 | §9, §10, UI | 1:1 High-End Dark Neon Refactoring des Navigationsrads gemäß Konzept-Mockup | *(siehe `git show`)* |
 | `roadmap/2026-08-13-p4-console-port-8090` | 2026-08-13 | §9, §10, Port | Port-Umstellung der Console Web UI auf Port 8090 (http://localhost:8090) | *(siehe `git show`)* |
