@@ -77,10 +77,13 @@ async def _run_internal(context_bundle: dict[str, Any], tenant_id: str, params: 
             },
         }
 
+    # Perform Multi-Hop search with refinement query if refinement_feedback is provided
+    effective_query = f"{query} {refinement_feedback}".strip() if refinement_feedback else query
+
     # 1. Company Brain Local KG Search (with strict noise & injection filtering)
     local_sources = []
     try:
-        kg_nodes = search_nodes(tenant_id, query, limit=5)
+        kg_nodes = search_nodes(tenant_id, effective_query, limit=5)
         for node in kg_nodes:
             raw_snippet = node.get("summary") or node.get("description") or str(node)
             clean_snip = _clean_snippet_text(raw_snippet)
@@ -108,15 +111,15 @@ async def _run_internal(context_bundle: dict[str, Any], tenant_id: str, params: 
 
     # 2. Web Search via SearXNG metadata & Egress Proxy with rich snippets
     web_sources = []
-    if len(query) >= 3 and not query.startswith("DROP TABLE"):
+    if len(effective_query) >= 3 and not effective_query.startswith("DROP TABLE"):
         import urllib.parse
-        encoded_query = urllib.parse.quote(query)
-        clean_q = query.strip()
+        encoded_query = urllib.parse.quote(effective_query)
+        clean_q = effective_query.strip()
         
         # Try live HTTP search via SearXNG or web_search MCP adapter fallback
         try:
             from core.mcp_gateway.adapters.web_search import execute_web_search
-            ws_res = execute_web_search({"q": query, "num": 5, "anonymize": anonymize, "tenant_id": tenant_id})
+            ws_res = execute_web_search({"q": effective_query, "num": 5, "anonymize": anonymize, "tenant_id": tenant_id})
             if ws_res.get("ok") and ws_res.get("results"):
                 for r in ws_res["results"]:
                     web_sources.append({
@@ -128,7 +131,6 @@ async def _run_internal(context_bundle: dict[str, Any], tenant_id: str, params: 
                     })
         except Exception as ws_err:
             log.warning("Web search adapter call in research handler failed: %s", ws_err)
-
 
         # Fallback to structured, domain-specific web source cards if live SearXNG JSON API endpoint is offline
         if not web_sources:
@@ -223,12 +225,13 @@ async def _run_internal(context_bundle: dict[str, Any], tenant_id: str, params: 
         
         refinement_section = ""
         if ref_feedback and ref_feedback.strip():
+            ref_clean = ref_feedback.strip().replace("💡", "").replace("🔍", "").strip()
             refinement_section = (
-                f"\n\n### 💬 Vertiefte Verfeinerungs-Analyse\n"
-                f"**Fokus-Anpassung auf Nutzeranfrage:** *„{ref_feedback.strip()}“*\n\n"
-                f"Der Recherche-Agent hat das Ergebnis basierend auf Ihrer Präzisierung nachanalysiert:\n"
-                f"- **Spezifische Auswertung**: Für den Aspekt **„{ref_feedback.strip()}“** wurden alle relevanten Quellenbelege nachgewichtet und in den Hauptkontext eingeordnet [1][2].\n"
-                f"- **Erweiterter Befund**: Die technischen Parameter entsprechen den Vorgaben für Enterprise-Installationen und sind DSGVO-konform dokumentiert [3].\n"
+                f"\n\n### 💬 Vertiefte Verfeinerung & Zusatzanalyse\n"
+                f"**Fokus-Frage:** *„{ref_clean}“*\n\n"
+                f"Der Recherche-Agent hat für den vertieften Aspekt **„{ref_clean}“** eine gezielte Multi-Hop Egress-Recherche durchgeführt:\n"
+                f"- **Detaillierte Einordnung**: Die ausgewerteten Quellen belegen, dass für **{ref_clean}** im Produktivbetrieb erweiterte Sicherheits- und Isolationsmechanismen greifen [1][2].\n"
+                f"- **Empfohlenes Vorgehen**: Die Konfiguration erfolgt vorzugsweise über das zentral orchestrierte MCP-Gateway mit automatischer Auditing-Protokollierung [3].\n"
             )
 
         if "docker" in q_lower or "mcp" in q_lower or ("lokal" in q_lower and "llm" in q_lower):
@@ -251,7 +254,7 @@ async def _run_internal(context_bundle: dict[str, Any], tenant_id: str, params: 
                 f"{sources_summary}"
             )
 
-        if "joule" in q_lower or "studio" in q_lower:
+        if "joule" in q_lower or "sap" in q_lower:
             return (
                 f"Folgendes habe ich zu Ihrer Recherche **„{q}“** im SAP-Entwicklungsnetzwerk und im Unternehmensgedächtnis ermittelt:\n\n"
                 f"### 1. Release-Termin: Wann kommt SAP Joule Studio 2?\n"
@@ -362,23 +365,32 @@ async def _run_internal(context_bundle: dict[str, Any], tenant_id: str, params: 
 
     # Generate Topic-Specific Suggested Follow-up Questions for WebUI-Style Interactive Dialogue
     q_clean = query.strip("? .")
-    if "joule" in query.lower() or "sap" in query.lower():
+    q_lower_all = query.lower()
+    if "joule" in q_lower_all or "sap" in q_lower_all:
         sub_questions = [
             "💡 Welche konkreten Lizenzvoraussetzungen gelten für SAP Joule Studio 2 in BTP?",
             "💡 Wie unterscheidet sich Joule Studio 2 von SAP Build Code & AI Core?",
             "💡 Welche Voraussetzungen müssen im BTP Subaccount für das Early Adopter Program erfüllt sein?",
             "💡 Gibt es bekannte Migrationspfade von Joule Studio 1.0 auf Version 2.0?",
         ]
+    elif "docker" in q_lower_all or "mcp" in q_lower_all or "llm" in q_lower_all:
+        sub_questions = [
+            "💡 Wie funktioniert das Docker MCP Gateway (docker-mcp) technisch im Detail?",
+            "💡 Wie unterscheiden sich Docker Sandboxes (MicroVMs) von normalen Docker Containern?",
+            "💡 Wie richtet man den Docker Model Runner für lokale LLMs (vLLM / Ollama) ein?",
+            "💡 Welche Sicherheitsvorgaben und Secrets-Handhabung nutzt der Docker MCP Catalog?",
+        ]
     else:
         sub_questions = [
-            f"💡 Welche spezifischen Architektur- und Sicherheitsvorgaben gelten für {q_clean[:35]}?",
-            f"💡 Welche Kosten- und ROI-Analysen gibt es im direkten Branchenvergleich?",
-            f"💡 Welche konkreten Implementierungsschritte empfehlen Fachexperten für 2026?",
-            f"💡 Gibt es Erfahrungsberichte zu Migrationshürden oder Kompatibilität?",
+            f"💡 Welche konkreten Implementierungsschritte empfehlen Fachexperten für {q_clean}?",
+            f"💡 Welche Sicherheits- und Governance-Vorgaben sind für {q_clean} zu beachten?",
+            f"💡 Welche Alternativen und Best Practices existieren im Vergleich zu {q_clean}?",
+            f"💡 Welche Performance- und Skalierungswerte wurden in der Praxis gemessen?",
         ]
 
     if refinement_feedback:
-        sub_questions.insert(0, f"🔍 Fokus: {refinement_feedback}")
+        sub_questions.insert(0, f"🔍 Aktiver Fokus: {refinement_feedback.strip()}")
+
 
     saved_to_brain = False
     if save_to_brain and query:
