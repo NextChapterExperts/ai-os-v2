@@ -191,7 +191,7 @@ export function ResearchAgentWorkspace() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="z. B. SAP S/4HANA Migration Performance im Vergleich zu Oracle Cloud ERP 2026..."
               className="w-full p-3 rounded-xl border border-[var(--line)] bg-white text-sm text-[var(--ink)] focus:outline-none focus:ring-1 focus:ring-[var(--signal)] font-sans"
-              onKeyDown={(e) => e.key === "Enter" && executeResearch(false)}
+              onKeyDown={(e) => e.key === "Enter" && query.trim() && setIsModalOpen(true)}
             />
           </div>
 
@@ -268,11 +268,11 @@ export function ResearchAgentWorkspace() {
             </span>
             <button
               type="button"
-              disabled={loading || !query.trim()}
-              onClick={() => executeResearch(false)}
+              disabled={!query.trim()}
+              onClick={() => query.trim() && setIsModalOpen(true)}
               className="btn-primary text-xs font-bold py-2.5 px-6"
             >
-              {loading ? "⌛ Recherchiere…" : "🚀 Recherche Starten"}
+              🚀 Recherche Starten (im Pop-up)
             </button>
           </div>
         </div>

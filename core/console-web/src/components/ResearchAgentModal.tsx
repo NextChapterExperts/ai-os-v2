@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 interface SourceItem {
@@ -251,15 +251,26 @@ export function ResearchAgentModal({
   const [error, setError] = useState<string | null>(null);
 
 
+  const hasAutoStarted = useRef(false);
+
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    if (initialQuery && !query) {
+    if (isOpen && initialQuery && initialQuery.trim() && !hasAutoStarted.current) {
+      hasAutoStarted.current = true;
       setQuery(initialQuery);
+      // Auto-trigger research on modal open
+      setTimeout(() => {
+        executeResearch(false);
+      }, 100);
     }
-  }, [initialQuery, query]);
+    if (!isOpen) {
+      hasAutoStarted.current = false;
+    }
+  }, [isOpen, initialQuery]);
+
 
   useEffect(() => {
     if (isOpen) {
