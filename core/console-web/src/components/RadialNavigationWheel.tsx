@@ -16,8 +16,9 @@ export interface AgentNode {
   category: string;
   description: string;
   icon: React.ReactNode;
-  angle: number; // Grad auf dem Kreis (0 = Oben, 72, 144, 216, 288)
+  angle: number; // Grad auf dem Kreis (270 = Oben, 342, 54, 126, 198)
   color: string;
+  glowColor: string;
 }
 
 export const RADIAL_AGENTS: AgentNode[] = [
@@ -25,46 +26,51 @@ export const RADIAL_AGENTS: AgentNode[] = [
     id: "handwerker",
     name: "Handwerker Angebot",
     category: "Handwerk & Bau",
-    description: "Erstellt kalkulierte Angebote, Leistungsbeschreibungen & Kundenanschreiben",
-    icon: <IconTool size={22} />,
+    description: "Kalkulierte Angebote, Leistungsbeschreibungen & Kundenanschreiben",
+    icon: <IconTool size={24} />,
     angle: 270, // Oben
-    color: "var(--signal)",
+    color: "#00f2fe",
+    glowColor: "rgba(0, 242, 254, 0.5)",
   },
   {
     id: "blog",
     name: "Blog Generator",
     category: "Marketing & Media",
-    description: "Generiert SEO-optimierte Artikel & Unternehmens-News",
-    icon: <IconEdit size={22} />,
+    description: "SEO-optimierte Fachartikel & Marketing-Posts",
+    icon: <IconEdit size={24} />,
     angle: 342, // Oben-Rechts
-    color: "#a855f7",
+    color: "#c084fc",
+    glowColor: "rgba(192, 132, 252, 0.5)",
   },
   {
     id: "meetings",
     name: "Meeting Manager",
     category: "Zeitmanagement",
-    description: "Syncht Kalender, prüft Termine & generiert Meeting-Summaries",
-    icon: <IconCalendar size={22} />,
+    description: "Kalender-Sync, Terminprüfungen & Meeting-Summaries",
+    icon: <IconCalendar size={24} />,
     angle: 54, // Unten-Rechts
-    color: "#06b6d4",
+    color: "#38bdf8",
+    glowColor: "rgba(56, 189, 248, 0.5)",
   },
   {
     id: "email",
     name: "E-Mail & Ingest",
     category: "Finanzen & Dokumente",
-    description: "Syncht Gmail-Rechnungen, extrahiert PDFs & committet in den Knowledge Graph",
-    icon: <IconFileText size={22} />,
+    description: "Gmail-Rechnungen, PDF-Beleg-Extraktion & Graph Commit",
+    icon: <IconFileText size={24} />,
     angle: 126, // Unten-Links
-    color: "#ec4899",
+    color: "#f472b6",
+    glowColor: "rgba(244, 114, 182, 0.5)",
   },
   {
     id: "research",
     name: "Deep Research",
     category: "Wissen & Internet",
-    description: "Durchsucht Company Brain & SearXNG Web via Anonymem Egress",
-    icon: <IconSearch size={22} />,
+    description: "SearXNG Anonymer Web-Egress & Company Brain Suche",
+    icon: <IconSearch size={24} />,
     angle: 198, // Oben-Links
-    color: "#3b82f6",
+    color: "#60a5fa",
+    glowColor: "rgba(96, 165, 250, 0.5)",
   },
 ];
 
@@ -72,7 +78,7 @@ interface RadialNavigationWheelProps {
   activeAgentId: string;
   suggestedAgentId?: string | null;
   onSelectAgent: (agentId: string) => void;
-  children?: React.ReactNode; // Der zentrale Inhalt (z. B. das Suchfeld)
+  children?: React.ReactNode;
 }
 
 export const RadialNavigationWheel: React.FC<RadialNavigationWheelProps> = ({
@@ -84,38 +90,80 @@ export const RadialNavigationWheel: React.FC<RadialNavigationWheelProps> = ({
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   // Radius des Navigationsrads (in px)
-  const radius = 210;
+  const radius = 230;
 
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-[580px] w-full py-8">
-      {/* SVG Hintergrund-Ringe und Orbital-Linien */}
+    <div className="relative flex flex-col items-center justify-center min-h-[640px] w-full py-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-slate-950 rounded-3xl border border-cyan-500/20 shadow-[0_0_60px_rgba(6,182,212,0.12)] overflow-hidden">
+      {/* 1. KONTINUIERLICH ROTIERENDE & PULSIERENDE SVG ORBIT-RINGE */}
       <svg
         className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible"
-        viewBox="-300 -300 600 600"
+        viewBox="-350 -350 700 700"
       >
         <defs>
-          <radialGradient id="radialGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="var(--signal)" stopOpacity="0.12" />
-            <stop offset="100%" stopColor="var(--signal)" stopOpacity="0" />
+          {/* Radial Gradient Background Glow */}
+          <radialGradient id="cyberCenterGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.25" />
+            <stop offset="50%" stopColor="#3b82f6" stopOpacity="0.1" />
+            <stop offset="100%" stopColor="#0f172a" stopOpacity="0" />
           </radialGradient>
+
+          {/* Neon Arc Stroke Gradient */}
+          <linearGradient id="neonArcGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#00f2fe" stopOpacity="0.9" />
+            <stop offset="50%" stopColor="#3b82f6" stopOpacity="0.6" />
+            <stop offset="100%" stopColor="#a855f7" stopOpacity="0.9" />
+          </linearGradient>
+
+          {/* Laser Glow Filter */}
+          <filter id="neonGlowFilter" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="4" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
         </defs>
 
-        {/* Hintergrunde-Glow */}
-        <circle cx="0" cy="0" r={radius + 40} fill="url(#radialGlow)" />
+        {/* Center Glow Aura */}
+        <circle cx="0" cy="0" r={radius + 60} fill="url(#cyberCenterGlow)" />
 
-        {/* Äußerer gestrichelter Kreisring */}
+        {/* Outer Pulsing Dashed Orbit Ring */}
+        <circle
+          cx="0"
+          cy="0"
+          r={radius + 15}
+          fill="none"
+          stroke="url(#neonArcGradient)"
+          strokeWidth="1.5"
+          strokeDasharray="4 8"
+          className="opacity-40 animate-[spin_60s_linear_infinite]"
+        />
+
+        {/* Main Solid Glowing Orbit Circle */}
         <circle
           cx="0"
           cy="0"
           r={radius}
           fill="none"
-          stroke="var(--line)"
-          strokeWidth="1.5"
-          strokeDasharray="6 6"
-          className="opacity-70"
+          stroke="url(#neonArcGradient)"
+          strokeWidth="2"
+          filter="url(#neonGlowFilter)"
+          className="opacity-80"
         />
 
-        {/* Verbindungs-Strahlen vom Zentrum zu den Knoten */}
+        {/* Inner Secondary Dashed Orbit */}
+        <circle
+          cx="0"
+          cy="0"
+          r={radius - 40}
+          fill="none"
+          stroke="#06b6d4"
+          strokeWidth="1"
+          strokeDasharray="12 12"
+          className="opacity-30 animate-[spin_40s_linear_infinite_reverse]"
+        />
+
+        {/* Rays from Hub to Node Bulbs */}
         {RADIAL_AGENTS.map((agent) => {
           const rad = (agent.angle * Math.PI) / 180;
           const x2 = Math.cos(rad) * radius;
@@ -124,26 +172,39 @@ export const RadialNavigationWheel: React.FC<RadialNavigationWheelProps> = ({
           const isSuggested = agent.id === suggestedAgentId;
 
           return (
-            <line
-              key={`line-${agent.id}`}
-              x1="0"
-              y1="0"
-              x2={x2}
-              y2={y2}
-              stroke={isSelected ? agent.color : isSuggested ? "var(--signal)" : "var(--line)"}
-              strokeWidth={isSelected || isSuggested ? "2.5" : "1"}
-              strokeOpacity={isSelected ? "0.9" : isSuggested ? "0.8" : "0.35"}
-              className="transition-all duration-300"
-            />
+            <g key={`ray-${agent.id}`}>
+              <line
+                x1="0"
+                y1="0"
+                x2={x2}
+                y2={y2}
+                stroke={isSelected ? agent.color : isSuggested ? "#00f2fe" : "#334155"}
+                strokeWidth={isSelected || isSuggested ? "2.5" : "1"}
+                strokeOpacity={isSelected ? "0.9" : isSuggested ? "0.8" : "0.4"}
+                filter={isSelected || isSuggested ? "url(#neonGlowFilter)" : undefined}
+                className="transition-all duration-300"
+              />
+              {/* Pulsing Energy Dot on Line */}
+              {isSelected && (
+                <circle
+                  cx={x2 * 0.65}
+                  cy={y2 * 0.65}
+                  r="3"
+                  fill={agent.color}
+                  filter="url(#neonGlowFilter)"
+                  className="animate-ping"
+                />
+              )}
+            </g>
           );
         })}
       </svg>
 
-      {/* Zentrierter Content (z. B. das erweiterte Suchfeld) */}
-      <div className="relative z-10 w-full max-w-xl px-4">{children}</div>
+      {/* 2. ZENTRALES SUCHFELD HUB (Im Zentrum des Rads) */}
+      <div className="relative z-20 w-full max-w-xl px-4">{children}</div>
 
-      {/* Orbit-Buttons für die Fachagenten */}
-      <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+      {/* 3. ORBITAL FACHAGENTEN NODES (Im Ring angeordnet) */}
+      <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
         {RADIAL_AGENTS.map((agent) => {
           const rad = (agent.angle * Math.PI) / 180;
           const x = Math.cos(rad) * radius;
@@ -165,47 +226,53 @@ export const RadialNavigationWheel: React.FC<RadialNavigationWheelProps> = ({
                 onClick={() => onSelectAgent(agent.id)}
                 onMouseEnter={() => setHoveredId(agent.id)}
                 onMouseLeave={() => setHoveredId(null)}
-                className={`group relative flex flex-col items-center justify-center rounded-2xl p-3.5 transition-all duration-300 cursor-pointer backdrop-blur-md ${
+                className={`group relative flex flex-col items-center justify-center p-4 rounded-2xl transition-all duration-300 cursor-pointer backdrop-blur-xl ${
                   isSelected
-                    ? "bg-white text-[var(--ink)] shadow-xl ring-2 scale-110"
+                    ? "bg-slate-900/95 text-white scale-115 z-30"
                     : isSuggested
-                    ? "bg-white/90 text-[var(--ink)] shadow-lg ring-2 ring-[var(--signal)] animate-pulse"
-                    : "bg-white/80 hover:bg-white text-[var(--ink-soft)] hover:text-[var(--ink)] shadow-md hover:scale-105 border border-[var(--line)]"
+                    ? "bg-slate-900/90 text-slate-100 scale-105 animate-pulse"
+                    : "bg-slate-900/80 hover:bg-slate-800/90 text-slate-300 hover:text-white hover:scale-110"
                 }`}
                 style={{
-                  borderColor: isSelected ? agent.color : undefined,
+                  border: `1.5px solid ${isSelected ? agent.color : isSuggested ? "#00f2fe" : "rgba(51, 65, 85, 0.6)"}`,
                   boxShadow: isSelected
-                    ? `0 10px 25px -5px ${agent.color}40, 0 0 15px 0 ${agent.color}30`
-                    : undefined,
+                    ? `0 0 30px ${agent.glowColor}, inset 0 0 15px ${agent.glowColor}`
+                    : isHovered
+                    ? `0 0 20px ${agent.glowColor}`
+                    : "0 10px 25px rgba(0, 0, 0, 0.5)",
                 }}
               >
-                {/* Visual Accent Dot / Icon */}
+                {/* Glowing Circular Icon Plaque */}
                 <div
-                  className="p-2 rounded-xl text-white transition-all duration-300"
+                  className="p-3 rounded-xl text-slate-950 font-bold transition-all duration-300 flex items-center justify-center"
                   style={{
-                    backgroundColor: agent.color,
+                    background: `linear-gradient(135deg, ${agent.color}, #0284c7)`,
+                    boxShadow: `0 0 18px ${agent.glowColor}`,
                   }}
                 >
                   {agent.icon}
                 </div>
 
-                <span className="text-[11px] font-bold mt-1.5 whitespace-nowrap tracking-tight">
+                {/* Node Title Label */}
+                <span className="text-[11px] font-extrabold mt-2.5 whitespace-nowrap tracking-wider uppercase text-slate-100 group-hover:text-cyan-300 transition-colors">
                   {agent.name}
                 </span>
 
-                {/* Intent Highlight Badge */}
+                {/* Intent Smart Suggestion Badge */}
                 {isSuggested && (
-                  <span className="absolute -top-3.5 bg-[var(--signal)] text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-md inline-flex items-center gap-1">
-                    <IconSparkles size={10} />
-                    Empfehlung
+                  <span className="absolute -top-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-widest shadow-[0_0_12px_#06b6d4] inline-flex items-center gap-1 border border-cyan-300">
+                    <IconSparkles size={11} />
+                    Empfohlen
                   </span>
                 )}
 
-                {/* Hover Tooltip Card */}
+                {/* Cyberpunk Hover Info Card */}
                 {isHovered && (
-                  <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-48 p-2.5 bg-slate-900 text-white rounded-xl text-[11px] font-sans shadow-2xl z-30 pointer-events-none animate-in fade-in zoom-in-95 duration-150 border border-slate-700">
-                    <div className="font-bold text-indigo-300">{agent.category}</div>
-                    <div className="text-[10px] text-slate-300 mt-0.5 leading-tight">
+                  <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 w-52 p-3 bg-slate-950/95 text-slate-100 rounded-xl text-[11px] font-sans shadow-[0_10px_40px_rgba(0,0,0,0.8)] z-40 pointer-events-none border border-cyan-500/40 backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-150">
+                    <div className="font-bold text-cyan-400 uppercase tracking-wider text-[10px]">
+                      {agent.category}
+                    </div>
+                    <div className="text-[11px] text-slate-300 mt-1 leading-snug">
                       {agent.description}
                     </div>
                   </div>

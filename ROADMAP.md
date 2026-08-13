@@ -3325,6 +3325,18 @@ git show roadmap/2026-08-03-p4-email-invoices --stat
 - **PGE Trinity Sandbox Executor (Option 2 - P15):** `core/orchestrator/sandbox_executor.py` führt risikobehaftete Tools/Skripte (Risikoklassen `YELLOW` und `ORANGE`) in ephemeren, hochisolierten Docker MicroVM Sandboxes aus. Risikoklasse `RED` wird vom Gatekeeper blockiert.
 - **Erweiterte Testsuite:** `tests/test_mcp_docker.py`, `tests/test_sandbox_executor.py` und `tests/test_docker_integration_edge_cases.py` (227 Pytests + 19 Memory Cases + 7 Compute Cases = 100% PASS).
 
+## Stand & Changelog (2026-08-13 — High-End Dark Neon Refactoring des Navigationsrads)
+
+- **Release-Tag:** `roadmap/2026-08-13-p4-radial-navigation-dark-neon`
+- **1:1 Visual Refactoring des Navigationsrads (`RadialNavigationWheel.tsx`):**
+  - Umwandlung in ein hoch-ästhetisches Dark Neon / Cyber-HUD Design gemäß Konzept-Mockup.
+  - Mehrschichtige SVG-Orbit-Ringe mit Cyan/Blue Gradients, pulsenden Orbits & Glassmorphism Node-Badges (`bg-slate-900/90`, `shadow-[0_0_30px_...]`).
+  - Zifferblatt-Positionierung der 5 Fachagenten mit farbkodierten Neon-Glows, Icon-Plaketten & Hover-Infokarten.
+  - Vollständiges Dark-Space Theme für das zentrale Suchfeld mit Modellauswahl, IP-Protection & Intent-Highlighter.
+- **Master Testsuite:** 100% grün (0 Failed).
+
+---
+
 ## Stand & Changelog (2026-08-13 — Port-Umstellung auf 8090 für Console Web)
 
 - **Release-Tag:** `roadmap/2026-08-13-p4-console-port-8090`

@@ -15,24 +15,19 @@ import {
   IconEdit,
   IconCalendar,
   IconFileText,
-  IconSettings,
-  IconUserCheck,
-  IconCpu,
-  IconArrowLeft,
   IconSparkles,
-  IconTerminal,
-  IconDatabase,
+  IconCpu,
+  IconAdjustments,
 } from "@tabler/icons-react";
 
 export default function PrototypeStartPage() {
-  // Mode State: 'user' (Anwendermodus - Default) vs. 'admin' (Admin-Modus)
-  const [mode, setMode] = useState<"user" | "admin">("user");
-
   // Active Agent State for Radial Wheel Navigation
   const [activeAgentId, setActiveAgentId] = useState<string>("research");
 
-  // Search input state for intent detection
+  // Search input & model state
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedModel, setSelectedModel] = useState("qwen2.5-coder:14b");
+  const [ipProtection, setIpProtection] = useState(true);
 
   // Sample Output for Fachagenten
   const [lastOutput, setLastOutput] = useState<any>(null);
@@ -59,90 +54,130 @@ export default function PrototypeStartPage() {
   const suggestedAgentId = detectSuggestedAgent(searchQuery);
 
   return (
-    <div className="text-[var(--ink)] font-sans">
-      {/* MAIN WORKSPACE CONTAINER */}
-      <main className="max-w-6xl mx-auto px-0 py-4 space-y-10">
-        {/* RADIAL NAVIGATION WHEEL & CENTRAL SEARCH AGENT */}
-        <section className="space-y-4">
-          <RadialNavigationWheel
-            activeAgentId={activeAgentId}
-            suggestedAgentId={suggestedAgentId}
-            onSelectAgent={(id) => {
-              setActiveAgentId(id);
-              setLastOutput(null);
-            }}
-          >
-            {/* Zentrale Suchkarte */}
-            <div className="p-6 rounded-3xl border border-[var(--line)] bg-white shadow-xl space-y-4 transition-all">
-              <div className="flex items-center justify-between border-b border-[var(--line)] pb-3">
-                <div className="flex items-center gap-2">
-                  <IconSearch size={20} className="text-[var(--signal)]" />
-                  <span className="font-bold text-sm text-[var(--ink)]">Search Agent</span>
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans p-4 sm:p-6 space-y-10">
+      {/* 1. RADIAL NAVIGATION WHEEL & ZENTRALES SEARCH AGENT PANEL */}
+      <section className="max-w-6xl mx-auto space-y-4">
+        <RadialNavigationWheel
+          activeAgentId={activeAgentId}
+          suggestedAgentId={suggestedAgentId}
+          onSelectAgent={(id) => {
+            setActiveAgentId(id);
+            setLastOutput(null);
+          }}
+        >
+          {/* ZENTRALE CYBER-SEARCH KARTE */}
+          <div className="p-6 rounded-3xl border border-cyan-500/30 bg-slate-900/90 shadow-[0_0_50px_rgba(6,182,212,0.15)] backdrop-blur-2xl space-y-5 transition-all">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+                  <IconSearch size={18} />
                 </div>
-                <span className="badge" data-variant="graph">
-                  Company Brain & Web
+                <span className="font-bold text-sm tracking-wide text-white">
+                  SEARCH AGENT <span className="text-cyan-400">SCHALTZENTRALE</span>
                 </span>
               </div>
+              <span className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 uppercase tracking-wider">
+                Company Brain & Web
+              </span>
+            </div>
 
-              {/* Central Input Box */}
-              <div className="relative">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Tippe deine Frage oder Aufgabe ein (z. B. 'Angebot für Malerbetrieb' oder 'Was steht aus?')..."
-                  className="w-full bg-[color-mix(in_oklab,white_90%,transparent)] border border-[var(--line)] text-[var(--ink)] rounded-2xl px-4 py-3.5 text-xs placeholder-[var(--ink-soft)] focus:outline-none focus:border-[var(--signal)] transition-colors pr-10"
-                />
-                <IconSearch
-                  size={18}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--ink-soft)]"
-                />
+            {/* Central Input Bar */}
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Wonach suchen Sie, Max? (z. B. 'Angebot Malerarbeiten Schulze' oder 'Rechnungen')"
+                className="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-400 text-white rounded-2xl px-4 py-3.5 text-xs placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-400 transition-all pr-12 shadow-inner"
+              />
+              <button
+                type="button"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 hover:scale-105 transition-transform cursor-pointer font-bold"
+                title="Suche ausführen"
+              >
+                <IconSearch size={16} />
+              </button>
+            </div>
+
+            {/* Integrated Options Bar: Model Dropdown & IP-Protection Toggle */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-slate-800/80 text-xs">
+              {/* Modellauswahl Dropdown */}
+              <div className="flex items-center gap-2 bg-slate-950/60 px-3 py-1.5 rounded-xl border border-slate-800">
+                <IconCpu size={14} className="text-cyan-400" />
+                <span className="text-[11px] text-slate-400 font-mono">Modell:</span>
+                <select
+                  value={selectedModel}
+                  onChange={(e) => setSelectedModel(e.target.value)}
+                  className="bg-transparent text-white font-bold text-xs outline-none cursor-pointer"
+                >
+                  <option value="qwen2.5-coder:14b" className="bg-slate-900 text-white">Qwen 2.5 Coder 14B</option>
+                  <option value="deepseek-r1:32b" className="bg-slate-900 text-white">DeepSeek R1 32B</option>
+                  <option value="mistral-nemo:12b" className="bg-slate-900 text-white">Mistral Nemo 12B</option>
+                  <option value="hermes3:8b" className="bg-slate-900 text-white">Hermes 3 8B</option>
+                  <option value="llama3.2-vision:11b" className="bg-slate-900 text-white">Llama 3.2 Vision 11B</option>
+                </select>
               </div>
 
-              {/* Smart Suggestion Chip if Intent Detected */}
-              {suggestedAgentId && (
-                <div className="p-2.5 rounded-xl bg-[color-mix(in_oklab,var(--signal)_8%,white)] border border-[var(--signal)] flex items-center justify-between text-xs animate-in fade-in duration-200">
-                  <div className="flex items-center gap-2">
-                    <IconSparkles size={16} className="text-[var(--signal)]" />
-                    <span>
-                      Passender Fachagent erkannt:{" "}
-                      <strong>
-                        {RADIAL_AGENTS.find((a) => a.id === suggestedAgentId)?.name}
-                      </strong>
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setActiveAgentId(suggestedAgentId)}
-                    className="btn-ghost text-xs py-1 px-3 text-[var(--signal)] font-bold border-[var(--signal)] cursor-pointer"
-                  >
-                    Wechseln ➔
-                  </button>
-                </div>
-              )}
+              {/* IP-Schutz Toggle */}
+              <button
+                type="button"
+                onClick={() => setIpProtection(!ipProtection)}
+                className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  ipProtection
+                    ? "bg-cyan-500/10 border-cyan-500/40 text-cyan-300"
+                    : "bg-slate-950/60 border-slate-800 text-slate-400"
+                }`}
+              >
+                {ipProtection ? <IconShieldCheck size={14} className="text-cyan-400" /> : <IconShieldOff size={14} />}
+                <span>IP-Schutz: {ipProtection ? "AN (Anonym)" : "AUS"}</span>
+              </button>
             </div>
-          </RadialNavigationWheel>
-        </section>
 
-        {/* 4. ACTIVE FACHAGENT WORKSPACE */}
-        <section className="space-y-6 pt-4 border-t border-[var(--line)]">
-          <div className="flex items-center justify-between">
-            <h2 className="section-title text-lg font-bold text-[var(--ink)] m-0 flex items-center gap-2">
-              <span>Aktivierter Fachagent:</span>
-              <span className="text-[var(--signal)]">
-                {RADIAL_AGENTS.find((a) => a.id === activeAgentId)?.name}
-              </span>
-            </h2>
-            <span className="mono text-xs muted">
-              Kategorie: {RADIAL_AGENTS.find((a) => a.id === activeAgentId)?.category}
-            </span>
+            {/* Smart Intent Suggestion Banner */}
+            {suggestedAgentId && (
+              <div className="p-3 rounded-2xl bg-cyan-500/15 border border-cyan-400/50 flex items-center justify-between text-xs animate-in fade-in duration-200 shadow-[0_0_20px_rgba(6,182,212,0.2)]">
+                <div className="flex items-center gap-2 text-cyan-200">
+                  <IconSparkles size={16} className="text-cyan-400 animate-spin" />
+                  <span>
+                    Intelligente Absprung-Empfehlung:{" "}
+                    <strong className="text-white">
+                      {RADIAL_AGENTS.find((a) => a.id === suggestedAgentId)?.name}
+                    </strong>
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveAgentId(suggestedAgentId)}
+                  className="px-3 py-1 rounded-xl bg-cyan-400 text-slate-950 font-black text-xs hover:bg-cyan-300 transition-colors cursor-pointer"
+                >
+                  Zu Agent ➔
+                </button>
+              </div>
+            )}
           </div>
+        </RadialNavigationWheel>
+      </section>
 
-          {/* DYNAMISCHER WORKSPACE JE NACH SELEKTIERTEM AGENTEN */}
+      {/* 2. AKTIVIERTER FACHAGENT WORKSPACE */}
+      <section className="max-w-6xl mx-auto space-y-6 pt-6 border-t border-slate-800">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-extrabold text-white uppercase tracking-wider m-0 flex items-center gap-2">
+            <span className="text-slate-400">Arbeitsbereich:</span>
+            <span className="text-cyan-400">
+              {RADIAL_AGENTS.find((a) => a.id === activeAgentId)?.name}
+            </span>
+          </h2>
+          <span className="font-mono text-xs text-slate-400">
+            Kategorie: {RADIAL_AGENTS.find((a) => a.id === activeAgentId)?.category}
+          </span>
+        </div>
+
+        {/* WORKSPACE CONTENT JE NACH SELEKTIERTEM KNOTEN */}
+        <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 backdrop-blur-md shadow-2xl">
           {activeAgentId === "research" ? (
             <ResearchAgentWorkspace />
           ) : activeAgentId === "handwerker" ? (
-            <div className="p-6 rounded-2xl border border-[var(--line)] bg-white space-y-6 shadow-sm">
+            <div className="space-y-6">
               <DynamicDataProductForm
                 schema={{
                   title: "Handwerker Angebot & Kalkulation",
@@ -188,7 +223,7 @@ export default function PrototypeStartPage() {
               {lastOutput && <DataProductViewer dataProduct={lastOutput} title="Ingestion DataProduct Commit" />}
             </div>
           ) : activeAgentId === "blog" ? (
-            <div className="p-6 rounded-2xl border border-[var(--line)] bg-white space-y-6 shadow-sm">
+            <div className="space-y-6">
               <DynamicDataProductForm
                 schema={{
                   title: "Blog & Content Engine",
@@ -215,22 +250,22 @@ export default function PrototypeStartPage() {
               {lastOutput && <DataProductViewer dataProduct={lastOutput} title="Generierter Blogbeitrag" />}
             </div>
           ) : (
-            <div className="p-6 rounded-2xl border border-[var(--line)] bg-white space-y-4 shadow-sm">
-              <h3 className="section-title text-base font-bold m-0 flex items-center gap-2">
-                <IconCalendar size={20} className="text-[var(--signal)]" />
+            <div className="space-y-4">
+              <h3 className="text-base font-bold text-white flex items-center gap-2 m-0">
+                <IconCalendar size={20} className="text-cyan-400" />
                 <span>Meeting- & Zeitmanagement Agent</span>
               </h3>
-              <p className="text-xs muted m-0">
+              <p className="text-xs text-slate-400 m-0">
                 Synchronisiert Google Calendar, analysiert freie Fokusblöcke und generiert Zusammenfassungen.
               </p>
-              <div className="p-4 rounded-xl border border-[var(--line)] bg-[color-mix(in_oklab,white_90%,transparent)] text-xs mono space-y-2">
+              <div className="p-4 rounded-2xl border border-slate-800 bg-slate-950 text-xs font-mono text-cyan-300 space-y-2">
                 <div>Calendar Sync Status: 68 Termine synchronisiert</div>
                 <div>Nächster Freier Fokusblock: Morgen 14:00 - 16:30 Uhr</div>
               </div>
             </div>
           )}
-        </section>
-      </main>
+        </div>
+      </section>
     </div>
   );
 }
