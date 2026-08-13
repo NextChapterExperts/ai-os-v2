@@ -77,21 +77,21 @@ class ResearchAgent(AgentBase):
                 "search",
                 {"q": query, "k": 3, "tenant_id": self.ctx.tenant_id},
             )
-            if isinstance(local_res, list):
-                for item in local_res:
-                    local_hits.append(
-                        SourceItem(
-                            title=item.get("title") or "Company Brain Dokument",
-                            url=item.get("url") or f"brain://{item.get('id', 'doc')}",
-                            snippet=item.get("text") or item.get("snippet") or "",
-                            source_type="local_brain",
-                            trust_score=0.95,
-                        )
+            local_items = local_res.get("results", []) if isinstance(local_res, dict) else (local_res if isinstance(local_res, list) else [])
+            for item in local_items:
+                local_hits.append(
+                    SourceItem(
+                        title=item.get("title") or "Company Brain Dokument",
+                        url=item.get("url") or f"brain://{item.get('id', 'doc')}",
+                        snippet=item.get("text") or item.get("snippet") or "",
+                        source_type="local_brain",
+                        trust_score=0.95,
                     )
+                )
         except Exception:
             pass
 
-        # 2. Dual-Retrieval: Web Search via SearXNG MCP
+        # 2. Dual-Retrieval: Web Search via MCP
         web_hits = []
         try:
             web_res = await self.mcp.call(
@@ -99,19 +99,20 @@ class ResearchAgent(AgentBase):
                 "search",
                 {"q": query, "num": 5, "anonymize": input_dp.anonymize},
             )
-            if isinstance(web_res, list):
-                for item in web_res:
-                    web_hits.append(
-                        SourceItem(
-                            title=item.get("title") or "Web-Quelle",
-                            url=item.get("url") or item.get("link") or "https://searxng.local",
-                            snippet=item.get("snippet") or item.get("snippet_text") or "",
-                            source_type="web_searxng",
-                            trust_score=0.85,
-                        )
+            web_items = web_res.get("results", []) if isinstance(web_res, dict) else (web_res if isinstance(web_res, list) else [])
+            for item in web_items:
+                web_hits.append(
+                    SourceItem(
+                        title=item.get("title") or "Web-Quelle",
+                        url=item.get("url") or item.get("link") or "https://searxng.local",
+                        snippet=item.get("snippet") or item.get("snippet_text") or "",
+                        source_type="web_searxng",
+                        trust_score=0.85,
                     )
+                )
         except Exception:
             pass
+
 
         all_sources = local_hits + web_hits
 
