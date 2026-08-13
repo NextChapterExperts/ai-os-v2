@@ -15,8 +15,8 @@ def test_prototype_page_exists():
     assert '"use client"' in content
     assert "RadialNavigationWheel" in content
     assert "detectSuggestedAgent" in content
-    assert "Anwendermodus" in content
-    assert "Admin-Modus" in content
+    assert "SEARCH AGENT" in content
+    assert "qwen2.5-coder:14b" in content
 
 
 def test_radial_navigation_wheel_component_exists():
