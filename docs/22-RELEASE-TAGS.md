@@ -40,6 +40,7 @@ git push origin roadmap/2026-08-03-p4-email-invoices
 
 | Tag | Datum | Roadmap | Kurzbeschreibung | Commit |
 |-----|-------|---------|------------------|--------|
+| `roadmap/2026-08-13-p4-pure-harmonious-radial-page` | 2026-08-13 | §9, §10, UI | Harmonisierte puristische Startseite (280px Radius), 100% frei von Unter-Boxen | *(siehe `git show`)* |
 | `roadmap/2026-08-13-p4-radial-wheel-fullwidth` | 2026-08-13 | §9, §10, UI | Full-Width Screen Layout (440px Radius) & Hover-Erklärungen mit Klick-Absprung | *(siehe `git show`)* |
 | `roadmap/2026-08-13-p4-radial-wheel-fullscreen` | 2026-08-13 | §9, §10, UI | Fullscreen Navigationsrad (Radius 370px) & Entfernung der unteren festen Websearch-Box | *(siehe `git show`)* |
 | `roadmap/2026-08-13-p4-radial-navigation-dark-neon` | 2026-08-13 | §9, §10, UI | 1:1 High-End Dark Neon Refactoring des Navigationsrads gemäß Konzept-Mockup | *(siehe `git show`)* |
