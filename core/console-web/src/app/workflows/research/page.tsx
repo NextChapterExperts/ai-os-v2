@@ -3,11 +3,11 @@
 import { useState } from "react";
 
 interface SourceItem {
-  title: str;
-  url: str;
-  snippet: str;
-  source_type: "local_brain" | "web_searxng";
-  trust_score: number;
+  title?: string;
+  url?: string;
+  snippet?: string;
+  source_type?: "local_brain" | "web_searxng";
+  trust_score?: number;
 }
 
 interface PromptContext {
@@ -38,7 +38,7 @@ const AVAILABLE_MODELS = [
   { id: "openrouter/auto", label: "OpenRouter Cloud (Premium Fallback)" },
 ];
 
-function renderMarkdownReport(text: string) {
+function renderMarkdownReport(text: string, sources: SourceItem[] = [], onSelectSource?: (src: SourceItem) => void) {
   if (!text) return null;
   const lines = text.split("\n");
   return (
@@ -77,14 +77,20 @@ function renderMarkdownReport(text: string) {
             {trimmed.startsWith("- ") ? <span className="text-indigo-400 font-bold">▸</span> : null}
             <span>
               {parts.map((part, pIdx) => {
-                if (/^\[\d+\]$/.test(part)) {
+                const citeMatch = part.match(/^\[(\d+)\]$/);
+                if (citeMatch) {
+                  const srcNum = parseInt(citeMatch[1], 10);
+                  const matchingSrc = sources[srcNum - 1];
                   return (
-                    <span
+                    <button
                       key={pIdx}
-                      className="inline-flex items-center justify-center px-1.5 py-0.5 mx-0.5 rounded bg-indigo-950/80 border border-indigo-500/50 text-indigo-300 font-mono font-bold text-[10px] align-baseline"
+                      type="button"
+                      onClick={() => matchingSrc && onSelectSource?.(matchingSrc)}
+                      title={matchingSrc ? `Quelle #${srcNum}: ${matchingSrc.title}` : `Quelle #${srcNum}`}
+                      className="inline-flex items-center justify-center px-1.5 py-0.5 mx-0.5 rounded bg-indigo-950/90 hover:bg-indigo-600 hover:text-white border border-indigo-500/50 text-indigo-300 font-mono font-bold text-[10px] align-baseline transition-all cursor-pointer border-none"
                     >
-                      {part}
-                    </span>
+                      [{srcNum}]
+                    </button>
                   );
                 }
                 if (part.startsWith("**") && part.endsWith("**")) {
@@ -99,6 +105,7 @@ function renderMarkdownReport(text: string) {
     </div>
   );
 }
+
 
 export default function ResearchWorkflowPage() {
   const [query, setQuery] = useState("");

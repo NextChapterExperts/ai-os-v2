@@ -49,7 +49,7 @@ const LAGEBILD_MODELS = [
 function cleanTextSnippet(text?: string): string {
   if (!text) return "";
   let s = String(text);
-  s = s.replace(/<(script|style|svg)[^>]*>.*?<\/\1>/gis, "");
+  s = s.replace(/<(script|style|svg)[^>]*>[\s\S]*?<\/\1>/gi, "");
   s = s.replace(/<[^>]+>/g, " ");
   s = s.replace(/(?:var|let|const|function)\s+\w+\s*=.*?;/g, " ");
   s = s.replace(/&\w+;/g, " ");
@@ -434,7 +434,7 @@ export function ResearchAgentWorkspace() {
                 <div>
                   <span className="muted">Zeichenanzahl:</span>{" "}
                   <strong>
-                    {promptDetails?.contextCharCount || result?.llmContext?.prompt?.contextCharCount || 0} Zeichen
+                    {promptDetails?.contextCharCount || (result?.llmContext?.prompt as any)?.contextCharCount || 0} Zeichen
                   </strong>
                 </div>
                 <div>
@@ -450,7 +450,7 @@ export function ResearchAgentWorkspace() {
                   System Prompt (SystemSlice & Guardrails):
                 </h4>
                 <pre className="p-3 rounded-xl border border-[var(--line)] bg-[color-mix(in_oklab,white_95%,var(--ink))] text-[11px] whitespace-pre-wrap overflow-x-auto m-0">
-                  {promptDetails?.system || result?.llmContext?.prompt?.system || "Kein System-Prompt erfasst."}
+                  {promptDetails?.system || (result?.llmContext?.prompt as any)?.system || "Kein System-Prompt erfasst."}
                 </pre>
               </div>
 
@@ -459,7 +459,7 @@ export function ResearchAgentWorkspace() {
                   User Prompt (TaskSlice & Context):
                 </h4>
                 <pre className="p-3 rounded-xl border border-[var(--line)] bg-[color-mix(in_oklab,white_95%,var(--ink))] text-[11px] whitespace-pre-wrap overflow-x-auto m-0">
-                  {promptDetails?.user || result?.llmContext?.prompt?.user || "Kein User-Prompt erfasst."}
+                  {promptDetails?.user || (result?.llmContext?.prompt as any)?.user || "Kein User-Prompt erfasst."}
                 </pre>
               </div>
 

@@ -58,9 +58,14 @@ async def _run_internal(context_bundle: dict[str, Any], tenant_id: str, params: 
     depth = str(params.get("depth") or "quick")
     model_override = params.get("model") or params.get("model_override")
     compute_mode = params.get("compute_mode") or "sovereign"
-    anonymize = params.get("anonymize", True)
+    raw_anon = params.get("anonymize", True)
+    if isinstance(raw_anon, str):
+        anonymize = raw_anon.lower() in ("true", "1", "yes", "on")
+    else:
+        anonymize = bool(raw_anon)
     refinement_feedback = params.get("refinement_feedback")
     save_to_brain = params.get("save_to_brain", False)
+
 
     # Boundary handling for empty/short/gibberish queries
     if not query:

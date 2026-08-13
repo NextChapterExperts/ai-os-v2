@@ -18,7 +18,16 @@ CONTEXT_DIR = Path(
 def save_run_context(run_id: str, context: dict[str, Any]) -> None:
     CONTEXT_DIR.mkdir(parents=True, exist_ok=True)
     path = CONTEXT_DIR / f"{run_id}.json"
-    path.write_text(json.dumps(context, ensure_ascii=False, indent=2), encoding="utf-8")
+    try:
+        content = json.dumps(context, ensure_ascii=False, indent=2)
+        path.write_text(content, encoding="utf-8", errors="replace")
+    except Exception:
+        try:
+            content = json.dumps(context, ensure_ascii=True, indent=2)
+            path.write_text(content, encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
 
 
 def load_run_context(run_id: str) -> dict[str, Any] | None:

@@ -128,7 +128,8 @@ async def dispatch_intent(req: DispatchRequest) -> DispatchResponse:
             run_id=run_id,
         )
     except Exception as exc:
-        logger.error("Error in dispatch_intent handler for %s: %s", intent, exc, exc_info=True)
+        log.error("Error in dispatch_intent handler for %s: %s", intent, exc, exc_info=True)
+
         q = str(params.get("query") or req.intent)
         fallback_result = {
             "query": q,

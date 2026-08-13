@@ -53,7 +53,100 @@ function cleanTextSnippet(text?: string): string {
   return s;
 }
 
-function renderMarkdownReport(text: string) {
+function SourcePreviewModal({
+  source,
+  onClose,
+}: {
+  source: SourceItem;
+  onClose: () => void;
+}) {
+  const isWeb = Boolean(source.url && source.url.startsWith("http"));
+  const cleanSnippet = cleanTextSnippet(source.snippet);
+
+  return (
+    <div className="fixed inset-0 z-[100000] bg-black/75 backdrop-blur-md flex items-center justify-center p-4 rise">
+      <div className="bg-white border border-[var(--line)] rounded-2xl max-w-4xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+        {/* Modal Header */}
+        <div className="px-6 py-4 border-b border-[var(--line)] bg-[color-mix(in_oklab,white_95%,var(--ink))] flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-[color-mix(in_oklab,var(--signal)_12%,white)] border border-[var(--signal)] flex items-center justify-center text-lg shrink-0">
+              {isWeb ? "🌐" : "🧠"}
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-sm font-bold text-[var(--ink)] m-0 truncate">
+                {source.title || "Quellen-Vorschau"}
+              </h3>
+              <p className="text-xs font-mono muted m-0 truncate">{source.url || "brain://internal"}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {isWeb && (
+              <a
+                href={source.url}
+                target="_blank"
+                rel="noreferrer"
+                className="px-3.5 py-1.5 rounded-xl bg-[var(--signal)] text-white text-xs font-bold font-mono no-underline hover:opacity-90 transition-all flex items-center gap-1"
+              >
+                <span>Extern im Tab öffnen</span> ↗
+              </a>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-3.5 py-1.5 rounded-xl border border-[var(--line)] bg-white text-xs font-bold font-mono text-[var(--ink)] hover:bg-slate-100 transition-all cursor-pointer"
+            >
+              ✕ Schließen
+            </button>
+          </div>
+        </div>
+
+        {/* Modal Body */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          <div className="p-4 rounded-xl bg-[color-mix(in_oklab,white_96%,var(--ink))] border border-[var(--line)] space-y-2">
+            <div className="flex items-center justify-between text-xs font-mono">
+              <span className="font-bold text-[var(--signal)] flex items-center gap-1.5">
+                <span>{isWeb ? "🌐 Web-Quelle (SearXNG Egress)" : "🧠 Company Brain Asset"}</span>
+              </span>
+              <span className="muted">Vertrauen: {source.trust_score ? Math.round(source.trust_score * 100) : 88}%</span>
+            </div>
+            <p className="text-xs text-[var(--ink)] font-sans leading-relaxed m-0 pt-1">
+              {cleanSnippet || "Keine Textzusammenfassung verfügbar."}
+            </p>
+          </div>
+
+          {/* Embedded Web Preview Iframe for External URLs */}
+          {isWeb ? (
+            <div className="w-full h-[460px] rounded-xl border border-[var(--line)] overflow-hidden bg-slate-100 relative">
+              <iframe
+                src={source.url}
+                title={source.title}
+                className="w-full h-full border-none"
+                sandbox="allow-scripts allow-same-origin allow-popups"
+              />
+            </div>
+          ) : (
+            <div className="p-8 text-center muted text-xs font-mono border border-dashed border-[var(--line)] rounded-xl">
+              🧠 Dies ist ein internes Dokument aus dem Company Brain. Der Inhalt wurde ausgewertet und im Recherchebericht synthetisiert.
+            </div>
+          )}
+        </div>
+
+        {/* Modal Footer */}
+        <div className="px-6 py-3 border-t border-[var(--line)] bg-[color-mix(in_oklab,white_96%,var(--ink))] flex justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl bg-[var(--signal)] text-white text-xs font-bold hover:opacity-90 transition-all"
+          >
+            Zurück zur Recherche
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function renderMarkdownReport(text: string, sources: SourceItem[] = [], onSelectSource?: (src: SourceItem) => void) {
   if (!text) return null;
   const lines = text.split("\n");
   return (
@@ -93,14 +186,20 @@ function renderMarkdownReport(text: string) {
             {trimmed.startsWith("- ") ? <span className="text-[var(--signal)] font-bold">▸</span> : null}
             <span>
               {parts.map((part, pIdx) => {
-                if (/^\[\d+\]$/.test(part)) {
+                const citeMatch = part.match(/^\[(\d+)\]$/);
+                if (citeMatch) {
+                  const srcNum = parseInt(citeMatch[1], 10);
+                  const matchingSrc = sources[srcNum - 1];
                   return (
-                    <span
+                    <button
                       key={pIdx}
-                      className="inline-flex items-center justify-center px-1.5 py-0.5 mx-0.5 rounded bg-[color-mix(in_oklab,var(--signal)_12%,white)] border border-[var(--signal)] text-[var(--signal)] font-mono font-bold text-[10px] align-baseline"
+                      type="button"
+                      onClick={() => matchingSrc && onSelectSource?.(matchingSrc)}
+                      title={matchingSrc ? `Quelle #${srcNum}: ${matchingSrc.title}` : `Quelle #${srcNum}`}
+                      className="inline-flex items-center justify-center px-1.5 py-0.5 mx-0.5 rounded bg-[color-mix(in_oklab,var(--signal)_15%,white)] hover:bg-[var(--signal)] hover:text-white border border-[var(--signal)] text-[var(--signal)] font-mono font-bold text-[10px] align-baseline transition-all cursor-pointer border-none"
                     >
-                      {part}
-                    </span>
+                      [{srcNum}]
+                    </button>
                   );
                 }
                 if (part.startsWith("**") && part.endsWith("**")) {
@@ -115,6 +214,7 @@ function renderMarkdownReport(text: string) {
     </div>
   );
 }
+
 
 const RESEARCH_STEPS = [
   { label: "Rechercheauftrag analysieren & Entitäten extrahieren", icon: "🔍", percent: 20 },
@@ -144,10 +244,12 @@ export function ResearchAgentModal({
   const [progressStep, setProgressStep] = useState(0);
   const [progressPercent, setProgressPercent] = useState(0);
   const [result, setResult] = useState<ResearchResponse | null>(null);
+  const [activePreviewSource, setActivePreviewSource] = useState<SourceItem | null>(null);
   const [showPromptInspector, setShowPromptInspector] = useState(false);
   const [showContextViewer, setShowContextViewer] = useState(true);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
 
   useEffect(() => {
     setMounted(true);
@@ -621,7 +723,7 @@ export function ResearchAgentModal({
 
               {/* Formatted Report Content */}
               <div className="p-7 rounded-2xl bg-[color-mix(in_oklab,white_96%,var(--ink))] border border-[var(--line)] shadow-2xs">
-                {renderMarkdownReport(summaryText)}
+                {renderMarkdownReport(summaryText, result.sources || [], setActivePreviewSource)}
               </div>
 
               {result.sub_questions && result.sub_questions.length > 0 && (
@@ -648,10 +750,10 @@ export function ResearchAgentModal({
                       <span>📖</span> Evaluierte Quellen & Nachweise ({result.sources.length})
                     </h2>
                     <p className="text-xs muted m-0 mt-0.5 font-sans">
-                      Klicken Sie auf den Button einer Quelle, um die Originalseite im Browser zu öffnen.
+                      Klicken Sie auf den Vorschau-Button einer Quelle, um den Inhalt im In-App Pop-up zu öffnen.
                     </p>
                   </div>
-                  <span className="badge" data-variant="curated">
+                  <span className="badge" data-variant={result.anonymity_active ? "curated" : "raw"}>
                     {result.anonymity_active ? "🛡️ SearXNG Proxy Aktiv" : "🌐 Direkt"}
                   </span>
                 </div>
@@ -688,23 +790,33 @@ export function ResearchAgentModal({
                           </p>
                         </div>
 
-                        {src.url && (
-                          <a
-                            href={src.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="px-4 py-2 rounded-xl bg-[color-mix(in_oklab,var(--signal)_10%,white)] border border-[var(--signal)] text-[var(--signal)] font-bold text-xs hover:bg-[var(--signal)] hover:text-white transition-all inline-flex items-center gap-1.5 no-underline shrink-0"
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setActivePreviewSource(src)}
+                            className="px-4 py-2 rounded-xl bg-[color-mix(in_oklab,var(--signal)_10%,white)] border border-[var(--signal)] text-[var(--signal)] font-bold text-xs hover:bg-[var(--signal)] hover:text-white transition-all cursor-pointer flex items-center gap-1.5"
                           >
-                            <span>🌐 Quelle öffnen</span>
-                            <span>↗</span>
-                          </a>
-                        )}
+                            <span>🔍 Vorschau (Pop-up)</span>
+                          </button>
+                          {src.url && isWeb && (
+                            <a
+                              href={src.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-3 py-2 rounded-xl border border-[var(--line)] bg-white text-[var(--ink)] font-bold text-xs hover:bg-slate-100 transition-all no-underline shrink-0"
+                              title="In neuem Tab öffnen"
+                            >
+                              <span>↗</span>
+                            </a>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
                 </div>
               </div>
             )}
+
 
             {/* WebUI-Style Interactive Refinement Box with Clickable Question Chips */}
             <div className="p-8 rounded-2xl border border-[var(--line)] bg-[color-mix(in_oklab,var(--signal)_5%,white)] space-y-5 shadow-xs">
@@ -811,6 +923,13 @@ export function ResearchAgentModal({
             : "💾 Ergebnisse werden beim Schließen automatisch im Company Brain gespeichert."}
         </span>
       </footer>
+
+      {activePreviewSource && (
+        <SourcePreviewModal
+          source={activePreviewSource}
+          onClose={() => setActivePreviewSource(null)}
+        />
+      )}
     </div>
   );
 
