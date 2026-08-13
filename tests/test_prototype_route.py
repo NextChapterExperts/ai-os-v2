@@ -15,7 +15,7 @@ def test_prototype_page_exists():
     assert '"use client"' in content
     assert "RadialNavigationWheel" in content
     assert "detectSuggestedAgent" in content
-    assert "SEARCH AGENT" in content
+    assert "WEBRECHERCHE" in content
     assert "qwen2.5-coder:14b" in content
 
 

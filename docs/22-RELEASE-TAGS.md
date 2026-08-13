@@ -40,6 +40,7 @@ git push origin roadmap/2026-08-03-p4-email-invoices
 
 | Tag | Datum | Roadmap | Kurzbeschreibung | Commit |
 |-----|-------|---------|------------------|--------|
+| `roadmap/2026-08-13-p4-giant-wheel-mega-search` | 2026-08-13 | §9, §10, UI | 520px Mega-Navigationsrad (Full Screen) & Riesiges 850px Webrecherche-Suchfenster | *(siehe `git show`)* |
 | `roadmap/2026-08-13-p4-expansive-radial-wheel` | 2026-08-13 | §9, §10, UI | Großzügiges Raumausfüllendes Navigationsrad (Radius 380px, Pill Searchbar max-w-2xl) | *(siehe `git show`)* |
 | `roadmap/2026-08-13-p4-pure-harmonious-radial-page` | 2026-08-13 | §9, §10, UI | Harmonisierte puristische Startseite (280px Radius), 100% frei von Unter-Boxen | *(siehe `git show`)* |
 | `roadmap/2026-08-13-p4-radial-wheel-fullwidth` | 2026-08-13 | §9, §10, UI | Full-Width Screen Layout (440px Radius) & Hover-Erklärungen mit Klick-Absprung | *(siehe `git show`)* |
