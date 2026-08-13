@@ -73,68 +73,68 @@ export default function PrototypeStartPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans p-2 sm:p-6 flex flex-col items-center justify-center">
-      {/* 520px MEGA RAD & RIESIGES 850px WEBRECHERCHE-FENSTER */}
-      <section className="w-full max-w-[1600px] mx-auto my-auto space-y-4">
+    <div className="h-[calc(100vh-80px)] min-h-[580px] text-slate-100 font-sans p-1 sm:p-4 flex flex-col items-center justify-center overflow-hidden">
+      {/* 100% VIEWPORT FIT RADIAL WHEEL SECTION */}
+      <section className="w-full max-w-[1400px] h-full flex items-center justify-center mx-auto my-auto">
         <RadialNavigationWheel
           suggestedAgentId={suggestedAgentId}
           onSelectAgent={handleAgentSelect}
         >
-          {/* ZENTRALE CYBER-SEARCH KARTE (RIESIG: max-w-3xl / 850px) */}
-          <div className="p-7 sm:p-8 rounded-3xl border border-cyan-500/40 bg-slate-900/95 shadow-[0_0_80px_rgba(6,182,212,0.22)] backdrop-blur-2xl space-y-6 transition-all">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 shadow-[0_0_15px_rgba(6,182,212,0.3)]">
-                  <IconSearch size={24} />
+          {/* ZENTRALE CYBER-SEARCH KARTE */}
+          <div className="p-6 sm:p-7 rounded-3xl border border-cyan-500/40 bg-slate-900/95 shadow-[0_0_80px_rgba(6,182,212,0.22)] backdrop-blur-2xl space-y-5 transition-all">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 shadow-[0_0_15px_rgba(6,182,212,0.3)]">
+                  <IconSearch size={22} />
                 </div>
                 <div>
-                  <h3 className="font-black text-base sm:text-lg tracking-wider text-white m-0 uppercase">
+                  <h3 className="font-extrabold text-sm sm:text-base tracking-wider text-white m-0 uppercase">
                     WEBRECHERCHE & COMPANY BRAIN <span className="text-cyan-400">SCHALTZENTRALE</span>
                   </h3>
-                  <p className="text-xs text-slate-400 m-0">Anonyme SearXNG Egress & Dual Retrieval Pipeline</p>
+                  <p className="text-[11px] text-slate-400 m-0">Anonyme SearXNG Egress & Dual Retrieval Pipeline</p>
                 </div>
               </div>
-              <span className="text-xs font-mono font-bold px-3 py-1.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/40 uppercase tracking-widest hidden sm:inline-block">
+              <span className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/40 uppercase tracking-widest hidden sm:inline-block">
                 Souveränes KI-OS
               </span>
             </div>
 
             {/* Central Large Input Form */}
-            <form onSubmit={handleExecuteSearch} className="space-y-4">
+            <form onSubmit={handleExecuteSearch} className="space-y-3.5">
               <div className="relative">
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Geben Sie Ihre Suchanfrage oder Webrecherche ein... (z. B. 'Aktuelle Handwerkerpreise Fassadendämmung 2026')"
-                  className="w-full bg-slate-950/90 border-2 border-slate-800 focus:border-cyan-400 text-white rounded-2xl px-6 py-4.5 text-sm sm:text-base placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 transition-all pr-36 shadow-inner"
+                  className="w-full bg-slate-950/90 border-2 border-slate-800 focus:border-cyan-400 text-white rounded-2xl px-5 py-4 text-xs sm:text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 transition-all pr-32 shadow-inner"
                 />
                 <button
                   type="submit"
                   disabled={isSearching}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 px-5 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 hover:scale-105 active:scale-95 transition-all cursor-pointer font-black text-xs sm:text-sm shadow-[0_0_20px_#06b6d4] inline-flex items-center gap-2"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 hover:scale-105 active:scale-95 transition-all cursor-pointer font-black text-xs shadow-[0_0_20px_#06b6d4] inline-flex items-center gap-1.5"
                 >
                   {isSearching ? (
                     <span className="animate-pulse">Recherche...</span>
                   ) : (
                     <>
                       <span>Recherche</span>
-                      <IconArrowRight size={16} />
+                      <IconArrowRight size={15} />
                     </>
                   )}
                 </button>
               </div>
 
               {/* Integrated Options Bar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-2 text-xs">
+              <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1 text-xs">
                 {/* Modellauswahl Dropdown */}
-                <div className="flex items-center gap-2 bg-slate-950/70 px-3.5 py-2 rounded-xl border border-slate-800">
-                  <IconCpu size={16} className="text-cyan-400" />
-                  <span className="text-xs text-slate-400 font-mono">Modell:</span>
+                <div className="flex items-center gap-2 bg-slate-950/70 px-3 py-1.5 rounded-xl border border-slate-800">
+                  <IconCpu size={15} className="text-cyan-400" />
+                  <span className="text-[11px] text-slate-400 font-mono">Modell:</span>
                   <select
                     value={selectedModel}
                     onChange={(e) => setSelectedModel(e.target.value)}
-                    className="bg-transparent text-white font-bold text-xs sm:text-sm outline-none cursor-pointer"
+                    className="bg-transparent text-white font-bold text-xs outline-none cursor-pointer"
                   >
                     <option value="qwen2.5-coder:14b" className="bg-slate-900 text-white">Qwen 2.5 Coder 14B</option>
                     <option value="deepseek-r1:32b" className="bg-slate-900 text-white">DeepSeek R1 32B</option>
@@ -148,13 +148,13 @@ export default function PrototypeStartPage() {
                 <button
                   type="button"
                   onClick={() => setIpProtection(!ipProtection)}
-                  className={`px-4 py-2 rounded-xl border text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                     ipProtection
-                      ? "bg-cyan-500/10 border-cyan-500/40 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.2)]"
+                      ? "bg-cyan-500/10 border-cyan-500/40 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.2)]"
                       : "bg-slate-950/70 border-slate-800 text-slate-400"
                   }`}
                 >
-                  {ipProtection ? <IconShieldCheck size={16} className="text-cyan-400" /> : <IconShieldOff size={16} />}
+                  {ipProtection ? <IconShieldCheck size={15} className="text-cyan-400" /> : <IconShieldOff size={15} />}
                   <span>IP-Schutz: {ipProtection ? "AN (SearXNG Anonym)" : "AUS (Direkt)"}</span>
                 </button>
               </div>
@@ -162,12 +162,12 @@ export default function PrototypeStartPage() {
 
             {/* Smart Intent Suggestion Banner */}
             {suggestedAgentId && (
-              <div className="p-3.5 rounded-2xl bg-cyan-500/15 border border-cyan-400/50 flex items-center justify-between text-xs animate-in fade-in duration-200 shadow-[0_0_25px_rgba(6,182,212,0.25)]">
+              <div className="p-3 rounded-2xl bg-cyan-500/15 border border-cyan-400/50 flex items-center justify-between text-xs animate-in fade-in duration-200 shadow-[0_0_20px_rgba(6,182,212,0.25)]">
                 <div className="flex items-center gap-2 text-cyan-200">
-                  <IconSparkles size={18} className="text-cyan-400 animate-spin" />
+                  <IconSparkles size={16} className="text-cyan-400 animate-spin" />
                   <span>
                     Intelligente Absprung-Empfehlung:{" "}
-                    <strong className="text-white text-sm">
+                    <strong className="text-white">
                       {RADIAL_AGENTS.find((a) => a.id === suggestedAgentId)?.name}
                     </strong>
                   </span>
@@ -178,7 +178,7 @@ export default function PrototypeStartPage() {
                     const agent = RADIAL_AGENTS.find((a) => a.id === suggestedAgentId);
                     if (agent) handleAgentSelect(agent);
                   }}
-                  className="px-4 py-1.5 rounded-xl bg-cyan-400 text-slate-950 font-black text-xs hover:bg-cyan-300 transition-colors cursor-pointer shadow-[0_0_15px_#06b6d4]"
+                  className="px-3 py-1 rounded-xl bg-cyan-400 text-slate-950 font-black text-xs hover:bg-cyan-300 transition-colors cursor-pointer shadow-[0_0_12px_#06b6d4]"
                 >
                   Zu Agent ➔
                 </button>
@@ -187,18 +187,18 @@ export default function PrototypeStartPage() {
 
             {/* WEBRECHERCHE ERGEBNISSEN ANZEIGE */}
             {searchResults && (
-              <div className="mt-4 p-4 rounded-2xl bg-slate-950/90 border border-cyan-500/40 text-xs space-y-3 animate-in fade-in zoom-in-95 duration-200">
-                <div className="flex items-center justify-between text-cyan-400 font-mono font-bold border-b border-slate-800 pb-2">
+              <div className="mt-3 p-3.5 rounded-2xl bg-slate-950/90 border border-cyan-500/40 text-xs space-y-2.5 animate-in fade-in zoom-in-95 duration-200">
+                <div className="flex items-center justify-between text-cyan-400 font-mono font-bold border-b border-slate-800 pb-1.5">
                   <span className="flex items-center gap-1.5">
                     <IconBrandGoogle size={14} />
                     SearXNG Egress Ergebnisse ({searchResults.timestamp})
                   </span>
                   <span className="text-[10px] text-slate-400">Modell: {selectedModel}</span>
                 </div>
-                <p className="text-slate-200 leading-relaxed font-sans">{searchResults.synthesis}</p>
-                <div className="space-y-1.5 pt-1">
+                <p className="text-slate-200 leading-relaxed font-sans text-[11px]">{searchResults.synthesis}</p>
+                <div className="space-y-1 pt-0.5">
                   {searchResults.sources.map((s: any, idx: number) => (
-                    <div key={idx} className="p-2 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between text-[11px]">
+                    <div key={idx} className="p-1.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between text-[11px]">
                       <span className="text-slate-300 truncate max-w-md">{s.title}: {s.snippet}</span>
                       <a href={s.url} target="_blank" rel="noreferrer" className="text-cyan-400 hover:underline flex items-center gap-1">
                         <span>Quelle</span>

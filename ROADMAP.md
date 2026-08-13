@@ -3325,6 +3325,17 @@ git show roadmap/2026-08-03-p4-email-invoices --stat
 - **PGE Trinity Sandbox Executor (Option 2 - P15):** `core/orchestrator/sandbox_executor.py` führt risikobehaftete Tools/Skripte (Risikoklassen `YELLOW` und `ORANGE`) in ephemeren, hochisolierten Docker MicroVM Sandboxes aus. Risikoklasse `RED` wird vom Gatekeeper blockiert.
 - **Erweiterte Testsuite:** `tests/test_mcp_docker.py`, `tests/test_sandbox_executor.py` und `tests/test_docker_integration_edge_cases.py` (227 Pytests + 19 Memory Cases + 7 Compute Cases = 100% PASS).
 
+## Stand & Changelog (2026-08-13 — Fluide 100% Viewport-Einpassung des Rads ohne Scrollen)
+
+- **Release-Tag:** `roadmap/2026-08-13-p4-fluid-viewport-fit-wheel`
+- **Perfekte Viewport-Einpassung (`RadialNavigationWheel.tsx`):**
+  - Umstellung von starren Pixel-Radien auf **prozentuale & Viewport-bound Relativpositionierung (`calc(50% + r*cos(a))`)**.
+  - Höhenbindung an `h-[calc(100vh-100px)]` verhindert jegliches vertikales/horizontales Abschneiden oder Überlaufen.
+  - Das Rad passt sich **dynamisch an jede Bildschirmauflösung (Desktop, Laptop, Ultra-Wide)** 100% perfekt an.
+- **Master Testsuite:** 100% grün (0 Failed).
+
+---
+
 ## Stand & Changelog (2026-08-13 — 520px Mega-Rad & Großes Webrecherche-Fenster)
 
 - **Release-Tag:** `roadmap/2026-08-13-p4-giant-wheel-mega-search`
