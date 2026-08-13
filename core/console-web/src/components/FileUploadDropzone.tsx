@@ -1,6 +1,13 @@
 "use client";
 
 import React, { useState, useRef } from "react";
+import {
+  IconFileText,
+  IconUpload,
+  IconLoader2,
+  IconCheck,
+  IconAlertTriangle,
+} from "@tabler/icons-react";
 
 interface FileUploadDropzoneProps {
   onUploadSuccess?: (result: any) => void;
@@ -37,7 +44,7 @@ export const FileUploadDropzone: React.FC<FileUploadDropzoneProps> = ({ onUpload
 
       setStatusMsg({
         type: "success",
-        text: `✓ "${file.name}" verarbeitet (${data.text_length} Zeichen, Asset: ${data.asset_id})`,
+        text: `"${file.name}" verarbeitet (${data.text_length} Zeichen, Asset: ${data.asset_id})`,
         details: data,
       });
 
@@ -47,7 +54,7 @@ export const FileUploadDropzone: React.FC<FileUploadDropzoneProps> = ({ onUpload
     } catch (err: any) {
       setStatusMsg({
         type: "error",
-        text: `❌ Ingestion-Fehler: ${err.message}`,
+        text: `Ingestion-Fehler: ${err.message}`,
       });
     } finally {
       setUploading(false);
@@ -78,7 +85,8 @@ export const FileUploadDropzone: React.FC<FileUploadDropzoneProps> = ({ onUpload
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div>
           <h3 className="section-title text-base font-bold text-[var(--ink)] flex items-center gap-2 m-0">
-            <span className="text-[var(--signal)]">📄</span> Dokument-Upload & Ingestion Pipeline
+            <IconFileText size={20} className="text-[var(--signal)]" />
+            <span>Dokument-Upload & Ingestion Pipeline</span>
           </h3>
           <p className="text-xs muted mt-1 m-0">
             Automatische Text- & PDF-Extraktion, SQLite FTS-Indizierung und OrgKnowledgeAsset-Commit in den Knowledge Graph.
@@ -114,13 +122,13 @@ export const FileUploadDropzone: React.FC<FileUploadDropzoneProps> = ({ onUpload
         />
         {uploading ? (
           <div className="flex flex-col items-center justify-center gap-2 py-3 text-[var(--ink)]">
-            <span className="animate-spin text-2xl">⏳</span>
+            <IconLoader2 size={28} className="animate-spin text-[var(--signal)]" />
             <span className="text-sm font-medium">Verarbeite & indiziere Dokument...</span>
             <span className="text-xs mono muted">FTS Indexing & Knowledge Graph Commit</span>
           </div>
         ) : (
-          <div className="space-y-2">
-            <div className="text-3xl">📥</div>
+          <div className="space-y-2 flex flex-col items-center">
+            <IconUpload size={32} className="text-[var(--signal)]" />
             <div className="text-sm font-semibold text-[var(--ink)]">
               Datei hierher ziehen oder <span className="text-[var(--signal)] underline">durchsuchen</span>
             </div>
@@ -131,19 +139,22 @@ export const FileUploadDropzone: React.FC<FileUploadDropzoneProps> = ({ onUpload
 
       {statusMsg && (
         <div
-          className={`mt-4 p-4 rounded-xl text-xs mono transition-all border ${
+          className={`mt-4 p-4 rounded-xl text-xs mono transition-all border flex items-center gap-2 ${
             statusMsg.type === "success"
               ? "bg-[color-mix(in_oklab,var(--signal)_10%,white)] text-[var(--signal)] border-[var(--signal)]"
               : "bg-[color-mix(in_oklab,var(--danger)_10%,white)] text-[var(--danger)] border-[var(--danger)]"
           }`}
         >
-          <div>{statusMsg.text}</div>
-          {statusMsg.details && (
-            <div className="mt-2 pt-2 border-t border-[var(--line)] flex flex-wrap items-center justify-between text-[11px]">
-              <span>Path: {statusMsg.details.path}</span>
-              <span>Hash: {statusMsg.details.hash?.slice(0, 16)}...</span>
-            </div>
-          )}
+          {statusMsg.type === "success" ? <IconCheck size={16} /> : <IconAlertTriangle size={16} />}
+          <div className="flex-1">
+            <div>{statusMsg.text}</div>
+            {statusMsg.details && (
+              <div className="mt-2 pt-2 border-t border-[var(--line)] flex flex-wrap items-center justify-between text-[11px]">
+                <span>Path: {statusMsg.details.path}</span>
+                <span>Hash: {statusMsg.details.hash?.slice(0, 16)}...</span>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

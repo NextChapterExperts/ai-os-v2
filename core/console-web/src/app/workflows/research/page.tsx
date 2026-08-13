@@ -1,18 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
+import {
+  IconSearch,
+  IconShieldCheck,
+  IconShieldOff,
+  IconGlobe,
+  IconBrain,
+  IconBolt,
+  IconMicroscope,
+  IconRocket,
+  IconLock,
+  IconFileText,
+  IconBook,
+  IconExternalLink,
+  IconX,
+  IconRefresh,
+  IconMessageDots,
+  IconLoader2,
+  IconSparkles,
+  IconAlertTriangle,
+  IconClipboardText,
+} from "@tabler/icons-react";
 
 interface SourceItem {
   title?: string;
   url?: string;
   snippet?: string;
-  source_type?: "local_brain" | "web_searxng";
+  source_type?: string;
   trust_score?: number;
 }
 
 interface PromptContext {
-  system: string;
-  user: string;
+  system?: string;
+  user?: string;
   full_prompt_text?: string;
   contextCharCount?: number;
   token_estimate?: number;
@@ -20,9 +41,10 @@ interface PromptContext {
 }
 
 interface ResearchResponse {
-  query: string;
-  summary: string;
-  sources: SourceItem[];
+  query?: string;
+  summary?: string;
+  answer?: string;
+  sources?: SourceItem[];
   confidence: number;
   anonymity_active: boolean;
   model_used: string;
@@ -31,81 +53,51 @@ interface ResearchResponse {
 }
 
 const AVAILABLE_MODELS = [
-  { id: "qwen2.5-coder:14b", label: "Qwen 2.5 Coder 14B (Sovereign Local Default)" },
-  { id: "mistral-nemo:12b", label: "Mistral Nemo 12B (Fast Sovereign)" },
-  { id: "hermes-3:8b", label: "Hermes 3 8B (Lightweight Local)" },
-  { id: "deepseek-r1:32b", label: "DeepSeek R1 32B (Reasoning Heavy)" },
-  { id: "openrouter/auto", label: "OpenRouter Cloud (Premium Fallback)" },
+  { id: "qwen2.5-coder:14b", label: "Qwen 2.5 Coder 14B (Souverän & Schnell)" },
+  { id: "deepseek-r1:32b", label: "DeepSeek-R1 32B (Reasoning & Logik)" },
+  { id: "mistral-nemo:12b", label: "Mistral Nemo 12B (Deutsche Texte)" },
+  { id: "hermes3:8b", label: "Hermes 3 8B (Multi-Agent)" },
+  { id: "llama3.2-vision:11b", label: "Llama 3.2 Vision 11B (Vision/PDF)" },
 ];
 
-function renderMarkdownReport(text: string, sources: SourceItem[] = [], onSelectSource?: (src: SourceItem) => void) {
+function renderMarkdownReport(text?: string) {
   if (!text) return null;
   const lines = text.split("\n");
   return (
-    <div className="space-y-3 font-sans text-sm text-slate-200 leading-relaxed">
+    <div className="space-y-2 text-xs font-sans leading-relaxed text-slate-200">
       {lines.map((line, idx) => {
         const trimmed = line.trim();
-        if (!trimmed) return <div key={idx} className="h-2" />;
-        if (trimmed === "---") {
-          return <hr key={idx} className="border-t border-slate-800 my-4" />;
-        }
+        if (!trimmed) return <div key={idx} className="h-1" />;
         if (trimmed.startsWith("### ")) {
           return (
-            <h3 key={idx} className="text-base font-bold text-indigo-300 mt-5 mb-2 flex items-center gap-2 font-display">
+            <h3 key={idx} className="text-sm font-bold text-indigo-300 mt-4 mb-1">
               {trimmed.replace(/^###\s+/, "")}
             </h3>
           );
         }
         if (trimmed.startsWith("## ")) {
           return (
-            <h2 key={idx} className="text-lg font-bold text-slate-100 mt-6 mb-2 font-display">
+            <h2 key={idx} className="text-base font-bold text-slate-100 mt-5 mb-2">
               {trimmed.replace(/^##\s+/, "")}
             </h2>
           );
         }
         if (trimmed.startsWith("# ")) {
           return (
-            <h1 key={idx} className="text-xl font-bold text-slate-100 mt-6 mb-3 font-display">
+            <h1 key={idx} className="text-lg font-bold text-slate-100 mt-6 mb-3">
               {trimmed.replace(/^#\s+/, "")}
             </h1>
           );
         }
-
-        const parts = line.split(/(\[\d+\]|\*\*[^*]+\*\*)/g);
         return (
-          <div key={idx} className={trimmed.startsWith("- ") ? "ml-4 flex items-start gap-2" : ""}>
-            {trimmed.startsWith("- ") ? <span className="text-indigo-400 font-bold">▸</span> : null}
-            <span>
-              {parts.map((part, pIdx) => {
-                const citeMatch = part.match(/^\[(\d+)\]$/);
-                if (citeMatch) {
-                  const srcNum = parseInt(citeMatch[1], 10);
-                  const matchingSrc = sources[srcNum - 1];
-                  return (
-                    <button
-                      key={pIdx}
-                      type="button"
-                      onClick={() => matchingSrc && onSelectSource?.(matchingSrc)}
-                      title={matchingSrc ? `Quelle #${srcNum}: ${matchingSrc.title}` : `Quelle #${srcNum}`}
-                      className="inline-flex items-center justify-center px-1.5 py-0.5 mx-0.5 rounded bg-indigo-950/90 hover:bg-indigo-600 hover:text-white border border-indigo-500/50 text-indigo-300 font-mono font-bold text-[10px] align-baseline transition-all cursor-pointer border-none"
-                    >
-                      [{srcNum}]
-                    </button>
-                  );
-                }
-                if (part.startsWith("**") && part.endsWith("**")) {
-                  return <strong key={pIdx} className="text-slate-100">{part.slice(2, -2)}</strong>;
-                }
-                return part.replace(/^- /, "");
-              })}
-            </span>
-          </div>
+          <p key={idx} className={trimmed.startsWith("- ") ? "ml-3 border-l-2 border-indigo-500/40 pl-2 text-slate-300" : ""}>
+            {trimmed.replace(/^- /, "")}
+          </p>
         );
       })}
     </div>
   );
 }
-
 
 export default function ResearchWorkflowPage() {
   const [query, setQuery] = useState("");
@@ -121,7 +113,7 @@ export default function ResearchWorkflowPage() {
   const [error, setError] = useState<string | null>(null);
 
   const executeResearch = async (isRefinement = false) => {
-    const activeQuery = query.trim();
+    const activeQuery = isRefinement ? query : query.trim();
     if (!activeQuery) return;
 
     setLoading(true);
@@ -145,52 +137,35 @@ export default function ResearchWorkflowPage() {
         }),
       });
 
+      if (!res.ok) {
+        throw new Error(`Dispatch Fehler: HTTP ${res.status}`);
+      }
+
       const data = await res.json();
-      const payloadObj = data.result && typeof data.result === "object" ? data.result : data;
-      const summaryText = payloadObj.summary || payloadObj.answer || data.summary || data.answer || "";
-
-      if (!res.ok && !summaryText) {
-        throw new Error(data.error || data.message || `Dispatch Fehler: HTTP ${res.status}`);
+      if (data.error && !data.answer) {
+        throw new Error(data.error);
       }
-
-      if (summaryText) {
-        setResult({
-          query: payloadObj.query || activeQuery,
-          summary: summaryText,
-          sources: payloadObj.sources || [],
-          confidence: payloadObj.confidence || 0.9,
-          anonymity_active: payloadObj.anonymity_active ?? anonymize,
-          model_used: payloadObj.model_used || payloadObj.model || selectedModel,
-          sub_questions: payloadObj.sub_questions || [],
-          llmContext: payloadObj.llmContext || data.llmContext,
-        });
-      } else {
-        throw new Error(data.error || "Keine Zusammenfassung erhalten.");
-      }
-    } catch (err: any) {
+      setResult(data);
+    } catch (err: unknown) {
       console.error("Research error:", err);
-      setError(err.message || "Fehler bei der Ausführung der Recherche.");
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg || "Fehler bei der Ausführung der Recherche.");
     } finally {
       setLoading(false);
     }
   };
 
-
-  const getPromptDetails = (): PromptContext | null => {
-    if (!result?.llmContext?.prompt) return null;
-    return result.llmContext.prompt;
-  };
-
-  const promptDetails = getPromptDetails();
+  const promptDetails: PromptContext | null = result?.llmContext?.prompt ?? null;
 
   return (
-    <section className="rise pt-8 pb-16 max-w-5xl mx-auto px-4">
-      {/* Header */}
-      <div className="mb-8 border-b border-slate-800 pb-6">
+    <div className="max-w-6xl mx-auto p-6 md:p-10 font-sans">
+      {/* Top Banner Header */}
+      <div className="bg-gradient-to-r from-indigo-950/80 via-slate-900 to-slate-950 border border-indigo-900/40 rounded-2xl p-6 mb-8 shadow-2xl backdrop-blur-md">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-3 font-display">
-              <span>🔍</span> AI-OS Recherche-Agent & Deep-Web Cockpit
+              <IconSearch size={24} className="text-indigo-400" />
+              <span>AI-OS Recherche-Agent & Deep-Web Cockpit</span>
             </h1>
             <p className="text-slate-400 text-sm mt-1">
               Multi-Hop Dual-Retrieval: Durchsucht gleichzeitig das lokale Company Brain & das Internet via SearXNG.
@@ -198,13 +173,14 @@ export default function ResearchWorkflowPage() {
           </div>
           <div className="flex items-center gap-2">
             <span
-              className={`px-3 py-1 text-xs font-mono rounded-full border ${
+              className={`px-3 py-1 text-xs font-mono rounded-full border inline-flex items-center gap-1.5 ${
                 anonymize
                   ? "bg-emerald-950/60 border-emerald-600/40 text-emerald-400"
                   : "bg-amber-950/60 border-amber-600/40 text-amber-400"
               }`}
             >
-              {anonymize ? "🛡️ Anonymer SearXNG Egress Aktiv" : "⚠️ Direkter Modus"}
+              {anonymize ? <IconShieldCheck size={14} /> : <IconShieldOff size={14} />}
+              <span>{anonymize ? "Anonymer SearXNG Egress Aktiv" : "Direkter Modus"}</span>
             </span>
           </div>
         </div>
@@ -255,24 +231,26 @@ export default function ResearchWorkflowPage() {
                 <button
                   type="button"
                   onClick={() => setDepth("quick")}
-                  className={`flex-1 text-xs py-1.5 font-medium rounded-md transition-colors ${
+                  className={`flex-1 text-xs py-1.5 font-medium rounded-md transition-colors inline-flex items-center justify-center gap-1 ${
                     depth === "quick"
                       ? "bg-indigo-600 text-white"
                       : "text-slate-400 hover:text-slate-200"
                   }`}
                 >
-                  ⚡ Quick (30s)
+                  <IconBolt size={14} />
+                  <span>Quick (30s)</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setDepth("deep")}
-                  className={`flex-1 text-xs py-1.5 font-medium rounded-md transition-colors ${
+                  className={`flex-1 text-xs py-1.5 font-medium rounded-md transition-colors inline-flex items-center justify-center gap-1 ${
                     depth === "deep"
                       ? "bg-indigo-600 text-white"
                       : "text-slate-400 hover:text-slate-200"
                   }`}
                 >
-                  🔬 Deep (Multi-Hop)
+                  <IconMicroscope size={14} />
+                  <span>Deep (Multi-Hop)</span>
                 </button>
               </div>
             </div>
@@ -285,14 +263,17 @@ export default function ResearchWorkflowPage() {
               <button
                 type="button"
                 onClick={() => setAnonymize(!anonymize)}
-                className={`w-full py-2 px-3 text-xs font-mono rounded-lg border text-left transition-colors flex items-center justify-between ${
+                className={`w-full py-2 px-3 text-xs font-mono rounded-lg border text-left transition-colors flex items-center justify-between cursor-pointer ${
                   anonymize
                     ? "bg-emerald-950/40 border-emerald-700/50 text-emerald-300"
                     : "bg-slate-950 border-slate-700 text-slate-400"
                 }`}
               >
                 <span>{anonymize ? "Anonym: An" : "Anonym: Aus"}</span>
-                <span className="text-xs">{anonymize ? "🔒 Proxy/SearXNG" : "🌐 Direkt"}</span>
+                <span className="text-xs inline-flex items-center gap-1">
+                  {anonymize ? <IconLock size={13} /> : <IconGlobe size={13} />}
+                  <span>{anonymize ? "Proxy/SearXNG" : "Direkt"}</span>
+                </span>
               </button>
             </div>
           </div>
@@ -305,14 +286,18 @@ export default function ResearchWorkflowPage() {
               type="button"
               disabled={loading || !query.trim()}
               onClick={() => executeResearch(false)}
-              className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm font-semibold px-6 py-2.5 rounded-lg shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2"
+              className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm font-semibold px-6 py-2.5 rounded-lg shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2 cursor-pointer border-none"
             >
               {loading ? (
                 <>
-                  <span className="animate-spin">⏳</span> Recherchiere...
+                  <IconLoader2 size={16} className="animate-spin" />
+                  <span>Recherchiere...</span>
                 </>
               ) : (
-                <>🚀 Recherche Starten</>
+                <>
+                  <IconRocket size={16} />
+                  <span>Recherche Starten</span>
+                </>
               )}
             </button>
           </div>
@@ -321,8 +306,9 @@ export default function ResearchWorkflowPage() {
 
       {/* Error Banner */}
       {error && (
-        <div className="mb-8 p-4 bg-rose-950/50 border border-rose-700/50 text-rose-300 rounded-xl text-sm font-mono">
-          ⚠️ {error}
+        <div className="mb-8 p-4 bg-rose-950/50 border border-rose-700/50 text-rose-300 rounded-xl text-sm font-mono flex items-center gap-2">
+          <IconAlertTriangle size={16} />
+          <span>Fehler: {error}</span>
         </div>
       )}
 
@@ -356,9 +342,10 @@ export default function ResearchWorkflowPage() {
             <button
               type="button"
               onClick={() => setShowPromptModal(true)}
-              className="bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-indigo-500/30 text-xs font-mono px-3.5 py-1.5 rounded-lg transition-colors flex items-center gap-2"
+              className="bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-indigo-500/30 text-xs font-mono px-3.5 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1.5 cursor-pointer"
             >
-              <span>📄</span> Kompletten Prompt anzeigen
+              <IconFileText size={14} />
+              <span>Kompletten Prompt anzeigen</span>
             </button>
           </div>
 
@@ -366,7 +353,8 @@ export default function ResearchWorkflowPage() {
 
           <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-6 shadow-xl">
             <h2 className="text-lg font-bold text-slate-100 mb-4 font-display flex items-center gap-2">
-              <span>📋</span> Synthese & Befund
+              <IconClipboardText size={20} className="text-indigo-400" />
+              <span>Synthese & Befund</span>
             </h2>
             <div className="p-4 rounded-lg bg-slate-950/60 border border-slate-800">
               {renderMarkdownReport(result.summary)}
@@ -382,7 +370,7 @@ export default function ResearchWorkflowPage() {
                 <ul className="space-y-1.5">
                   {result.sub_questions.map((q, idx) => (
                     <li key={idx} className="text-xs text-slate-300 flex items-start gap-2">
-                      <span className="text-indigo-400">▸</span> {q}
+                      <span className="text-indigo-400 font-bold">▸</span> {q}
                     </li>
                   ))}
                 </ul>
@@ -393,7 +381,8 @@ export default function ResearchWorkflowPage() {
           {/* Sources & Citations */}
           <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-6 shadow-xl">
             <h2 className="text-lg font-bold text-slate-100 mb-4 font-display flex items-center gap-2">
-              <span>📚</span> Quellennachweise & Citations ({result.sources?.length || 0})
+              <IconBook size={20} className="text-indigo-400" />
+              <span>Quellennachweise & Citations ({result.sources?.length || 0})</span>
             </h2>
             {result.sources && result.sources.length > 0 ? (
               <div className="grid grid-cols-1 gap-3">
@@ -407,18 +396,20 @@ export default function ResearchWorkflowPage() {
                         href={src.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-indigo-400 hover:text-indigo-300 font-medium text-sm transition-colors truncate max-w-xl"
+                        className="text-indigo-400 hover:text-indigo-300 font-medium text-sm transition-colors truncate max-w-xl inline-flex items-center gap-1"
                       >
-                        {src.title}
+                        <span>{src.title}</span>
+                        <IconExternalLink size={13} />
                       </a>
                       <span
-                        className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
+                        className={`text-[10px] font-mono px-2 py-0.5 rounded border inline-flex items-center gap-1 ${
                           src.source_type === "local_brain"
                             ? "bg-purple-950/50 border-purple-600/40 text-purple-300"
                             : "bg-blue-950/50 border-blue-600/40 text-blue-300"
                         }`}
                       >
-                        {src.source_type === "local_brain" ? "🧠 Company Brain" : "🌐 Web (SearXNG)"}
+                        {src.source_type === "local_brain" ? <IconBrain size={12} /> : <IconGlobe size={12} />}
+                        <span>{src.source_type === "local_brain" ? "Company Brain" : "Web (SearXNG)"}</span>
                       </span>
                     </div>
                     <p className="text-xs text-slate-400 line-clamp-2">{src.snippet}</p>
@@ -431,10 +422,11 @@ export default function ResearchWorkflowPage() {
             )}
           </div>
 
-          {/* Interactive Refinement Panel (Human-in-the-Loop) */}
+          {/* Interactive Refinement Panel */}
           <div className="bg-slate-900/80 border border-indigo-900/50 rounded-xl p-6 shadow-xl">
             <h3 className="text-sm font-bold text-indigo-300 mb-2 font-display flex items-center gap-2">
-              <span>💬</span> Interaktiver Dialog & Verfeinerung
+              <IconMessageDots size={18} className="text-indigo-400" />
+              <span>Interaktiver Dialog & Verfeinerung</span>
             </h3>
             <p className="text-xs text-slate-400 mb-3">
               Möchtest du bestimmte Punkte vertiefen oder eine korrigierte Suchrichtung eingeben?
@@ -452,9 +444,10 @@ export default function ResearchWorkflowPage() {
                 type="button"
                 disabled={loading || !refinementText.trim()}
                 onClick={() => executeResearch(true)}
-                className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-all"
+                className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-all inline-flex items-center gap-1.5 cursor-pointer border-none"
               >
-                Verfeinern
+                <IconSparkles size={14} />
+                <span>Verfeinern</span>
               </button>
             </div>
           </div>
@@ -468,7 +461,7 @@ export default function ResearchWorkflowPage() {
             {/* Modal Header */}
             <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/80 rounded-t-xl">
               <div className="flex items-center gap-2">
-                <span className="text-lg">📄</span>
+                <IconFileText size={18} className="text-indigo-400" />
                 <h3 className="text-sm font-bold text-slate-100 font-mono">
                   Prompt Inspektor & Context Bundle
                 </h3>
@@ -476,9 +469,10 @@ export default function ResearchWorkflowPage() {
               <button
                 type="button"
                 onClick={() => setShowPromptModal(false)}
-                className="text-slate-400 hover:text-white font-mono text-sm px-2 py-1 rounded"
+                className="text-slate-400 hover:text-white font-mono text-sm px-2 py-1 rounded inline-flex items-center gap-1 cursor-pointer"
               >
-                ✕ Schließen
+                <IconX size={14} />
+                <span>Schließen</span>
               </button>
             </div>
 
@@ -540,6 +534,6 @@ export default function ResearchWorkflowPage() {
           </div>
         </div>
       )}
-    </section>
+    </div>
   );
 }

@@ -1,7 +1,6 @@
-"use client";
-
 import React, { useState, useEffect } from "react";
 import { MeetingPickerField } from "@/components/MeetingPickerField";
+import { IconEdit, IconBolt, IconLoader2 } from "@tabler/icons-react";
 
 interface JsonSchemaProperty {
   type?: string;
@@ -140,7 +139,8 @@ export const DynamicDataProductForm: React.FC<DynamicDataProductFormProps> = ({
       <div className="flex items-center justify-between border-b border-[var(--line)] pb-3 mb-4">
         <div>
           <h4 className="text-sm font-bold text-[var(--ink)] flex items-center gap-2 m-0">
-            <span className="text-[var(--signal)]">📝</span> {schema.title || "Datenerfassung"}
+            <IconEdit size={18} className="text-[var(--signal)]" />
+            <span>{schema.title || "Datenerfassung"}</span>
           </h4>
           {schema.description && (
             <p className="text-xs muted mt-0.5 m-0">{schema.description}</p>
@@ -247,16 +247,16 @@ export const DynamicDataProductForm: React.FC<DynamicDataProductFormProps> = ({
         <button
           type="submit"
           disabled={loading}
-          className="btn-primary rounded-lg text-xs font-bold"
+          className="btn-primary rounded-lg text-xs font-bold inline-flex items-center gap-1.5"
         >
           {loading ? (
             <>
-              <span className="animate-spin">⏳</span>
+              <IconLoader2 size={14} className="animate-spin" />
               <span>{loadingLabel}</span>
             </>
           ) : (
             <>
-              <span>⚡</span>
+              <IconBolt size={14} />
               <span>{submitLabel}</span>
             </>
           )}

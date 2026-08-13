@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { DynamicDataProductForm } from "@/components/DynamicDataProductForm";
@@ -7,6 +5,14 @@ import { DataProductViewer } from "@/components/DataProductViewer";
 import { MeetingsReportViewer } from "@/components/MeetingsReportViewer";
 import { FileUploadDropzone } from "@/components/FileUploadDropzone";
 import { mergeAgentInputSchema } from "@/lib/merge-agent-schema";
+import {
+  IconRobot,
+  IconFileText,
+  IconTool,
+  IconBolt,
+  IconAlertTriangle,
+  IconChartBar,
+} from "@tabler/icons-react";
 
 interface AgentItem {
   workflow_id: string;
@@ -442,18 +448,20 @@ export default function AgentsPage() {
       <div className="flex items-center gap-2 border-b border-[var(--line)] pb-4 mb-8">
         <button
           onClick={() => setActiveTab("agents")}
-          className="btn-ghost text-xs font-bold"
+          className="btn-ghost text-xs font-bold inline-flex items-center gap-2"
           data-active={activeTab === "agents" ? "true" : "false"}
         >
-          🤖 Ihre Fachagenten ({agentCount})
+          <IconRobot size={16} />
+          <span>Ihre Fachagenten ({agentCount})</span>
         </button>
 
         <button
           onClick={() => setActiveTab("ingest")}
-          className="btn-ghost text-xs font-bold"
+          className="btn-ghost text-xs font-bold inline-flex items-center gap-2"
           data-active={activeTab === "ingest" ? "true" : "false"}
         >
-          📄 Dokument-Upload & Ingestion
+          <IconFileText size={16} />
+          <span>Dokument-Upload & Ingestion</span>
         </button>
       </div>
 
@@ -491,7 +499,8 @@ export default function AgentsPage() {
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-sm text-[var(--ink)] flex items-center gap-2">
-                        <span>🛠️</span> {ag.name}
+                        <IconTool size={16} className="text-[var(--signal)]" />
+                        <span>{ag.name}</span>
                       </span>
                       {isSelected && (
                         <span className="badge" data-variant="graph">
@@ -555,7 +564,8 @@ export default function AgentsPage() {
                         </span>
                       </div>
                       <h2 className="section-title text-xl font-bold text-[var(--ink)] m-0 flex items-center gap-2">
-                        <span>🛠️</span> {selectedAgent.name}
+                        <IconTool size={22} className="text-[var(--signal)]" />
+                        <span>{selectedAgent.name}</span>
                       </h2>
                       <p className="text-xs muted mt-1 leading-relaxed m-0">{selectedAgent.description}</p>
                       {isEmailInvoiceAgent && (invoiceResources?.sheet_url || invoiceResources?.drive_folder_url) ? (
@@ -587,9 +597,10 @@ export default function AgentsPage() {
                     {hasSamplePrefill ? (
                       <button
                         onClick={handleLoadSample}
-                        className="btn-ghost text-xs font-bold text-[var(--signal)] border-[var(--signal)]"
+                        className="btn-ghost text-xs font-bold text-[var(--signal)] border-[var(--signal)] inline-flex items-center gap-1.5"
                       >
-                        ⚡ Sample laden & ausführen
+                        <IconBolt size={14} />
+                        <span>Sample laden & ausführen</span>
                       </button>
                     ) : null}
                   </div>
@@ -611,12 +622,14 @@ export default function AgentsPage() {
                 {lastResult && (
                   <div className="space-y-3">
                     <h4 className="mono text-xs uppercase muted tracking-wider flex items-center gap-2">
-                      <span>📊</span> Generiertes Output DataProduct
+                      <IconChartBar size={16} className="text-[var(--signal)]" />
+                      <span>Generiertes Output DataProduct</span>
                     </h4>
 
                     {lastResult.error ? (
-                      <div className="p-5 rounded-2xl border border-[var(--danger)] bg-[color-mix(in_oklab,var(--danger)_10%,white)] text-[var(--danger)] text-xs mono">
-                        ❌ Ausführungsfehler: {lastResult.error}
+                      <div className="p-5 rounded-2xl border border-[var(--danger)] bg-[color-mix(in_oklab,var(--danger)_10%,white)] text-[var(--danger)] text-xs mono flex items-center gap-2">
+                        <IconAlertTriangle size={16} />
+                        <span>Ausführungsfehler: {lastResult.error}</span>
                       </div>
                     ) : (
                       <>

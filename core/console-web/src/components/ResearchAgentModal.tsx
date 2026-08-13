@@ -25,6 +25,8 @@ import {
   IconCpu,
   IconCheck,
   IconInfoCircle,
+  IconEye,
+  IconEyeOff,
 } from "@tabler/icons-react";
 
 interface SourceItem {
@@ -756,9 +758,19 @@ export function ResearchAgentModal({
                 <button
                   type="button"
                   onClick={() => setShowContextViewer(!showContextViewer)}
-                  className="px-3 py-1.5 rounded-lg border border-[var(--line)] bg-white text-xs mono text-[var(--ink)] hover:bg-[color-mix(in_oklab,white_90%,var(--ink))]"
+                  className="px-3 py-1.5 rounded-lg border border-[var(--line)] bg-white text-xs mono text-[var(--ink)] hover:bg-[color-mix(in_oklab,white_90%,var(--ink))] inline-flex items-center gap-1.5 cursor-pointer"
                 >
-                  {showContextViewer ? "🙈 Kontext verbergen" : "👁️ Kontext anzeigen"}
+                  {showContextViewer ? (
+                    <>
+                      <IconEyeOff size={14} />
+                      <span>Kontext verbergen</span>
+                    </>
+                  ) : (
+                    <>
+                      <IconEye size={14} />
+                      <span>Kontext anzeigen</span>
+                    </>
+                  )}
                 </button>
 
                 <button

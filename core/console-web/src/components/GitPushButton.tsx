@@ -1,6 +1,5 @@
-"use client";
-
 import { useState } from "react";
+import { IconX } from "@tabler/icons-react";
 
 export function GitPushButton() {
   const [loading, setLoading] = useState(false);
@@ -71,9 +70,9 @@ export function GitPushButton() {
               <button
                 type="button"
                 onClick={() => setShowLogModal(false)}
-                className="btn-ghost py-1 px-2 text-xs"
+                className="btn-ghost py-1 px-2 text-xs flex items-center justify-center"
               >
-                ✕
+                <IconX size={14} />
               </button>
             </div>
 

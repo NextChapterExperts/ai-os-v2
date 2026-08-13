@@ -3327,6 +3327,19 @@ git show roadmap/2026-08-03-p4-email-invoices --stat
 
 ---
 
+## Stand & Changelog (2026-08-13 — Systemweite Tabler-Icons, SearXNG UX & IP-Schutz Klärung)
+
+- **Release-Tag:** `roadmap/2026-08-13-p4-tabler-icons-searxng-ux`
+- **Systemweite Tabler Icons (`@tabler/icons-react`):** Vollständige Ersetzung aller rohen Emojis im Frontend (`core/console-web`) durch professionelle Tabler Vektor-Icons mit einheitlichen Größenstandards (`size={14}`, `size={16}`, `size={18}`, `size={20}`, `size={22}`).
+- **SearXNG Search Agent UX Refactoring:**
+  - Redundanten *Compute-Modus*-Dropdown aus der Startmaske entfernt (Auswahl erfolgt einheitlich über die Modell-Optionen).
+  - Klare Erläuterung des **IP-Schutz Toggles**: *Anonymer SearXNG Egress (Ollama + SearXNG Proxy)* vs. *Direkter Modus (Direkt-Egress)*.
+  - Konsolidierung der Header-Badges in eine aufgeräumte, einzeilige Statuszeile.
+  - Pop-up Dialog Erweiterung: Suchausführung beim Öffnen/Schließen und automatisches Abspeichern der Recherche-Ergebnisse.
+- **Master Testsuite:** 100% grün (0 Failed).
+
+---
+
 ## Stand & Changelog (2026-08-04 — Portfolio V2 & 4-Säulen-Lagebild)
 
 

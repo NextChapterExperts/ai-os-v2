@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { IconX } from "@tabler/icons-react";
 
 import { RunContextPanel } from "@/components/RunContextPanel";
 
@@ -306,10 +307,11 @@ export function MemorySearch({
             <h3 className="section-title m-0 text-base">LLM-Kontext (Run {data.runId.slice(0, 8)})</h3>
             <button
               type="button"
-              className="btn-ghost text-xs"
+              className="btn-ghost text-xs inline-flex items-center gap-1"
               onClick={() => setShowContext(false)}
             >
-              ✕ Schließen
+              <IconX size={14} />
+              <span>Schließen</span>
             </button>
           </div>
           <RunContextPanel runId={data.runId} />

@@ -23,6 +23,8 @@ import {
   IconLoader2,
   IconSparkles,
   IconCpu,
+  IconAlertTriangle,
+  IconClipboardText,
 } from "@tabler/icons-react";
 
 interface SourceItem {
@@ -278,8 +280,9 @@ export function ResearchAgentWorkspace() {
 
       {/* Error Message */}
       {error && (
-        <div className="p-4 rounded-xl border border-[var(--danger)] bg-[color-mix(in_oklab,var(--danger)_10%,white)] text-[var(--danger)] text-xs mono">
-          ❌ Fehler: {error}
+        <div className="p-4 rounded-xl border border-[var(--danger)] bg-[color-mix(in_oklab,var(--danger)_10%,white)] text-[var(--danger)] text-xs mono flex items-center gap-2">
+          <IconAlertTriangle size={16} />
+          <span>Fehler: {error}</span>
         </div>
       )}
 
@@ -305,16 +308,18 @@ export function ResearchAgentWorkspace() {
             <button
               type="button"
               onClick={() => setShowPromptModal(true)}
-              className="btn-ghost text-xs font-mono flex items-center gap-1.5 text-[var(--signal)] border-[var(--signal)]"
+              className="btn-ghost text-xs font-mono inline-flex items-center gap-1.5 text-[var(--signal)] border-[var(--signal)]"
             >
-              <span>📄</span> Kompletten Prompt anzeigen
+              <IconFileText size={14} />
+              <span>Kompletten Prompt anzeigen</span>
             </button>
           </div>
 
           {/* Synthesis Result Card */}
           <div className="p-6 rounded-2xl border border-[var(--line)] bg-white space-y-4 shadow-sm">
             <h3 className="section-title text-base font-bold text-[var(--ink)] m-0 flex items-center gap-2">
-              <span>📋</span> Synthese & Befund
+              <IconClipboardText size={20} className="text-[var(--signal)]" />
+              <span>Synthese & Befund</span>
             </h3>
             <div className="p-4 rounded-xl bg-[color-mix(in_oklab,white_95%,var(--ink))] border border-[var(--line)] text-xs text-[var(--ink)] leading-relaxed whitespace-pre-wrap">
               {summaryText || "Keine Zusammenfassung erzeugt."}
@@ -323,13 +328,14 @@ export function ResearchAgentWorkspace() {
             {/* Sub-Questions */}
             {result.sub_questions && result.sub_questions.length > 0 && (
               <div className="pt-3 border-t border-[var(--line)] space-y-2">
-                <h4 className="mono text-[11px] uppercase muted font-bold">
-                  Teilfragen & Zerlegung (Planner-State):
+                <h4 className="mono text-[11px] uppercase muted font-bold flex items-center gap-1">
+                  <IconBulb size={14} className="text-[var(--signal)]" />
+                  <span>Teilfragen & Zerlegung (Planner-State):</span>
                 </h4>
                 <ul className="space-y-1">
                   {result.sub_questions.map((q, idx) => (
                     <li key={idx} className="text-xs text-[var(--ink)] flex items-start gap-2">
-                      <span className="text-[var(--signal)]">▸</span> {q}
+                      <span className="text-[var(--signal)] font-bold">▸</span> {q}
                     </li>
                   ))}
                 </ul>
@@ -341,7 +347,8 @@ export function ResearchAgentWorkspace() {
           {result.sources && result.sources.length > 0 && (
             <div className="p-6 rounded-2xl border border-[var(--line)] bg-white space-y-4 shadow-sm">
               <h3 className="section-title text-base font-bold text-[var(--ink)] m-0 flex items-center gap-2">
-                <span>📚</span> Quellennachweise & Citations ({result.sources.length})
+                <IconBook size={20} className="text-[var(--signal)]" />
+                <span>Quellennachweise & Citations ({result.sources.length})</span>
               </h3>
               <div className="space-y-3">
                 {result.sources.map((src, idx) => (
@@ -355,15 +362,17 @@ export function ResearchAgentWorkspace() {
                           href={src.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="font-bold text-[var(--signal)] hover:underline truncate"
+                          className="font-bold text-[var(--signal)] hover:underline truncate inline-flex items-center gap-1"
                         >
-                          {src.title || "Quelle"}
+                          <span>{src.title || "Quelle"}</span>
+                          <IconExternalLink size={13} />
                         </a>
                       ) : (
                         <span className="font-bold text-[var(--ink)]">{src.title || "Quelle"}</span>
                       )}
-                      <span className="badge" data-variant="graph">
-                        {src.source_type === "local_brain" ? "🧠 Company Brain" : "🌐 Web (SearXNG)"}
+                      <span className="badge inline-flex items-center gap-1" data-variant="graph">
+                        {src.source_type === "local_brain" ? <IconBrain size={12} /> : <IconGlobe size={12} />}
+                        <span>{src.source_type === "local_brain" ? "Company Brain" : "Web (SearXNG)"}</span>
                       </span>
                     </div>
                     {src.snippet ? (
@@ -378,7 +387,8 @@ export function ResearchAgentWorkspace() {
           {/* Interactive Dialogue Refinement Panel */}
           <div className="p-6 rounded-2xl border border-[var(--line)] bg-[color-mix(in_oklab,var(--signal)_5%,white)] space-y-3">
             <h4 className="text-xs font-bold text-[var(--ink)] m-0 flex items-center gap-2">
-              <span>💬</span> Interaktiver Dialog & Verfeinerung
+              <IconMessageDots size={18} className="text-[var(--signal)]" />
+              <span>Interaktiver Dialog & Verfeinerung</span>
             </h4>
             <p className="text-xs muted m-0">
               Möchtest du bestimmte Punkte vertiefen oder eine korrigierte Suchrichtung eingeben?
@@ -396,9 +406,10 @@ export function ResearchAgentWorkspace() {
                 type="button"
                 disabled={loading || !refinementText.trim()}
                 onClick={() => executeResearch(true)}
-                className="btn-ghost text-xs font-bold text-[var(--signal)] border-[var(--signal)]"
+                className="btn-ghost text-xs font-bold text-[var(--signal)] border-[var(--signal)] inline-flex items-center gap-1.5"
               >
-                Verfeinern
+                <IconSparkles size={14} />
+                <span>Verfeinern</span>
               </button>
             </div>
           </div>
@@ -412,7 +423,7 @@ export function ResearchAgentWorkspace() {
             {/* Modal Header */}
             <div className="p-4 border-b border-[var(--line)] flex items-center justify-between bg-[color-mix(in_oklab,white_95%,var(--ink))] rounded-t-2xl">
               <div className="flex items-center gap-2">
-                <span>📄</span>
+                <IconFileText size={18} className="text-[var(--signal)]" />
                 <h3 className="text-sm font-bold text-[var(--ink)] mono m-0">
                   Prompt Inspektor & Context Bundle
                 </h3>
@@ -420,9 +431,10 @@ export function ResearchAgentWorkspace() {
               <button
                 type="button"
                 onClick={() => setShowPromptModal(false)}
-                className="btn-ghost text-xs mono"
+                className="btn-ghost text-xs mono inline-flex items-center gap-1"
               >
-                ✕ Schließen
+                <IconX size={14} />
+                <span>Schließen</span>
               </button>
             </div>
 

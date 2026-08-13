@@ -1,6 +1,5 @@
-"use client";
-
 import React, { useState } from "react";
+import { IconFileText, IconCopy, IconCheck } from "@tabler/icons-react";
 
 interface DataProductViewerProps {
   dataProduct: Record<string, any>;
@@ -143,9 +142,10 @@ export const DataProductViewer: React.FC<DataProductViewerProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={handleCopy}
-            className="btn-ghost text-xs py-1 px-3"
+            className="btn-ghost text-xs py-1 px-3 inline-flex items-center gap-1.5"
           >
-            {copied ? "✓ Kopiert" : "📋 JSON kopieren"}
+            {copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
+            <span>{copied ? "Kopiert" : "JSON kopieren"}</span>
           </button>
           <button
             onClick={() => setShowRawJson(!showRawJson)}
@@ -171,8 +171,9 @@ export const DataProductViewer: React.FC<DataProductViewerProps> = ({
             if (typeof value === "string" && (value.includes("\n") || key.includes("text") || key.includes("angebot"))) {
               return (
                 <div key={key} className="p-4 rounded-xl border border-[var(--line)] bg-white space-y-2">
-                  <div className="text-xs font-bold text-[var(--signal)] uppercase tracking-wider mono">
-                    📄 {key.replace(/_/g, " ")}
+                  <div className="text-xs font-bold text-[var(--signal)] uppercase tracking-wider mono flex items-center gap-1.5">
+                    <IconFileText size={14} />
+                    <span>{key.replace(/_/g, " ")}</span>
                   </div>
                   <div className="text-sm text-[var(--ink)] whitespace-pre-wrap leading-relaxed font-sans p-3 rounded-lg border border-[var(--line)] bg-[color-mix(in_oklab,white_90%,transparent)]">
                     {value}
