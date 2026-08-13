@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import { MeetingPickerField } from "@/components/MeetingPickerField";
 import { IconEdit, IconBolt, IconLoader2 } from "@tabler/icons-react";
