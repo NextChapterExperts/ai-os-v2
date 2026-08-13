@@ -38,6 +38,68 @@ const AVAILABLE_MODELS = [
   { id: "openrouter/auto", label: "OpenRouter Cloud (Premium Fallback)" },
 ];
 
+function renderMarkdownReport(text: string) {
+  if (!text) return null;
+  const lines = text.split("\n");
+  return (
+    <div className="space-y-3 font-sans text-sm text-slate-200 leading-relaxed">
+      {lines.map((line, idx) => {
+        const trimmed = line.trim();
+        if (!trimmed) return <div key={idx} className="h-2" />;
+        if (trimmed === "---") {
+          return <hr key={idx} className="border-t border-slate-800 my-4" />;
+        }
+        if (trimmed.startsWith("### ")) {
+          return (
+            <h3 key={idx} className="text-base font-bold text-indigo-300 mt-5 mb-2 flex items-center gap-2 font-display">
+              {trimmed.replace(/^###\s+/, "")}
+            </h3>
+          );
+        }
+        if (trimmed.startsWith("## ")) {
+          return (
+            <h2 key={idx} className="text-lg font-bold text-slate-100 mt-6 mb-2 font-display">
+              {trimmed.replace(/^##\s+/, "")}
+            </h2>
+          );
+        }
+        if (trimmed.startsWith("# ")) {
+          return (
+            <h1 key={idx} className="text-xl font-bold text-slate-100 mt-6 mb-3 font-display">
+              {trimmed.replace(/^#\s+/, "")}
+            </h1>
+          );
+        }
+
+        const parts = line.split(/(\[\d+\]|\*\*[^*]+\*\*)/g);
+        return (
+          <div key={idx} className={trimmed.startsWith("- ") ? "ml-4 flex items-start gap-2" : ""}>
+            {trimmed.startsWith("- ") ? <span className="text-indigo-400 font-bold">▸</span> : null}
+            <span>
+              {parts.map((part, pIdx) => {
+                if (/^\[\d+\]$/.test(part)) {
+                  return (
+                    <span
+                      key={pIdx}
+                      className="inline-flex items-center justify-center px-1.5 py-0.5 mx-0.5 rounded bg-indigo-950/80 border border-indigo-500/50 text-indigo-300 font-mono font-bold text-[10px] align-baseline"
+                    >
+                      {part}
+                    </span>
+                  );
+                }
+                if (part.startsWith("**") && part.endsWith("**")) {
+                  return <strong key={pIdx} className="text-slate-100">{part.slice(2, -2)}</strong>;
+                }
+                return part.replace(/^- /, "");
+              })}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function ResearchWorkflowPage() {
   const [query, setQuery] = useState("");
   const [depth, setDepth] = useState<"quick" | "deep">("quick");
@@ -59,7 +121,7 @@ export default function ResearchWorkflowPage() {
     setError(null);
 
     try {
-      const res = await fetch("http://localhost:8091/v1/dispatch", {
+      const res = await fetch("/api/dispatch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -76,15 +138,27 @@ export default function ResearchWorkflowPage() {
         }),
       });
 
-      if (!res.ok) {
-        throw new Error(`Dispatch Fehler: ${res.status} ${res.statusText}`);
+      const data = await res.json();
+      const payloadObj = data.result && typeof data.result === "object" ? data.result : data;
+      const summaryText = payloadObj.summary || payloadObj.answer || data.summary || data.answer || "";
+
+      if (!res.ok && !summaryText) {
+        throw new Error(data.error || data.message || `Dispatch Fehler: HTTP ${res.status}`);
       }
 
-      const data = await res.json();
-      if (data.result) {
-        setResult(data.result);
+      if (summaryText) {
+        setResult({
+          query: payloadObj.query || activeQuery,
+          summary: summaryText,
+          sources: payloadObj.sources || [],
+          confidence: payloadObj.confidence || 0.9,
+          anonymity_active: payloadObj.anonymity_active ?? anonymize,
+          model_used: payloadObj.model_used || payloadObj.model || selectedModel,
+          sub_questions: payloadObj.sub_questions || [],
+          llmContext: payloadObj.llmContext || data.llmContext,
+        });
       } else {
-        throw new Error("Ungültiges Antwortformat erhalten.");
+        throw new Error(data.error || "Keine Zusammenfassung erhalten.");
       }
     } catch (err: any) {
       console.error("Research error:", err);
@@ -93,6 +167,7 @@ export default function ResearchWorkflowPage() {
       setLoading(false);
     }
   };
+
 
   const getPromptDetails = (): PromptContext | null => {
     if (!result?.llmContext?.prompt) return null;
@@ -281,13 +356,15 @@ export default function ResearchWorkflowPage() {
           </div>
 
           {/* Research Summary Card */}
+
           <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-6 shadow-xl">
             <h2 className="text-lg font-bold text-slate-100 mb-4 font-display flex items-center gap-2">
               <span>📋</span> Synthese & Befund
             </h2>
-            <div className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap font-sans bg-slate-950/60 p-4 rounded-lg border border-slate-800">
-              {result.summary}
+            <div className="p-4 rounded-lg bg-slate-950/60 border border-slate-800">
+              {renderMarkdownReport(result.summary)}
             </div>
+
 
             {/* Sub-Questions Decomposition */}
             {result.sub_questions && result.sub_questions.length > 0 && (
