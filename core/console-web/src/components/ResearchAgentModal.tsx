@@ -114,15 +114,28 @@ function SourcePreviewModal({
             </p>
           </div>
 
-          {/* Embedded Web Preview Iframe for External URLs */}
+          {/* Embedded Web Preview Iframe for External URLs with Firefox Fallback Banner */}
           {isWeb ? (
-            <div className="w-full h-[460px] rounded-xl border border-[var(--line)] overflow-hidden bg-slate-100 relative">
-              <iframe
-                src={source.url}
-                title={source.title}
-                className="w-full h-full border-none"
-                sandbox="allow-scripts allow-same-origin allow-popups"
-              />
+            <div className="space-y-2">
+              <div className="px-4 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center justify-between gap-2">
+                <span>ℹ️ <strong>Firefox / Browser-Hinweis:</strong> Falls die Zielwebsite das Einbetten im Pop-up blockiert (X-Frame-Options), nutzen Sie den Button:</span>
+                <a
+                  href={source.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1 rounded-lg bg-[var(--signal)] text-white text-xs font-bold font-mono no-underline hover:opacity-90 transition-all shrink-0"
+                >
+                  Direkt im Tab öffnen ↗
+                </a>
+              </div>
+              <div className="w-full h-[430px] rounded-xl border border-[var(--line)] overflow-hidden bg-slate-100 relative">
+                <iframe
+                  src={source.url}
+                  title={source.title}
+                  className="w-full h-full border-none"
+                  sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                />
+              </div>
             </div>
           ) : (
             <div className="p-8 text-center muted text-xs font-mono border border-dashed border-[var(--line)] rounded-xl">
