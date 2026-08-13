@@ -123,7 +123,7 @@ export function ResearchAgentWorkspace() {
       <div className="p-6 rounded-2xl border border-[var(--line)] bg-[color-mix(in_oklab,white_75%,transparent)] shadow-sm space-y-5">
         <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--line)] pb-4">
           <div>
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
               <span className="badge" data-variant="graph">
                 Fachagent · Recherche-Agent
               </span>
@@ -131,24 +131,36 @@ export function ResearchAgentWorkspace() {
                 className="badge"
                 data-variant={anonymize ? "curated" : "raw"}
               >
-                {anonymize ? "🛡️ SearXNG Anonym Aktiv" : "🌐 Direkt-Modus"}
+                {anonymize ? "🛡️ SearXNG IP-Schutz: Anonym (Proxy Aktiv)" : "🌐 IP-Schutz: Deaktiviert (Direkt-Modus)"}
               </span>
             </div>
             <h2 className="section-title text-xl font-bold text-[var(--ink)] m-0 flex items-center gap-2">
-              <span>🔎</span> Recherche-Agent Vorschau
+              <span>🔎</span> Recherche-Agent
             </h2>
             <p className="text-xs muted mt-1 leading-relaxed m-0">
-              Multi-Hop Dual-Retrieval: Durchsucht gleichzeitig das lokale Company Brain & das Internet via SearXNG (IP-anonymisiert).
+              Multi-Hop Dual-Retrieval: Durchsucht gleichzeitig das lokale Company Brain & das Internet via SearXNG.
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setAnonymize(!anonymize)}
-            className="btn-ghost text-xs font-mono"
-          >
-            {anonymize ? "🔒 IP-Schutz: Aktiv" : "🔓 IP-Schutz: Deaktiviert"}
-          </button>
+          {/* Anonymity / IP Protection Toggle with Clear Explanation */}
+          <div className="flex flex-col items-start md:items-end gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => setAnonymize(!anonymize)}
+              className={`px-3.5 py-2 rounded-xl border text-xs font-mono font-bold transition-all cursor-pointer ${
+                anonymize
+                  ? "border-[var(--signal)] bg-[color-mix(in_oklab,var(--signal)_10%,white)] text-[var(--signal)] shadow-xs"
+                  : "border-[var(--line)] bg-white text-[var(--ink-soft)] hover:text-[var(--ink)]"
+              }`}
+            >
+              {anonymize ? "🛡️ IP-Schutz: Anonym (SearXNG Proxy)" : "🌐 IP-Schutz: Deaktiviert (Direkt-Modus)"}
+            </button>
+            <span className="text-[10px] font-mono muted">
+              {anonymize
+                ? "🔒 Anonym: Egress über SearXNG Proxy — Ihre lokale IP bleibt verborgen."
+                : "🌐 Direkt: Direkte Verbindung vom lokalen System zu Zielwebseiten."}
+            </span>
+          </div>
         </div>
 
         {/* Query Input */}
@@ -167,7 +179,7 @@ export function ResearchAgentWorkspace() {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Model Selector */}
             <div>
               <label className="mono text-[11px] uppercase muted block mb-1 font-bold">
@@ -215,22 +227,6 @@ export function ResearchAgentWorkspace() {
                   🔬 Deep (Multi-Hop)
                 </button>
               </div>
-            </div>
-
-            {/* Compute Mode */}
-            <div>
-              <label className="mono text-[11px] uppercase muted block mb-1 font-bold">
-                Compute-Modus
-              </label>
-              <select
-                value={computeMode}
-                onChange={(e) => setComputeMode(e.target.value)}
-                className="w-full p-2.5 rounded-xl border border-[var(--line)] bg-white text-xs font-mono text-[var(--ink)] focus:outline-none"
-              >
-                <option value="sovereign">Local Sovereign (Lokal)</option>
-                <option value="balanced">Balanced Hybrid</option>
-                <option value="premium">Premium Cloud API</option>
-              </select>
             </div>
           </div>
 
