@@ -77,6 +77,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <span className="font-mystic text-2xl sm:text-3xl font-extrabold tracking-[0.16em] text-ink uppercase group-hover/virki:text-signal transition-colors">
               VIRKI
             </span>
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase bg-amber-500/15 text-amber-600 border border-amber-500/30">
+              DEV
+            </span>
           </Link>
 
           {/* Odin's Ravens Story Hover Popover Dropdown */}

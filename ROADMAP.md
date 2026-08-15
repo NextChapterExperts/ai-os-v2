@@ -2,7 +2,7 @@
 
 **Für:** LLMs, Entwickler, die das System von Grund auf bauen  
 **Zweck:** Vollständige technische Spezifikation — ausreichend detailliert um ohne zusätzlichen Kontext zu starten  
-**Stand:** August 2026 (aktualisiert 2026-08-15 — Strikte Port-Entkopplung DEV Port 8090/8091 vs. DIST Port 8190/8191, Intent Router Klassifikations-Endpoints `/v1/intent/classify` & `/v1/intent/catalog`, Reparatur des Company-Cockpits `/company` für autarken Standalone-Betrieb, 200/200 bestandene Tests)  
+**Stand:** August 2026 (aktualisiert 2026-08-15 — VIRKI Control Plane Flotten-Cockpit für Multi-Target Bereitstellung [Docker, Cloud Run, Dedicated GCP VM] voll einsatzbereit, automatische IP-Synchronisation, Live-Log Terminal mit Copy-Funktion, Ist-Kostenanzeige, Enterprise-Härtungskonzept in docs/23-ENTERPRISE-FLEET-HARDENING.md hinterlegt, 200/200 Tests grün)  
 **Detail-Spec Company Brain:** [docs/09-COMPANY-BRAIN.md](docs/09-COMPANY-BRAIN.md) · **Memory einfach:** [docs/10-MEMORY-EINFACH.md](docs/10-MEMORY-EINFACH.md) · **Kontext Lagebild→LLM:** [docs/14-KONTEXT.md](docs/14-KONTEXT.md)  
 **Erstes Lizenzprodukt (VM):** [docs/11-PLATFORM-VM.md](docs/11-PLATFORM-VM.md)  
 **Leitprinzipien detailliert:** [docs/12-LEITPRINZIPIEN.md](docs/12-LEITPRINZIPIEN.md)  
