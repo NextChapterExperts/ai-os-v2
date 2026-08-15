@@ -81,3 +81,37 @@ def test_gcp_api_endpoints(client, monkeypatch):
     )
     assert post_res.status_code == 200
     assert post_res.json()["result"]["status"] == "created"
+
+    # 3. POST stop
+    monkeypatch.setattr(
+        "core.orchestrator.gcp_vm_manager.stop_customer_vm",
+        lambda instance_name, **kwargs: {"status": "stopped", "instance_name": instance_name},
+    )
+    stop_res = client.post(
+        "/v1/platform/gcp/vms/stop",
+        json={"instance_name": "aios-demo"},
+    )
+    assert stop_res.status_code == 200
+    assert stop_res.json()["result"]["status"] == "stopped"
+
+    # 4. POST start
+    monkeypatch.setattr(
+        "core.orchestrator.gcp_vm_manager.start_customer_vm",
+        lambda instance_name, **kwargs: {"status": "started", "instance_name": instance_name},
+    )
+    start_res = client.post(
+        "/v1/platform/gcp/vms/start",
+        json={"instance_name": "aios-demo"},
+    )
+    assert start_res.status_code == 200
+    assert start_res.json()["result"]["status"] == "started"
+
+    # 5. DELETE
+    monkeypatch.setattr(
+        "core.orchestrator.gcp_vm_manager.delete_customer_vm",
+        lambda instance_name, **kwargs: {"status": "deleted", "instance_name": instance_name},
+    )
+    del_res = client.delete("/v1/platform/gcp/vms/aios-demo")
+    assert del_res.status_code == 200
+    assert del_res.json()["result"]["status"] == "deleted"
+

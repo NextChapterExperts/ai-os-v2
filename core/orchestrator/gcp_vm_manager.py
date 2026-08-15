@@ -165,6 +165,12 @@ echo "✅ System-Setup abgeschlossen für {company_name}!"
     }
 
 
+def start_customer_vm(instance_name: str, zone: str = DEFAULT_ZONE, project: str = DEFAULT_PROJECT) -> dict[str, Any]:
+    """Startet eine pausierte Kunden-VM wieder auf."""
+    _run_gcloud(["compute", "instances", "start", instance_name, f"--project={project}", f"--zone={zone}"])
+    return {"status": "started", "instance_name": instance_name}
+
+
 def stop_customer_vm(instance_name: str, zone: str = DEFAULT_ZONE, project: str = DEFAULT_PROJECT) -> dict[str, Any]:
     """Stoppt eine Kunden-VM, um Rechenkosten einzusparen (0 € Compute-Kosten während Pause)."""
     _run_gcloud(["compute", "instances", "stop", instance_name, f"--project={project}", f"--zone={zone}"])
@@ -175,3 +181,4 @@ def delete_customer_vm(instance_name: str, zone: str = DEFAULT_ZONE, project: st
     """Löscht eine Kunden-VM vollständig aus Google Cloud."""
     _run_gcloud(["compute", "instances", "delete", instance_name, f"--project={project}", f"--zone={zone}", "--quiet"])
     return {"status": "deleted", "instance_name": instance_name}
+

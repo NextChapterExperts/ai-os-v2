@@ -9,6 +9,7 @@ import {
   IconPlus,
   IconReload,
   IconPlayerStop,
+  IconPlayerPlay,
   IconTrash,
   IconExternalLink,
   IconShieldLock,
@@ -34,6 +35,7 @@ export default function VmManagementPage() {
   const [vms, setVms] = useState<GcpVm[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [actionLoading, setActionLoading] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
@@ -104,6 +106,8 @@ export default function VmManagementPage() {
   };
 
   const handleStopVm = async (instanceName: string) => {
+    setActionLoading((prev) => ({ ...prev, [instanceName]: "stopping" }));
+    setError(null);
     try {
       const res = await fetch("/api/platform/gcp/vms", {
         method: "POST",
@@ -111,9 +115,66 @@ export default function VmManagementPage() {
         body: JSON.stringify({ action: "stop", instance_name: instanceName }),
       });
       if (!res.ok) throw new Error("Fehler beim Stoppen der VM");
-      await loadVms();
+      setSuccessMsg(`VM '${instanceName}' wurde pausiert (0 € Rechenkosten).`);
+      // Kurzes Warten damit GCP den Status aktualisiert
+      setTimeout(() => loadVms(), 2500);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Aktion fehlgeschlagen");
+    } finally {
+      setActionLoading((prev) => {
+        const next = { ...prev };
+        delete next[instanceName];
+        return next;
+      });
+    }
+  };
+
+  const handleStartVm = async (instanceName: string) => {
+    setActionLoading((prev) => ({ ...prev, [instanceName]: "starting" }));
+    setError(null);
+    try {
+      const res = await fetch("/api/platform/gcp/vms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "start", instance_name: instanceName }),
+      });
+      if (!res.ok) throw new Error("Fehler beim Starten der VM");
+      setSuccessMsg(`VM '${instanceName}' wird gestartet...`);
+      setTimeout(() => loadVms(), 2500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Aktion fehlgeschlagen");
+    } finally {
+      setActionLoading((prev) => {
+        const next = { ...prev };
+        delete next[instanceName];
+        return next;
+      });
+    }
+  };
+
+  const handleDeleteVm = async (instanceName: string) => {
+    if (!window.confirm(`Möchtest du die VM '${instanceName}' wirklich unwiderruflich löschen?`)) {
+      return;
+    }
+    setActionLoading((prev) => ({ ...prev, [instanceName]: "deleting" }));
+    setError(null);
+    try {
+      const res = await fetch("/api/platform/gcp/vms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete", instance_name: instanceName }),
+      });
+      if (!res.ok) throw new Error("Fehler beim Löschen der VM");
+      setSuccessMsg(`VM '${instanceName}' wurde gelöscht.`);
+      setTimeout(() => loadVms(), 2500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Aktion fehlgeschlagen");
+    } finally {
+      setActionLoading((prev) => {
+        const next = { ...prev };
+        delete next[instanceName];
+        return next;
+      });
     }
   };
 
@@ -326,65 +387,88 @@ export default function VmManagementPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {vms.map((vm) => (
-                  <div
-                    key={vm.name}
-                    className="rounded-lg border border-line bg-paper p-4 space-y-2 text-sm"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-ink font-mono">{vm.name}</span>
-                        <span
-                          className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${
-                            vm.status === "RUNNING"
-                              ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/30"
-                              : "bg-slate-500/10 text-slate-600 border border-slate-500/30"
-                          }`}
-                        >
-                          {vm.status}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {vm.status === "RUNNING" && (
-                          <button
-                            onClick={() => handleStopVm(vm.name)}
-                            className="btn-ghost text-xs text-amber-600 flex items-center gap-1 cursor-pointer"
-                            title="VM pausieren um Kosten zu sparen"
+                {vms.map((vm) => {
+                  const currentAction = actionLoading[vm.name];
+                  return (
+                    <div
+                      key={vm.name}
+                      className="rounded-lg border border-line bg-paper p-4 space-y-2 text-sm"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-ink font-mono">{vm.name}</span>
+                          <span
+                            className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${
+                              vm.status === "RUNNING"
+                                ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/30"
+                                : "bg-slate-500/10 text-slate-600 border border-slate-500/30"
+                            }`}
                           >
-                            <IconPlayerStop size={13} />
-                            <span>Pausieren</span>
+                            {currentAction ? `${currentAction}...` : vm.status}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {vm.status === "RUNNING" ? (
+                            <button
+                              onClick={() => handleStopVm(vm.name)}
+                              disabled={!!currentAction}
+                              className="btn-ghost text-xs text-amber-600 flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              title="VM pausieren (0 € Compute-Kosten)"
+                            >
+                              <IconPlayerStop size={13} />
+                              <span>Pausieren</span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleStartVm(vm.name)}
+                              disabled={!!currentAction}
+                              className="btn-ghost text-xs text-emerald-600 flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              title="VM wieder starten"
+                            >
+                              <IconPlayerPlay size={13} />
+                              <span>Starten</span>
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDeleteVm(vm.name)}
+                            disabled={!!currentAction}
+                            className="btn-ghost text-xs text-danger flex items-center gap-1 cursor-pointer disabled:opacity-50 hover:bg-danger/10"
+                            title="VM endgültig löschen"
+                          >
+                            <IconTrash size={13} />
+                            <span>Löschen</span>
                           </button>
-                        )}
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-xs text-ink-soft pt-1">
-                      <div>
-                        <span className="block font-semibold">Öffentliche IP:</span>
-                        <span className="font-mono">{vm.ip_address}</span>
+                      <div className="grid grid-cols-2 gap-2 text-xs text-ink-soft pt-1">
+                        <div>
+                          <span className="block font-semibold">Öffentliche IP:</span>
+                          <span className="font-mono">{vm.ip_address}</span>
+                        </div>
+                        <div>
+                          <span className="block font-semibold">Maschinen-Typ:</span>
+                          <span className="font-mono">{vm.machine_type}</span>
+                        </div>
                       </div>
-                      <div>
-                        <span className="block font-semibold">Maschinen-Typ:</span>
-                        <span className="font-mono">{vm.machine_type}</span>
-                      </div>
-                    </div>
 
-                    {vm.console_url && vm.status === "RUNNING" && (
-                      <div className="pt-2 border-t border-line flex items-center justify-between">
-                        <span className="text-xs text-ink-soft">Web-Konsole:</span>
-                        <a
-                          href={vm.console_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn-primary text-xs flex items-center gap-1.5 py-1 px-3"
-                        >
-                          <span>Kunden-Konsole öffnen</span>
-                          <IconExternalLink size={12} />
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                      {vm.console_url && vm.status === "RUNNING" && (
+                        <div className="pt-2 border-t border-line flex items-center justify-between">
+                          <span className="text-xs text-ink-soft">Web-Konsole:</span>
+                          <a
+                            href={vm.console_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn-primary text-xs flex items-center gap-1.5 py-1 px-3"
+                          >
+                            <span>Kunden-Konsole öffnen</span>
+                            <IconExternalLink size={12} />
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

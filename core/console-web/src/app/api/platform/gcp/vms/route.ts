@@ -26,7 +26,21 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const action = body.action || "create";
 
-    const endpoint = action === "stop" ? "/v1/platform/gcp/vms/stop" : "/v1/platform/gcp/vms/create";
+    if (action === "delete") {
+      const instanceName = body.instance_name;
+      const res = await fetch(`${ORCHESTRATOR_URL}/v1/platform/gcp/vms/${instanceName}`, {
+        method: "DELETE",
+        signal: AbortSignal.timeout(60_000),
+      });
+      const data = await res.json();
+      if (!res.ok) return NextResponse.json({ error: data }, { status: res.status });
+      return NextResponse.json(data);
+    }
+
+    let endpoint = "/v1/platform/gcp/vms/create";
+    if (action === "stop") endpoint = "/v1/platform/gcp/vms/stop";
+    if (action === "start") endpoint = "/v1/platform/gcp/vms/start";
+
     const res = await fetch(`${ORCHESTRATOR_URL}${endpoint}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

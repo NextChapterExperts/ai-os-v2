@@ -521,6 +521,19 @@ async def create_gcp_vm_endpoint(req: dict[str, Any]) -> dict[str, Any]:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
+@app.post("/v1/platform/gcp/vms/start")
+async def start_gcp_vm_endpoint(req: dict[str, Any]) -> dict[str, Any]:
+    from core.orchestrator.gcp_vm_manager import start_customer_vm
+    instance_name = req.get("instance_name")
+    if not instance_name:
+        raise HTTPException(status_code=400, detail="instance_name erforderlich")
+    try:
+        res = start_customer_vm(instance_name, zone=req.get("zone", "europe-west3-a"))
+        return {"status": "ok", "result": res}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
 @app.post("/v1/platform/gcp/vms/stop")
 async def stop_gcp_vm_endpoint(req: dict[str, Any]) -> dict[str, Any]:
     from core.orchestrator.gcp_vm_manager import stop_customer_vm

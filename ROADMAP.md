@@ -3346,6 +3346,20 @@ git tag -l 'roadmap/*'
 git show roadmap/2026-08-03-p4-email-invoices --stat
 ```
 
+## Stand & Changelog (2026-08-15 — 3-Stufen Staging- & VM-Release Lifecycle)
+
+- **Release-Tag:** `roadmap/2026-08-15-p4-staging-and-vm-release-lifecycle`
+- **Staging- & Update-Architektur ([docs/29-STAGING-UND-VM-RELEASE-WORKFLOW.md](docs/29-STAGING-UND-VM-RELEASE-WORKFLOW.md)):**
+  - **Stufe 1:** NextChapter Ur-Tenant für R&D und Feature-Entwicklung.
+  - **Stufe 2:** Google Cloud Staging-VM zur automatisierten Verifikation von Zero-Touch Setup, Clean-Slate Zustand und Port 8090.
+  - **Stufe 3:** Rollout zertifizierter Releases auf Kunden-VMs mit unveränderten Kundendaten.
+- **VM Lifecycle & UI Feedback:**
+  - `start_customer_vm`, `stop_customer_vm` und `delete_customer_vm` in `core/orchestrator/gcp_vm_manager.py` und `server.py`.
+  - Reaktive UI in `/platform/vms` mit Lade-Spinnern, Status-Polling, Starten, Pausieren (0 € Compute-Kosten) und Löschen.
+- **Master Testsuite:** 3/3 Tests in `tests/test_gcp_vm_manager.py` und Gesamttests grün.
+
+---
+
 ## Stand & Changelog (2026-08-15 — GCP Compute Engine VM Management & Kostenkontrolle-UI)
 
 - **Release-Tag:** `roadmap/2026-08-15-p4-gcp-vm-provisioning-and-billing-ui`
