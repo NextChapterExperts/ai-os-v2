@@ -513,6 +513,7 @@ async def create_gcp_vm_endpoint(req: dict[str, Any]) -> dict[str, Any]:
             tenant_id=tenant_id,
             company_name=company_name,
             admin_email=admin_email,
+            deploy_mode=req.get("deploy_mode", "docker"),
             zone=req.get("zone", "europe-west3-a"),
             machine_type=req.get("machine_type", "e2-standard-4"),
         )

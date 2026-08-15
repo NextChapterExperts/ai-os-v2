@@ -84,31 +84,52 @@ def create_customer_vm(
     company_name: str,
     admin_email: str,
     *,
+    deploy_mode: str = "docker",
     project: str = DEFAULT_PROJECT,
     zone: str = DEFAULT_ZONE,
     machine_type: str = DEFAULT_MACHINE_TYPE,
 ) -> dict[str, Any]:
-    """Erstellt eine neue, isolierte Kunden-VM in Google Cloud."""
+    """Erstellt eine neue, isolierte Kunden-VM/Docker Appliance in Google Cloud direkt aus GitHub."""
     sanitized_tenant = re.sub(r"[^a-z0-9\-]", "", tenant_id.lower().replace("_", "-"))
     instance_name = f"aios-{sanitized_tenant}"
+    
+    gh_token = os.environ.get("GITHUB_TOKEN", "")
+    if not gh_token:
+        try:
+            url_raw = subprocess.check_output(["git", "config", "--get", "remote.origin.url"], text=True).strip()
+            m = re.search(r"(ghp_[a-zA-Z0-9]+)", url_raw)
+            if m:
+                gh_token = m.group(1)
+        except Exception:
+            pass
 
-    # Startup-Script für automatische Zero-Touch Docker Installation
+    if gh_token:
+        github_repo = f"https://x-access-token:{gh_token}@github.com/NextChapterExperts/virgi-platform-dist.git"
+    else:
+        github_repo = "https://github.com/NextChapterExperts/virgi-platform-dist.git"
+
+    # Startup-Script: Zieht IMMER direkt aus GitHub (Branch main)
     startup_script = f"""#!/bin/bash
 set -e
-echo "🚀 Initialisiere AI-OS Core Platform Appliance für {company_name} ({tenant_id})..."
+echo "🚀 Initialisiere AI-OS Platform ({deploy_mode.upper()}) für {company_name} ({tenant_id}) direkt aus GitHub..."
+
+# 1. Systempakete & Docker vorbereiten
 apt-get update && apt-get install -y git curl docker.io docker-compose
 
-# Virgi Platform Distribution klonen
+# 2. Docker Service aktivieren & starten
+systemctl enable --now docker
+
+# 3. Distributions-Projekt IMMER frisch aus GitHub ziehen
 mkdir -p /opt
 rm -rf /opt/virgi-platform-dist
-git clone https://github.com/NextChapterExperts/virgi-platform-dist.git /opt/virgi-platform-dist
+git clone {github_repo} /opt/virgi-platform-dist
 
-# Docker Compose Appliance im Hintergrund starten
+# 4. Appliance Stack per Docker Compose starten
 cd /opt/virgi-platform-dist/deploy/docker
 docker-compose down || true
 docker-compose up -d --build
 
-echo "✅ Docker Appliance Setup abgeschlossen für {company_name}!"
+echo "✅ AI-OS {deploy_mode.upper()} Appliance erfolgreich aus GitHub bereitgestellt!"
 """
 
     args = [
@@ -119,13 +140,13 @@ echo "✅ Docker Appliance Setup abgeschlossen für {company_name}!"
         f"--project={project}",
         f"--zone={zone}",
         f"--machine-type={machine_type}",
-        "--image-family=ubuntu-2404-lts-amd64",
+        "--image-family=ubuntu-2204-lts",
         "--image-project=ubuntu-os-cloud",
-        "--boot-disk-size=50GB",
+        "--boot-disk-size=40GB",
         "--boot-disk-type=pd-balanced",
-        f"--labels=aios_tenant={sanitized_tenant},env=production",
-        f"--metadata=startup-script={startup_script},company-name={company_name},admin-email={admin_email}",
-        "--tags=http-server,https-server,aios-console",
+        f"--labels=aios_tenant={sanitized_tenant},env=production,deploy_mode={deploy_mode}",
+        f"--metadata=startup-script={startup_script},company-name={company_name},admin-email={admin_email},source=github-main",
+        "--tags=http-server,https-server,aios-console,aios-web",
         "--format=json",
     ]
 

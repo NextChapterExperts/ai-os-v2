@@ -44,6 +44,7 @@ export default function VmManagementPage() {
   const [companyName, setCompanyName] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
   const [machineType, setMachineType] = useState("e2-standard-4");
+  const [deployMode, setDeployMode] = useState<"docker" | "vm">("docker");
 
   useEffect(() => {
     const currentAuth = getStoredAuth();
@@ -87,13 +88,14 @@ export default function VmManagementPage() {
           company_name: companyName.trim(),
           admin_email: adminEmail.trim() || "admin@example.com",
           machine_type: machineType,
+          deploy_mode: deployMode,
           zone: "europe-west3-a",
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error?.detail || data.error || "VM-Erstellung fehlgeschlagen");
+      if (!res.ok) throw new Error(data.error?.detail || data.error || "Provisionierung fehlgeschlagen");
 
-      setSuccessMsg(`VM für '${companyName}' wird in Frankfurt bereitgestellt!`);
+      setSuccessMsg(`${deployMode === "docker" ? "Docker-Stack" : "VM-Appliance"} für '${companyName}' wird direkt aus GitHub in Frankfurt bereitgestellt!`);
       setTenantId("");
       setCompanyName("");
       setAdminEmail("");
@@ -276,18 +278,74 @@ export default function VmManagementPage() {
 
       {/* Grid: Formular + Liste */}
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-        {/* Neue VM erstellen (5 Spalten) */}
+        {/* Neue Bereitstellung (5 Spalten) */}
         <div className="space-y-6 lg:col-span-5">
           <div className="card space-y-4">
             <div className="flex items-center justify-between border-b border-line pb-3">
               <h2 className="text-base font-bold text-ink flex items-center gap-2 m-0">
                 <IconServer className="text-signal" size={18} />
-                Neue Kunden-VM provisionieren
+                Plattform bereitstellen
               </h2>
-              <span className="tag text-[11px] font-mono">SÄULE 1</span>
+              <span className="tag text-[11px] font-mono">GITHUB REPO</span>
+            </div>
+
+            {/* GitHub Source Indicator */}
+            <div className="rounded-lg border border-line bg-paper-subtle p-2.5 text-xs space-y-1">
+              <div className="flex items-center gap-1.5 font-semibold text-ink">
+                <span className="h-2 w-2 rounded-full bg-signal inline-block" />
+                <span>Quelle: GitHub (main)</span>
+              </div>
+              <p className="text-[11px] text-ink-soft m-0 font-mono break-all">
+                NextChapterExperts/virgi-platform-dist.git
+              </p>
+              <p className="text-[10px] text-signal m-0 font-sans">
+                ✓ Reines Distributions-Projekt · 100% autark & mandanten-neutral
+              </p>
             </div>
 
             <form onSubmit={handleCreateVm} className="space-y-3.5">
+              {/* Bereitstellungs-Typ */}
+              <div>
+                <label className="text-xs font-semibold text-ink-soft block mb-1.5">
+                  Bereitstellungs-Modus
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDeployMode("docker")}
+                    className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                      deployMode === "docker"
+                        ? "border-signal bg-signal/10 text-ink shadow-sm"
+                        : "border-line bg-paper text-ink-soft hover:bg-paper-subtle"
+                    }`}
+                  >
+                    <div className="font-semibold text-xs flex items-center gap-1.5 mb-1">
+                      <span>🐳 Docker Stack</span>
+                    </div>
+                    <div className="text-[10px] text-ink-soft leading-tight">
+                      Container-Stack via Docker Compose aus GitHub
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDeployMode("vm")}
+                    className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                      deployMode === "vm"
+                        ? "border-signal bg-signal/10 text-ink shadow-sm"
+                        : "border-line bg-paper text-ink-soft hover:bg-paper-subtle"
+                    }`}
+                  >
+                    <div className="font-semibold text-xs flex items-center gap-1.5 mb-1">
+                      <span>🏢 VM Appliance</span>
+                    </div>
+                    <div className="text-[10px] text-ink-soft leading-tight">
+                      Vollständige Ubuntu VM mit GitHub Auto-Sync
+                    </div>
+                  </button>
+                </div>
+              </div>
+
               <div>
                 <label className="text-xs font-semibold text-ink-soft block mb-1">
                   Mandanten-ID (Slug)
@@ -300,7 +358,7 @@ export default function VmManagementPage() {
                   required
                   className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink font-mono focus:outline-none focus:border-signal"
                 />
-                <span className="text-[10px] text-ink-soft">Wird als VM-Name <code>aios-{tenantId || "slug"}</code> genutzt.</span>
+                <span className="text-[10px] text-ink-soft">Wird als Instanz-Name <code>aios-{tenantId || "slug"}</code> genutzt.</span>
               </div>
 
               <div>
@@ -352,7 +410,11 @@ export default function VmManagementPage() {
                   className="btn-primary w-full flex items-center justify-center gap-2 py-2.5 cursor-pointer disabled:opacity-50"
                 >
                   {creating ? <IconReload size={16} className="animate-spin" /> : <IconPlus size={16} />}
-                  {creating ? "Erstelle Google Cloud VM..." : "Kunden-VM in Google Cloud starten"}
+                  {creating
+                    ? "Provisioniere aus GitHub..."
+                    : deployMode === "docker"
+                    ? "🐳 Docker Stack aus GitHub bereitstellen"
+                    : "🏢 Kunden-VM aus GitHub provisionieren"}
                 </button>
               </div>
             </form>

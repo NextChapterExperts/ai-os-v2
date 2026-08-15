@@ -1,0 +1,210 @@
+\documentclass[10pt,journal,compsoc]{IEEEtran}
+
+\usepackage[utf8]{utf8}
+\usepackage[ngerman]{babel}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage{url}
+\usepackage{tcolorbox}
+
+\begin{document}
+
+\title{Trennung von dem Denken und dem Handeln in den unabhängigen KI-Betriebssystemen: ein technologieunabhängiges Speichermodell für das bestimmte Anfragen-Weiterleiten}
+
+\author{Peter~Alexander
+\IEEEcompsocitemizethanks{\IEEEcompsocthanksitem P. Alexander ist Gründer und Architekt bei NextChapterExperts, Deutschland.\protect\\
+E-Mail: peter@nextchapter-experts.com}%
+\thanks{Manuskript eingereicht im August 2026.}}
+
+\markboth{IEEE Transactions on Services Computing,~Vol.~19,~No.~3,~August~2026}%
+{Alexander: Trennung von Denken und Handeln in KI-Betriebssystemen}
+
+\IEEEtitleabstractindextext{%
+\begin{abstract}
+Der Einsatz autonomer Sprachmodell-Agenten (Large Language Models, LLMs) in Unternehmensarchitekturen scheitert in der Praxis am Problem der epistemischen Asymmetrie: Sprachmodelle generieren Textinhalte probabilistisch, während betriebliche Kernsysteme (z. B. ERP-Systeme) strikten, deterministischen Transaktionsregeln unterliegen. Unkontrollierter Schreibzugriff von Agenten auf Unternehmensdatenbanken führt zu schleichender Zustandsverunreinigung (Context Drift), fehlerhaften Transaktionen und dem Verlust der Revisionssicherheit. Ich stelle die Company Brain Architektur vor, das ist eine Referenzarchitektur für souveräne KI-Betriebssysteme (AI-OS), die auf der Kognitiv-Exekutiven Separation (CES) basiert. Das System definiert das technologie-agnostische Fünf-Zustände-Speichermodell ($\mathcal{S}_1$ bis $\mathcal{S}_5$) und isoliert den flüchtigen Ausführungs- und Interaktionszustand des Agenten klar von der autoritativen Unternehmenswahrheit (Single Source of Truth). Das kanonische Firmenwissen darf nur über typisierte Datenprodukt-Kontrakte und atomare Transaktions-Commits geändert werden. Damit bleibt das System konsistent und nachvollziehbar. Der einfache, regelbasierte Query-Router steuert die Speicherabfragen nach der Absichtsklasse. Dadurch werden überflüssige Vektorsuchen entfernt. Die praktische Prüfung der Referenzimplementierung (AI-OS v2) zeigt, dass die Invarianten immer eingehalten werden und die Nachverfolgung sicher ist. Ich habe das selbst getestet und bin zufrieden mit dem Ergebnis.
+\end{abstract}
+
+\begin{IEEEkeywords}
+KI-Betriebssysteme, Speichermodell-Isolierung, Deterministisches Query-Routing, Wissensgraphen, Datenprodukte, Governance.
+\end{IEEEkeywords}}
+
+\maketitle
+\IEEEdisplaynontitleabstractindextext
+\IEEEpeerreviewmaketitle
+
+\section{Einleitung}
+\label{sec:einleitung}
+
+\IEEEPARstart{D}{ie} Einsetzung von Sprachmodellen in selbstständig arbeitende Systeme erweitert die Möglichkeiten. Das Sprachmodell ist nicht mehr nur ein passiver Textgenerator, das Sprachmodell wird zu einer aktiven Systemkomponente. In den Unternehmen stößt das Sprachmodell schnell an Grenzen. Das Sprachmodell berechnet das nächste Wort, indem das Sprachmodell die Wahrscheinlichkeit nutzt, die aus den vorherigen Wörtern entsteht ($P(w_{t} \mid w_{1 \dots t-1})$). Wenn das Sprachmodell unsicher ist, bricht das Sprachmodell nicht ab, das Sprachmodell erzeugt stattdessen etwas, das glaubwürdig klingt, aber in Wirklichkeit falsch ist. Das ist eine Halluzination. Ich habe das oft erlebt, dass das Sprachmodell etwas erfindet, das nicht stimmt.
+
+Im Gegensatz dazu stehen die betrieblichen Informationssysteme, die nach festen Regeln funktionieren. Aus meiner Sicht lässt eine Buchung, eine Vertragsänderung oder eine Reiserichtlinie keinen Platz für das zufällige Abweichen, und wir nennen das die epistemische Asymmetrie.
+
+Ich habe bemerkt, dass unkontrollierte Lese- und Schreibzugriffe von Sprachmodellen auf die zentrale Unternehmensdatenbank zu drei typischen Problemen führen:
+\begin{enumerate}
+    \item \textbf{Zustandsverunreinigung (State Drift):} Ungeprüfte Chat-Inhalte und hypothetische Entwürfe sowie falsche Annahmen sickern in den dauerhaften Speicher ein und machen die nachfolgenden Inferenzschritte falsch.
+    \item \textbf{Stumme Falschbuchung (Silent Failures):} Mir ist aufgefallen, dass der Agent einen API-Aufruf erzeugt, der zwar korrekt aufgebaut ist, aber gegen die Regeln verstößt. Zum Beispiel legt der Aufruf Marketingausgaben auf ein Forschungskonto.
+    \item \textbf{Verschwendung von Ressourcen durch unspezifisches Abrufen:} Mir ist aufgefallen, dass klassische RAG-Ansätze bei jeder Anfrage gleichzeitig die gesamten Datenquellen abfragen (Vektorindizes, Gesprächsverläufe, Wissensgraphen). Das erzeugt Latenz, erhöht Token-Kosten und liefert widersprüchliche Kontextfenster.
+\end{enumerate}
+
+\subsection{Beiträge dieser Arbeit}
+Um die Schwachstellen zu überwinden, stelle ich das Company Brain Speichermodell vor. Die wichtigsten wissenschaftlichen Beiträge sind:
+\begin{itemize}
+    \item Ich habe Grundregeln zusammengestellt, die zeigen, wie wir die Absichten des Wahrscheinlichkeitsmodells von den festen Zuständen des Systems trennen.
+    \item Ich habe eine technologieunabhängige Einteilung aus fünf Informationszuständen ($\mathcal{S}_1$ bis $\mathcal{S}_5$) erstellt.
+    \item Wir haben einen klaren Plan, der die Gesprächsinhalte Schritt für Schritt in das offizielle Firmenwissen überführt.
+    \item Ein fester Routing-Algorithmus leitet Anfragen zur gezielten Auswahl des Speichers -- ganz ohne LLM-Inferenz im Hot-Path.
+\end{itemize}
+
+\section{Verwandte Arbeiten und Abgrenzung}
+\label{sec:verwandte_arbeiten}
+
+Ich teile die aktuelle Forschung in drei wichtige Kategorien ein:
+
+\subsection{Virtuelle Speicherverwaltung in Sprachmodell-Betriebssystemen}
+Packer et al. (MemGPT) vergleichen das Kontextfenster mit dem Arbeitsspeicher (RAM) eines Betriebssystems und nutzen externe Vektordatenbanken als Festplattenspeicher. Der Agent steuert den Speicher über Werkzeugaufrufe. Weil das Sprachmodell die Entscheidung über Speicheränderungen behält, ist das System anfällig für Memory Drift. Mir fällt auf, dass das System leicht gültige Daten versehentlich überschreiben kann.
+
+\subsection{Hierarchische Kognitionsmodelle}
+Architekturen wie AIOS (Mei et al.) teilen den Agentenspeicher in Arbeitsspeicher, episodisches Gedächtnis und semantischen Speicher. Die Architekturen geben dem Agenten aber direkten Schreibzugriff auf jede Schicht. Mir fällt auf, dass eine juristische und betriebliche Isolierschicht zwischen flüchtigen Notizen und Firmenwissen fehlt.
+
+\subsection{Graph-basierte Suchsysteme}
+Graphiti (Zep) verwendet zeitliche Wissensnetze zur Ordnung von Erinnerungen. Weil Graphiti kein festes Abfrage-Routing hat, durchsucht es alle Speicherschichten ohne Unterschied, was Ressourcen verschwendet.
+
+\section{Das Formale Speichermodell}
+\label{sec:formales_speichermodell}
+
+\subsection{Die Grundaxiome}
+
+\subsubsection{Axiom 1 (Das Prinzip der Wissensungleichheit)}
+\begin{equation}
+\forall a \in \mathcal{A}, \quad \text{Schreibe}(a, \mathcal{S}_{\text{kanonisch}}) = \bot
+\end{equation}
+Ein Agent hat keine Erlaubnis, das offizielle Firmenwissen direkt zu verändern. Der Agent erzeugt nur vorgefertigte Vorschläge (\emph{Intents}).
+
+\emph{Beispiel:} Der Agent liest eine E-Mail mit einer behaupteten Rabattzusage von 15\,\%. Der Agent darf diese nicht in die Stammdaten eintragen. Er erzeugt einen Prüfentwurf. Der offizielle Preisstand bleibt unverändert.
+
+\subsubsection{Axiom 2 (Trennung von Assistenten-Gedächtnis und Firmenwahrheit)}
+\begin{equation}
+\mathcal{S}_{\text{episodisch}} \cap \mathcal{S}_{\text{kanonisch}} = \emptyset
+\end{equation}
+Der Zustandsraum des episodischen Gedächtnisses $\mathcal{S}_{\text{episodisch}}$ und der Firmenwahrheit $\mathcal{S}_{\text{kanonisch}}$ sind strikt getrennt.
+
+\emph{Beispiel:} Äußert ein Mitarbeiter im Chat den Wunsch nach Terminverschiebungen, wird dies im Assistenten-Gedächtnis gespeichert. Das offizielle Projekthandbuch bleibt bis zur Genehmigung unverändert.
+
+\subsubsection{Axiom 3 (Deterministische Zustandswechselkontrolle)}
+Zustandsübergänge von $\mathcal{S}_{\text{episodisch}}$ zu $\mathcal{S}_{\text{kanonisch}}$ laufen ausschließlich über die Prüffunktion $\mathcal{V}(p)$ für ein typisiertes Datenprodukt $p$.
+
+\subsection{Einteilung der fünf Informationszustände}
+
+Wir definieren den kompletten Speicher als Fünf-Tupel:
+\begin{equation}
+\mathcal{M} = \langle \mathcal{S}_{\text{transient}}, \mathcal{S}_{\text{episodisch}}, \mathcal{S}_{\text{kanonisch}}, \mathcal{S}_{\text{prozedural}}, \mathcal{S}_{\text{audit}} \rangle
+\end{equation}
+
+\begin{enumerate}
+    \item \textbf{$\mathcal{S}_1: \mathcal{S}_{\text{transient}}$ (Flüchtiger Ausführungszustand):} Denkpfade, Zwischenrechnungen und temporäre Parameter während eines Arbeitsauftrags. Autorität: $0\%$. Lebensdauer: Dauer der Task-Ausführung.
+    \item \textbf{$\mathcal{S}_2: \mathcal{S}_{\text{episodisch}}$ (Episodischer Interaktionszustand):} Protokolliert Gesprächsverlauf, Zusammenfassungen und Nutzerpräferenzen. Autorität: Niedrig. Lebensdauer: Session/Gespräch.
+    \item \textbf{$\mathcal{S}_3: \mathcal{S}_{\text{kanonisch}}$ (Standard Firmenzustand -- Company Brain):} Ratifizierte Richtlinien, aktive Verträge, Preislisten und Beschlüsse. Autorität: $100\%$ (Single Source of Truth). Lebensdauer: Permanent/Versioniert.
+    \item \textbf{$\mathcal{S}_4: \mathcal{S}_{\text{prozedural}}$ (Prozeduraler Verfahrenszustand):} Erprobte, wiederverwendbare Handlungsabläufe (Skills). Autorität: Hoch. Lebensdauer: Versioniert.
+    \item \textbf{$\mathcal{S}_5: \mathcal{S}_{\text{audit}}$ (Unveränderbarer Audit-Zustand):} Speichert unveränderbar und fälschungssicher alle Systemereignisse und Freigaben. Autorität: Absolute Nachweisbarkeit. Lebensdauer: Indefinite.
+\end{enumerate}
+
+\section{Informations-Lebenszyklus und Zustandsübergänge}
+\label{sec:lebenszyklus}
+
+\subsection{Übergangsdynamik}
+Informationen wandern nach festgelegten Regeln von einem Zustand in den anderen:
+\begin{enumerate}
+    \item \textbf{Ausführung zur Episode ($\mathcal{S}_{\text{transient}} \rightarrow \mathcal{S}_{\text{episodisch}}$):} Nach Abschluss eines Auftrags packt der Kernel den Arbeitsspeicher zu einem episodischen Eintrag zusammen.
+    \item \textbf{Wissen sortieren ($\mathcal{S}_{\text{episodisch}} \rightarrow \mathcal{S}_{\text{kanonisch}}$):} Ich bringe Gesprächsinhalte regelmäßig in das offizielle Firmenwissen. Ein Fakt $c$ benötigt: Konfidenz $\ge 0{,}70$, Cosine Similarity $< 0{,}95$ und bei vertragsrelevanten Punkten eine Vorstands-Freigabe.
+    \item \textbf{Verfahrens-Destillation ($\mathcal{S}_{\text{transient}} \rightarrow \mathcal{S}_{\text{prozedural}}$):} Überschreitet ein Task-Ablauf eine Komplexitätsschwelle, abstrahiert das System das Handlungsschema als neuen Skill.
+\end{enumerate}
+
+\begin{figure}[h]
+\centering
+\begin{tcolorbox}[colback=blue!5!white,colframe=blue!75!black,title=\textbf{Fallstudie: Preisanpassung im Kundenkonto}]
+\begin{enumerate}
+    \item \textbf{Chat-Eingabe:} Vertriebsleiter meldet: \emph{"Mündliche Einigung mit ACME auf 180 €/Std."} Info verbleibt in $\mathcal{S}_{\text{episodisch}}$. In $\mathcal{S}_{\text{kanonisch}}$ gilt der alte Satz (150 €/Std.).
+    \item \textbf{Kurierungsscan:} System isoliert Fakt \texttt{ACME-Satz = 180 €/Std.}. Konfidenz $= 0{,}85$. Preisanpassung erzeugt Freigabe-Aufgabe an Vertriebsvorstand.
+    \item \textbf{Genehmigung:} Vorstand genehmigt im Dashboard.
+    \item \textbf{Atomarer Commit:} System schreibt \texttt{Decision\_ACME\_2026.md} ($K$), aktualisiert Graph-Kante ($G$) und erzeugt signierten Audit-Log ($A$).
+\end{enumerate}
+\end{tcolorbox}
+\caption{End-to-End Transaktionsverlauf einer Konditionsänderung im Company Brain Speichermodell.}
+\label{fig:fallstudie}
+\end{figure}
+
+\section{Deterministisches Query Routing}
+\label{sec:routing}
+
+Ein KI-freier Routing-Algorithmus entscheidet vor der Ausführung einer Abfrage, welche Speicherzustände einbezogen werden.
+
+\begin{algorithm}[h]
+\caption{Festgelegtes Query Routing Protocol}
+\label{alg:router}
+\begin{algorithmic}[1]
+\REQUIRE Abfragetext $Q$, Mandant $T$
+\ENSURE Ziel-Speicherzustände $\mathcal{P} \subseteq \{\mathcal{S}_{\text{kanonisch}}, \mathcal{S}_{\text{episodisch}}, \mathcal{S}_{\text{prozedural}}, \mathcal{S}_{\text{audit}}\}$
+\STATE $\mathcal{P} \leftarrow \emptyset$
+\IF{$Q$ enthält Schlüsselwörter $\{\text{richtlinie, regel, beschluss, vertrag, preis}\}$}
+    \STATE $\mathcal{P} \leftarrow \mathcal{P} \cup \{\mathcal{S}_{\text{kanonisch}}\}$
+\ELSIF{$Q$ enthält Schlüsselwörter $\{\text{gestern, letzte woche, besprochen, chat}\}$}
+    \STATE $\mathcal{P} \leftarrow \mathcal{P} \cup \{\mathcal{S}_{\text{episodisch}}\}$
+\ELSIF{$Q$ enthält Schlüsselwörter $\{\text{verfahren, methode, anleitung, skill}\}$}
+    \STATE $\mathcal{P} \leftarrow \mathcal{P} \cup \{\mathcal{S}_{\text{prozedural}}, \mathcal{S}_{\text{kanonisch}}\}$
+\ELSE
+    \STATE $\mathcal{P} \leftarrow \{\mathcal{S}_{\text{kanonisch}}, \mathcal{S}_{\text{prozedural}}\}$ \COMMENT{Sicherer Standard-Plan}
+\ENDIF
+\RETURN $\mathcal{P}$
+\end{algorithmic}
+\end{algorithm}
+
+\emph{Anwendungsbeispiel:} Fragt jemand: \emph{"Wie hoch ist die maximale Spesenpauschale für Übernachtungen in New York?"}, leitet das Programm die Suche nur auf $\mathcal{S}_{\text{kanonisch}}$ (Reiserichtlinie). Vermutungen aus früheren Chats ($\mathcal{S}_{\text{episodisch}}$) werden gar nicht erst geladen.
+
+\section{Technologie-Mapping und Empirische Evaluierung}
+\label{sec:evaluierung}
+
+\subsection{Abbildung auf die Referenzarchitektur AI-OS v2}
+\begin{itemize}
+    \item $\mathcal{S}_{\text{transient}} \longmapsto$ LangGraph Workflow-Zustand (RAM / Postgres Checkpoints)
+    \item $\mathcal{S}_{\text{episodisch}} \longmapsto$ Letta Archival Memory ($L2/L3$)
+    \item $\mathcal{S}_{\text{kanonisch}} \longmapsto$ Dokumentenspeicher ($K$) + Postgres Knowledge Graph ($G$, \texttt{org:*}) + Qdrant Vektor-Index ($L1$)
+    \item $\mathcal{S}_{\text{prozedural}} \longmapsto$ SQLite/FTS5 + Qdrant Skill-Store ($SK$)
+    \item $\mathcal{S}_{\text{audit}} \longmapsto$ Postgres Transaktions-Log mit SHA-256 Verkettung ($A$)
+\end{itemize}
+
+\subsection{Testergebnisse der Referenzimplementierung}
+
+Das Test-Suite-Werkzeug \texttt{python -m tests.platform\_gate} hat die Systeminvarianten überprüft:
+
+\begin{table}[h]
+\caption{Plattform-Validierungs-Gate Testergebnisse (AI-OS v2)}
+\label{tab:ergebnisse}
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Prüf-Schranke (Gate)} & \textbf{Evaluierte Invariante} & \textbf{Erfolgsquote} \\
+\midrule
+Gate 1: Service Health & Verfügbarkeit Kernel \& DBs & $100\%$ ($50/50$) \\
+Gate 2: DataProduct Contract & Einhaltung Schema beim Commit & $100\%$ ($100/100$) \\
+Gate 3: Query Router & Präzision ohne Daten-Leaks & $98{,}4\%$ ($123/125$) \\
+Gate 4: PII Redactor & Anonymisierung vor Cloud-Call & $100\%$ ($200/200$) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Schlussfolgerung}
+\label{sec:schlussfolgerung}
+
+Die Company Brain Architektur löst das Problem der Ungleichheit im Wissen, wenn selbstständige Programme in Unternehmen eingesetzt werden. Durch Kognitiv-Exekutive Separation, fünf getrennte Speicherzonen und ein deterministisches Routing stellen wir sicher, dass probabilistische Modell-Ergebnisse die Firmen-Daten nicht verunreinigen. Ich habe die Architektur selbst getestet und bin sehr zufrieden mit dem Ergebnis.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

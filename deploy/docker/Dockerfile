@@ -35,15 +35,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Python Abhängigkeiten installieren
+COPY core/orchestrator/requirements.txt ./requirements.txt
 RUN python3 -m pip install --no-cache-dir --upgrade pip && \
-    python3 -m pip install --no-cache-dir \
-    fastapi \
-    uvicorn \
-    pydantic \
-    pyyaml \
-    httpx \
-    sentence-transformers \
-    fastembed
+    python3 -m pip install --no-cache-dir -r requirements.txt
 
 # Plattform Module kopieren
 COPY core/ /app/core/
