@@ -95,9 +95,9 @@ def create_customer_vm(
     # Startup-Script für automatische Zero-Touch Installation
     startup_script = f"""#!/bin/bash
 set -e
-echo "🚀 Initialisiere AI-OS v2 Kunden-VM für {company_name} ({tenant_id})..."
-curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-apt-get update && apt-get install -y git curl docker.io docker-compose python3 python3-venv nodejs
+echo "🚀 Initialisiere AI-OS v2 Appliance für {company_name} ({tenant_id})..."
+curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+apt-get update && apt-get install -y git curl docker.io docker-compose python3 python3-venv nodejs build-essential
 
 # AI-OS v2 Repository klonen
 mkdir -p /opt
@@ -105,10 +105,31 @@ if [ ! -d "/opt/ai-os-v2" ]; then
   git clone https://github.com/NextChapterExperts/ai-os-v2.git /opt/ai-os-v2
 fi
 
-# Console Web installieren & starten
+# Console Web Abhängigkeiten installieren
 cd /opt/ai-os-v2/core/console-web
-npm install --legacy-peer-deps
-nohup ./node_modules/.bin/next dev -p 8090 -H 0.0.0.0 > /tmp/console.log 2>&1 &
+npm install --ignore-scripts
+
+# Systemd Service für permanente Verfügbarkeit
+cat << "EOF" > /etc/systemd/system/aios-console.service
+[Unit]
+Description=AI-OS Console Web
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/ai-os-v2/core/console-web
+ExecStart=/bin/bash -c "export PATH=/usr/bin:/bin:\\$PATH && /opt/ai-os-v2/core/console-web/node_modules/.bin/next dev -p 8090 -H 0.0.0.0"
+Restart=always
+RestartSec=3
+Environment=PORT=8090
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable --now aios-console.service
 
 echo "✅ System-Setup abgeschlossen für {company_name}!"
 """
