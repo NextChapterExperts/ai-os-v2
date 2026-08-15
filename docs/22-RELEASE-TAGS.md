@@ -40,6 +40,7 @@ git push origin roadmap/2026-08-03-p4-email-invoices
 
 | Tag | Datum | Roadmap | Kurzbeschreibung | Commit |
 |-----|-------|---------|------------------|--------|
+| `roadmap/2026-08-15-p4-admin-layout-company-role-separation` | 2026-08-15 | §9, §10, UI | 1:1 Admin Nordic/Sovereign Design für /company, strikte Rollentrennung (User=nur Fachagenten, Admin=Plattform) | *(siehe `git show`)* |
 | `roadmap/2026-08-15-p4-enterprise-profile-company-root` | 2026-08-15 | §9, §12, UI | Unternehmens-Identität (Company Brain Root): Schema, Context-Slice, API & /company Web-UI | *(siehe `git show`)* |
 | `roadmap/2026-08-15-p4-rag-taxonomy-graph-rag-doc` | 2026-08-15 | §9, §12, RAG | Arten von RAG & Hybrid Graph-RAG Architektur-Spezifikation (docs/26) | *(siehe `git show`)* |
 | `roadmap/2026-08-15-p4-formal-memory-mapping-doc` | 2026-08-15 | §9, §12, Memory | 5-Schichten-Memory-Modell Referenz-Doku & Code-Mapping (docs/25) mit Paper-Verknüpfung | *(siehe `git show`)* |

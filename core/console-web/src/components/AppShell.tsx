@@ -7,16 +7,14 @@ import { getStoredAuth, logoutUser, AuthUser } from "@/lib/auth";
 import { IconLogout, IconUserCheck, IconShieldLock } from "@tabler/icons-react";
 
 const USER_NAV = [
-  { href: "/", label: "Startseite & Suche" },
   { href: "/agents", label: "Fachagenten" },
-  { href: "/company", label: "Unternehmen" },
 ] as const;
 
 const ADMIN_NAV = [
   { href: "/", label: "Lagebild" },
+  { href: "/company", label: "Unternehmen" },
   { href: "/portfolio", label: "Projekte" },
   { href: "/agents", label: "Agenten" },
-  { href: "/company", label: "Unternehmen" },
   { href: "/search", label: "Suche" },
   { href: "/platform", label: "Plattform" },
 ] as const;

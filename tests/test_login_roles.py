@@ -27,3 +27,27 @@ def test_login_page_exists():
     assert "peter" in content
     assert "admin" in content
     assert "loginUser" in content
+
+
+def test_appshell_navigation_role_separation():
+    """Prüft strikte Rollentrennung: USER darf nur Fachagenten sehen, ADMIN hat alle Plattform-Tools."""
+    appshell_ts = CONSOLE_WEB_DIR / "src" / "components" / "AppShell.tsx"
+    assert appshell_ts.exists()
+    content = appshell_ts.read_text(encoding="utf-8")
+    
+    # USER_NAV: Nur Fachagenten
+    assert 'const USER_NAV = [' in content
+    assert '{ href: "/agents", label: "Fachagenten" }' in content
+    assert 'const ADMIN_NAV = [' in content
+    assert '{ href: "/company", label: "Unternehmen" }' in content
+    assert '{ href: "/platform", label: "Plattform" }' in content
+
+
+def test_company_page_has_admin_guard():
+    """Prüft, dass die Unternehmensseite einen Admin-Guard besitzt."""
+    company_page = CONSOLE_WEB_DIR / "src" / "app" / "company" / "page.tsx"
+    assert company_page.exists()
+    content = company_page.read_text(encoding="utf-8")
+    assert 'auth.role !== "admin"' in content
+    assert 'Zugriff verweigert (Administrator erforderlich)' in content
+

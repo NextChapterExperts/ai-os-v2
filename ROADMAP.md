@@ -3346,6 +3346,19 @@ git tag -l 'roadmap/*'
 git show roadmap/2026-08-03-p4-email-invoices --stat
 ```
 
+## Stand & Changelog (2026-08-15 — Konsistentes Admin-Design für Unternehmens-Identität & Strikte Rollentrennung)
+
+- **Release-Tag:** `roadmap/2026-08-15-p4-admin-layout-company-role-separation`
+- **Konsistentes Admin-Layout (`/company` & `AppShell.tsx`):**
+  - Vollständiges Redesign von `/company` nach dem einheitlichen Nordic/Sovereign Design System (`section-title`, `card`, `row-list`, `btn-primary`, `btn-ghost`, `tag-signal`, `tag-warn`).
+  - **Strikte Rollentrennung:**
+    - `USER` (Peter / Endanwender): Hat ausschließlich Zugriff auf Fachagenten (`/agents`).
+    - `ADMIN` (Administrator): Besitzt vollen Zugriff auf die gesamte Plattform-Verwaltung (`/`, `/company`, `/portfolio`, `/agents`, `/search`, `/platform`).
+  - Integrierter Role-Guard auf `/company` mit klarer Zugriffsverweigerung für Nicht-Administratoren.
+- **Master Testsuite:** 240/240 Tests zu 100% grün (0 Failed).
+
+---
+
 ## Stand & Changelog (2026-08-15 — Enterprise Profile & Unternehmens-Identität im Company Brain)
 
 - **Release-Tag:** `roadmap/2026-08-15-p4-enterprise-profile-company-root`
