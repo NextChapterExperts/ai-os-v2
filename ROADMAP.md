@@ -3346,6 +3346,18 @@ git tag -l 'roadmap/*'
 git show roadmap/2026-08-03-p4-email-invoices --stat
 ```
 
+## Stand & Changelog (2026-08-15 — Core Plattform Extraktion & Docker Appliance)
+
+- **Release-Tag:** `roadmap/2026-08-15-p4-core-platform-extraction-docker-appliance`
+- **Extraktion der Core-Plattform & Bereinigung ([docs/30-CORE-PLATFORM-EXTRACTION-UND-DOCKER-CONTAINER.md](docs/30-CORE-PLATFORM-EXTRACTION-UND-DOCKER-CONTAINER.md)):**
+  - **Reine Plattform-Navigation:** Entfernung veralteter NextChapter-Projekte (`/portfolio`) und Demo-Agenten aus dem Core-Appliance Admin-Menü.
+  - **Dynamische Unternehmens-Identität (`/company`):** Sauberes Laden & Speichern beliebiger Mandanten (`tenant_id`) mit initialem Blanko-Formular für Neukunden.
+  - **Empty-State für Fachagenten (`/agents`):** Kunden-Appliances starten ohne vorinstallierte Agenten und bieten direkten Link zum Store/Custom SKUs.
+  - **Einheitlicher Production Docker-Stack:** Multi-Stage `deploy/docker/Dockerfile` und `deploy/docker/docker-compose.yml` mit persistentem Daten-Volume (`/app/data`).
+- **Master Testsuite:** 248/248 Tests zu 100% grün, Next.js Production Build mit allen 28 Routen fehlerfrei kompiliert.
+
+---
+
 ## Stand & Changelog (2026-08-15 — 3-Stufen Staging- & VM-Release Lifecycle)
 
 - **Release-Tag:** `roadmap/2026-08-15-p4-staging-and-vm-release-lifecycle`

@@ -7,6 +7,7 @@ import { DataProductViewer } from "@/components/DataProductViewer";
 import { MeetingsReportViewer } from "@/components/MeetingsReportViewer";
 import { FileUploadDropzone } from "@/components/FileUploadDropzone";
 import { mergeAgentInputSchema } from "@/lib/merge-agent-schema";
+import { getStoredAuth } from "@/lib/auth";
 import {
   IconRobot,
   IconFileText,
@@ -175,10 +176,9 @@ type InvoiceResources = {
 };
 
 export default function AgentsPage() {
-  const [agents, setAgents] = useState<Record<string, AgentItem>>({
-    ...CORE_FACHAGENTS,
-  });
-  const [selectedAgentId, setSelectedAgentId] = useState<string>("research-agent");
+  const [auth, setAuth] = useState<any>(null);
+  const [agents, setAgents] = useState<Record<string, AgentItem>>({});
+  const [selectedAgentId, setSelectedAgentId] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [executing, setExecuting] = useState(false);
   const [lastResult, setLastResult] = useState<any>(null);
@@ -189,43 +189,27 @@ export default function AgentsPage() {
   const [agentFormData, setAgentFormData] = useState<Record<string, any>>({});
 
   useEffect(() => {
-    fetchAgents();
+    const currentAuth = getStoredAuth();
+    setAuth(currentAuth);
+    if (currentAuth.tenant_id === "nextchapter") {
+      setAgents(CORE_FACHAGENTS);
+      setSelectedAgentId("research-agent");
+    }
+    fetchAgents(currentAuth.tenant_id);
   }, []);
 
-  useEffect(() => {
-    if (!EMAIL_INVOICE_AGENT_IDS.has(selectedAgentId)) {
-      setInvoiceResources(null);
-      return;
-    }
-    let cancelled = false;
-    fetch("/api/agents/invoice-resources", { cache: "no-store" })
-      .then(async (res) => {
-        if (!res.ok) return null;
-        return (await res.json()) as InvoiceResources;
-      })
-      .then((data) => {
-        if (!cancelled && data) setInvoiceResources(data);
-      })
-      .catch(() => {
-        if (!cancelled) setInvoiceResources(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedAgentId]);
-
-  const fetchAgents = async () => {
+  const fetchAgents = async (tenantId?: string) => {
     setLoading(true);
     try {
       const res = await fetch("/api/agents/registry");
       if (res.ok) {
         const data = await res.json();
         const wfs = data.workflows || {};
-        if (Object.keys(wfs).length > 0) {
-          const merged: Record<string, AgentItem> = {};
+        if (tenantId === "nextchapter" || Object.keys(wfs).length > 0) {
+          const base = tenantId === "nextchapter" ? { ...CORE_FACHAGENTS } : {};
           for (const [id, wf] of Object.entries(wfs) as [string, AgentItem][]) {
             const fallback = CORE_FACHAGENTS[id];
-            merged[id] = fallback
+            base[id] = fallback
               ? {
                   ...wf,
                   input_schema: mergeAgentInputSchema(
@@ -235,11 +219,14 @@ export default function AgentsPage() {
                 }
               : wf;
           }
-          setAgents((prev) => ({ ...prev, ...merged }));
+          setAgents(base);
+          if (!selectedAgentId && Object.keys(base).length > 0) {
+            setSelectedAgentId(Object.keys(base)[0]);
+          }
         }
       }
-    } catch (e) {
-      console.warn("Backend Registry offline — verwende lokalen Sample-Agenten", e);
+    } catch {
+      // Ignoriere Netzwerkfehler
     } finally {
       setLoading(false);
     }
@@ -420,6 +407,23 @@ export default function AgentsPage() {
       {activeTab === "ingest" ? (
         <div className="space-y-6">
           <FileUploadDropzone />
+        </div>
+      ) : agentCount === 0 ? (
+        <div className="card text-center py-16 space-y-4">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-signal/10 text-signal border border-signal/30">
+            <IconRobot size={32} />
+          </div>
+          <div className="space-y-1 max-w-md mx-auto">
+            <h2 className="text-lg font-bold text-ink">Keine vorinstallierten Fachagenten</h2>
+            <p className="text-xs text-ink-soft leading-relaxed m-0">
+              Diese AI-OS Core Appliance ist als neutrale Plattform lizenziert. Fachagenten können über den Agent Store oder als maßgeschneiderte Custom SKU freigeschaltet werden.
+            </p>
+          </div>
+          <div className="pt-2">
+            <Link href="/company" className="btn-primary inline-flex items-center gap-2 text-xs">
+              Zum Unternehmens-Profil →
+            </Link>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

@@ -13,8 +13,6 @@ const USER_NAV = [
 const ADMIN_NAV = [
   { href: "/", label: "Lagebild" },
   { href: "/company", label: "Unternehmen" },
-  { href: "/portfolio", label: "Projekte" },
-  { href: "/agents", label: "Agenten" },
   { href: "/search", label: "Suche" },
   { href: "/platform", label: "Plattform" },
 ] as const;

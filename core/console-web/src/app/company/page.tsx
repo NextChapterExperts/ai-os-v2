@@ -71,16 +71,36 @@ export default function CompanyProfilePage() {
     }
   }, []);
 
+  const EMPTY_PROFILE: CompanyProfile = {
+    legal_name: "",
+    brand_name: "",
+    tax_id: "",
+    website: "",
+    industry: "",
+    description: "",
+    founder_or_owner: "",
+    hourly_rates: {},
+    team_members: [],
+    core_services: [],
+    standard_terms: { payment_terms_days: 14, travel_policy: "" },
+  };
+
+  const getActiveTenant = () => {
+    return auth?.tenant_id || "nextchapter";
+  };
+
   const loadProfile = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/company/profile?tenant_id=nextchapter");
+      const tenant = getActiveTenant();
+      const res = await fetch(`/api/company/profile?tenant_id=${encodeURIComponent(tenant)}`);
       if (!res.ok) throw new Error("Fehler beim Laden des Unternehmensprofils");
       const data = await res.json();
-      setProfile(data.profile);
+      setProfile(data.profile || EMPTY_PROFILE);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unbekannter Fehler");
+      setProfile(EMPTY_PROFILE);
     } finally {
       setLoading(false);
     }
@@ -92,7 +112,8 @@ export default function CompanyProfilePage() {
     setSavedSuccess(false);
     setError(null);
     try {
-      const res = await fetch("/api/company/profile?tenant_id=nextchapter", {
+      const tenant = getActiveTenant();
+      const res = await fetch(`/api/company/profile?tenant_id=${encodeURIComponent(tenant)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(profile),

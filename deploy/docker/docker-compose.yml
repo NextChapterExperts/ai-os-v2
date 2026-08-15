@@ -1,0 +1,23 @@
+services:
+  ai-os-core:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    image: aios-core-appliance:latest
+    container_name: aios-core-appliance
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+      - "8091:8091"
+    environment:
+      - NODE_ENV=production
+      - PORT=8090
+      - HOST=0.0.0.0
+      - ORCHESTRATOR_URL=http://127.0.0.1:8091
+      - DATA_DIR=/app/data
+    volumes:
+      - aios-data:/app/data
+
+volumes:
+  aios-data:
+    name: aios-data-volume

@@ -5,6 +5,7 @@ export interface AuthUser {
   name: string;
   role: UserRole;
   personId: string;
+  tenant_id?: string;
 }
 
 export const VALID_CREDENTIALS: Record<string, { pass: string; name: string; role: UserRole; personId: string }> = {
