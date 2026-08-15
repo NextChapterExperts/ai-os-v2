@@ -22,7 +22,10 @@ mkdir -p "${TARGET_DIR}/core/workflow_engine"
 mkdir -p "${TARGET_DIR}/core/file_ingest_watcher"
 mkdir -p "${TARGET_DIR}/core/ingest_agent"
 mkdir -p "${TARGET_DIR}/core/console-web"
-mkdir -p "${TARGET_DIR}/deploy/docker"
+mkdir -p "${TARGET_DIR}/sdk"
+mkdir -p "${TARGET_DIR}/config"
+mkdir -p "${TARGET_DIR}/deploy"
+mkdir -p "${TARGET_DIR}/tests"
 mkdir -p "${TARGET_DIR}/docs"
 mkdir -p "${TARGET_DIR}/scripts"
 
@@ -46,22 +49,45 @@ rsync -av --exclude '__pycache__' --exclude '*.pyc' --exclude '.venv' \
 rsync -av --exclude '__pycache__' --exclude '*.pyc' \
   "${SRC_DIR}/core/ingest_agent/" "${TARGET_DIR}/core/ingest_agent/"
 
-if [ -f "${SRC_DIR}/pyproject.toml" ]; then
-  cp -f "${SRC_DIR}/pyproject.toml" "${TARGET_DIR}/"
-fi
+# 3. Agent SDK & Schemas kopieren
+echo "🧩 Kopiere Agent SDK & Developer Kit..."
+rsync -av --exclude '__pycache__' --exclude '*.pyc' \
+  "${SRC_DIR}/sdk/" "${TARGET_DIR}/sdk/"
 
-# 3. Reines Web Frontend kopieren
+# 4. Plattform-Konfigurationen kopieren
+echo "⚙️ Kopiere Plattform-Konfigurationen & SQL-Schemata..."
+rsync -av --exclude '__pycache__' \
+  "${SRC_DIR}/config/" "${TARGET_DIR}/config/"
+
+# 5. Deployment-Setups kopieren
+echo "🐳 Kopiere Deployment-Setups & Docker Stacks..."
+rsync -av "${SRC_DIR}/deploy/" "${TARGET_DIR}/deploy/"
+
+# 6. Reines Web Frontend kopieren
 echo "🌐 Kopiere Core Web Konsole (Next.js)..."
 rsync -av --exclude 'node_modules' --exclude '.next' --exclude '.git' \
   "${SRC_DIR}/core/console-web/" "${TARGET_DIR}/core/console-web/"
 
-# 4. Docker Deployment Stack kopieren
-echo "🐳 Kopiere Docker Appliance Stack..."
-rsync -av "${SRC_DIR}/deploy/docker/" "${TARGET_DIR}/deploy/docker/"
+# 7. Plattform-Testsuite kopieren
+echo "🧪 Kopiere Plattform-Testsuite..."
+rsync -av --exclude '__pycache__' --exclude '.pytest_cache' \
+  "${SRC_DIR}/tests/" "${TARGET_DIR}/tests/"
 
-# 5. Vollständige CLI & Speichermanagement-Skripte kopieren
-echo "🛠️ Kopiere alle Speichermanagement-, Ingest- & Plattform-Skripte..."
+# 8. Konfigurations- & Root-Dateien kopieren
+if [ -f "${SRC_DIR}/core/orchestrator/requirements.txt" ]; then
+  cp -f "${SRC_DIR}/core/orchestrator/requirements.txt" "${TARGET_DIR}/requirements.txt"
+fi
+if [ -f "${SRC_DIR}/.env.example" ]; then
+  cp -f "${SRC_DIR}/.env.example" "${TARGET_DIR}/"
+fi
+if [ -f "${SRC_DIR}/.gitignore" ]; then
+  cp -f "${SRC_DIR}/.gitignore" "${TARGET_DIR}/"
+fi
+
+# 9. Vollständige CLI & Speichermanagement-Skripte kopieren
+echo "🛠️ Kopiere alle Speichermanagement-, Ingest-, Test- & Plattform-Skripte..."
 SCRIPTS_TO_EXPORT=(
+  "run-all-tests.sh"
   "run-l1-curator.py"
   "run-l2-curator.py"
   "run-l3-curator.py"
