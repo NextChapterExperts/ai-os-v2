@@ -16,15 +16,39 @@ echo "🎯 Ziel:   ${TARGET_DIR}"
 # 1. Zielverzeichnis vorbereiten
 mkdir -p "${TARGET_DIR}"
 mkdir -p "${TARGET_DIR}/core/orchestrator"
+mkdir -p "${TARGET_DIR}/core/memory"
+mkdir -p "${TARGET_DIR}/core/memory_gateway"
+mkdir -p "${TARGET_DIR}/core/workflow_engine"
+mkdir -p "${TARGET_DIR}/core/file_ingest_watcher"
+mkdir -p "${TARGET_DIR}/core/ingest_agent"
 mkdir -p "${TARGET_DIR}/core/console-web"
 mkdir -p "${TARGET_DIR}/deploy/docker"
 mkdir -p "${TARGET_DIR}/docs"
 mkdir -p "${TARGET_DIR}/scripts"
 
-# 2. Reines Orchestrator Backend kopieren
-echo "📦 Kopiere Core Orchestrator Module..."
+# 2. Core Plattform Backend-Module kopieren
+echo "📦 Kopiere alle Core Plattform Backend-Module..."
 rsync -av --exclude '__pycache__' --exclude '*.pyc' \
   "${SRC_DIR}/core/orchestrator/" "${TARGET_DIR}/core/orchestrator/"
+
+rsync -av --exclude '__pycache__' --exclude '*.pyc' \
+  "${SRC_DIR}/core/memory/" "${TARGET_DIR}/core/memory/"
+
+rsync -av --exclude '__pycache__' --exclude '*.pyc' \
+  "${SRC_DIR}/core/memory_gateway/" "${TARGET_DIR}/core/memory_gateway/"
+
+rsync -av --exclude '__pycache__' --exclude '*.pyc' \
+  "${SRC_DIR}/core/workflow_engine/" "${TARGET_DIR}/core/workflow_engine/"
+
+rsync -av --exclude '__pycache__' --exclude '*.pyc' --exclude '.venv' \
+  "${SRC_DIR}/core/file_ingest_watcher/" "${TARGET_DIR}/core/file_ingest_watcher/"
+
+rsync -av --exclude '__pycache__' --exclude '*.pyc' \
+  "${SRC_DIR}/core/ingest_agent/" "${TARGET_DIR}/core/ingest_agent/"
+
+if [ -f "${SRC_DIR}/pyproject.toml" ]; then
+  cp -f "${SRC_DIR}/pyproject.toml" "${TARGET_DIR}/"
+fi
 
 # 3. Reines Web Frontend kopieren
 echo "🌐 Kopiere Core Web Konsole (Next.js)..."
@@ -35,13 +59,30 @@ rsync -av --exclude 'node_modules' --exclude '.next' --exclude '.git' \
 echo "🐳 Kopiere Docker Appliance Stack..."
 rsync -av "${SRC_DIR}/deploy/docker/" "${TARGET_DIR}/deploy/docker/"
 
-# 5. CLI & Administrations-Skripte kopieren
-echo "🛠️ Kopiere CLI- & Management-Skripte..."
-cp -f "${SRC_DIR}/scripts/search_company_brain.py" "${TARGET_DIR}/scripts/"
-cp -f "${SRC_DIR}/scripts/manage_memory.py" "${TARGET_DIR}/scripts/"
-cp -f "${SRC_DIR}/scripts/ingest_documents.py" "${TARGET_DIR}/scripts/"
-cp -f "${SRC_DIR}/scripts/manage_company_profile.py" "${TARGET_DIR}/scripts/"
-chmod +x "${TARGET_DIR}"/scripts/*.py
+# 5. Vollständige CLI & Speichermanagement-Skripte kopieren
+echo "🛠️ Kopiere alle Speichermanagement-, Ingest- & Plattform-Skripte..."
+SCRIPTS_TO_EXPORT=(
+  "run-l1-curator.py"
+  "run-l2-curator.py"
+  "run-l3-curator.py"
+  "rebuild-fts.py"
+  "backfill-letta-from-sqlite.py"
+  "provision-tenant.sh"
+  "search_company_brain.py"
+  "manage_memory.py"
+  "ingest_documents.py"
+  "manage_company_profile.py"
+  "run-memory-testcases.py"
+  "generate-memory-testcases.py"
+  "run-compute-mode-testcases.py"
+)
+
+for s in "${SCRIPTS_TO_EXPORT[@]}"; do
+  if [ -f "${SRC_DIR}/scripts/${s}" ]; then
+    cp -f "${SRC_DIR}/scripts/${s}" "${TARGET_DIR}/scripts/"
+  fi
+done
+chmod +x "${TARGET_DIR}"/scripts/*
 
 # 6. Vollständige Original-Plattform-Dokumentation kopieren
 echo "📚 Kopiere alle vollständigen Original-Dokumente aus docs/..."
