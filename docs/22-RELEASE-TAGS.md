@@ -40,6 +40,7 @@ git push origin roadmap/2026-08-03-p4-email-invoices
 
 | Tag | Datum | Roadmap | Kurzbeschreibung | Commit |
 |-----|-------|---------|------------------|--------|
+| `roadmap/2026-08-15-p4-rag-taxonomy-graph-rag-doc` | 2026-08-15 | §9, §12, RAG | Arten von RAG & Hybrid Graph-RAG Architektur-Spezifikation (docs/26) | *(siehe `git show`)* |
 | `roadmap/2026-08-15-p4-formal-memory-mapping-doc` | 2026-08-15 | §9, §12, Memory | 5-Schichten-Memory-Modell Referenz-Doku & Code-Mapping (docs/25) mit Paper-Verknüpfung | *(siehe `git show`)* |
 | `roadmap/2026-08-13-p4-fluid-viewport-fit-wheel` | 2026-08-13 | §9, §10, UI | Fluide 100% Viewport-Einpassung des Rads (relativer 37.5% Radius) ohne Scrollbalken | *(siehe `git show`)* |
 | `roadmap/2026-08-13-p4-giant-wheel-mega-search` | 2026-08-13 | §9, §10, UI | 520px Mega-Navigationsrad (Full Screen) & Riesiges 850px Webrecherche-Suchfenster | *(siehe `git show`)* |

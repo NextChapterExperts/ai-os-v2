@@ -2,7 +2,7 @@
 
 > **Status:** Verbindliche Architektur-Dokumentation & Code-Übersicht  
 > **Wissenschaftliche Grundlage:** Formal Research Paper & RFC [`company_brain_formal_memory_model_rfc.md`](file:///home/peter/Projekte/active/papers/company_brain_memory_model/de/company_brain_formal_memory_model_rfc.md)  
-> **Verwandte Dokumente:** [09-COMPANY-BRAIN.md](09-COMPANY-BRAIN.md) · [10-MEMORY-EINFACH.md](10-MEMORY-EINFACH.md) · [12-LEITPRINZIPIEN.md](12-LEITPRINZIPIEN.md) · [03-DATENPRODUKTE.md](03-DATENPRODUKTE.md)
+> **Verwandte Dokumente:** [26-ARTEN-VON-RAG.md](26-ARTEN-VON-RAG.md) (RAG-Taxonomie & Graph-RAG) · [09-COMPANY-BRAIN.md](09-COMPANY-BRAIN.md) · [10-MEMORY-EINFACH.md](10-MEMORY-EINFACH.md) · [12-LEITPRINZIPIEN.md](12-LEITPRINZIPIEN.md) · [03-DATENPRODUKTE.md](03-DATENPRODUKTE.md)
 
 ---
 

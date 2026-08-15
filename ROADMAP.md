@@ -3346,6 +3346,17 @@ git tag -l 'roadmap/*'
 git show roadmap/2026-08-03-p4-email-invoices --stat
 ```
 
+## Stand & Changelog (2026-08-15 — Arten von RAG & Hybrid Graph-RAG Architektur-Spezifikation)
+
+- **Release-Tag:** `roadmap/2026-08-15-p4-rag-taxonomy-graph-rag-doc`
+- **RAG-Taxonomie & Graph-RAG ([docs/26-ARTEN-VON-RAG.md](docs/26-ARTEN-VON-RAG.md)):**
+  - Detaillierte Spezifikation der 4 RAG-Evolutionsstufen (Natives RAG, Advanced RAG, Modulares RAG, Hybrid Graph-RAG).
+  - 4-Stufen-Pipeline: Deterministischer Query-Router $\rightarrow$ Strukturelles Graph-Retrieval ($G$) $\rightarrow$ Semantisches Vektor-RAG ($L1$) $\rightarrow$ Unified Search Fusion.
+  - Praxis-Vergleich (Reisekosten-Szenario) zur Veranschaulichung der Halluzinationsfreiheit.
+- **Master Testsuite:** 236 Tests zu 100% grün (0 Failed).
+
+---
+
 ## Stand & Changelog (2026-08-15 — 5-Schichten-Memory-Modell Referenz-Dokumentation & Code-Mapping)
 
 - **Release-Tag:** `roadmap/2026-08-15-p4-formal-memory-mapping-doc`
