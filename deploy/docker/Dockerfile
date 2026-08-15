@@ -15,6 +15,8 @@ COPY core/console-web/ ./
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 RUN npm run build
+RUN cp -r .next/static .next/standalone/.next/static || true
+RUN cp -r public .next/standalone/public || true
 
 # ------------------------------------------------------------------------------
 # Stage 2: Unified Production Runner (FastAPI + Node Runtime + SQLite)
@@ -45,8 +47,10 @@ COPY sdk/ /app/sdk/
 COPY config/ /app/config/
 COPY scripts/ /app/scripts/
 
-# Vorkompiliertes Web-Frontend aus Stage 1 übernehmen
+# Vorkompiliertes Web-Frontend & Standalone Assets aus Stage 1 übernehmen
 COPY --from=web-builder /app/console-web /app/core/console-web
+COPY --from=web-builder /app/console-web/.next/static /app/core/console-web/.next/standalone/.next/static
+COPY --from=web-builder /app/console-web/public /app/core/console-web/.next/standalone/public
 
 # Persistenter Daten-Layer
 ENV DATA_DIR=/app/data
