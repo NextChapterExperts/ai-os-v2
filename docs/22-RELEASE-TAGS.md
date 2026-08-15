@@ -40,6 +40,7 @@ git push origin roadmap/2026-08-03-p4-email-invoices
 
 | Tag | Datum | Roadmap | Kurzbeschreibung | Commit |
 |-----|-------|---------|------------------|--------|
+| `roadmap/2026-08-15-p4-core-platform-distribution-repo` | 2026-08-15 | §9, §15, Dist | Eigenständiges Distributions-Repo 1110-AI-OS-Core-Platform, Export-Engine & v1.0.0 Tag | *(siehe `git show`)* |
 | `roadmap/2026-08-15-p4-core-platform-extraction-docker-appliance` | 2026-08-15 | §9, §15, Docker | Core-Plattform Extraktion (docs/30), Bereinigung Alt-Projekte/Agenten, Dockerfile & Compose | *(siehe `git show`)* |
 | `roadmap/2026-08-15-p4-staging-and-vm-release-lifecycle` | 2026-08-15 | §9, §15, Staging | 3-Stufen Release-Architektur (docs/29), VM Lifecycle (Start/Stop/Delete), Polling & Feedback | *(siehe `git show`)* |
 | `roadmap/2026-08-15-p4-gcp-vm-provisioning-and-billing-ui` | 2026-08-15 | §9, §15, GCP | GCP Compute Engine VM Management (Frankfurt), Kostenkontrolle/Billing-Link & Web-UI /platform/vms | *(siehe `git show`)* |

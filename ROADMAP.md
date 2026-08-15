@@ -3346,6 +3346,18 @@ git tag -l 'roadmap/*'
 git show roadmap/2026-08-03-p4-email-invoices --stat
 ```
 
+## Stand & Changelog (2026-08-15 — Autarkes Distributions-Repo 1110-AI-OS-Core-Platform)
+
+- **Release-Tag:** `roadmap/2026-08-15-p4-core-platform-distribution-repo`
+- **Autarkes Distributions-Repo ([docs/31-CORE-PLATFORM-DISTRIBUTION-REPO.md](docs/31-CORE-PLATFORM-DISTRIBUTION-REPO.md)):**
+  - Neues separates Distributions-Projekt unter `/home/peter/Projekte/1110-AI-OS-Core-Platform`.
+  - **Automatisierter Export (`scripts/export-core-appliance.sh`):** Überträgt saubere Core-Module (Orchestrator, Console-Web, Docker-Stack, Top-Tier Doku) ohne R&D-Artefakte.
+  - **Release v1.0.0 Tag:** Eigenständiges Git-Repository im Zielordner mit offiziellem Tag `v1.0.0-core-appliance`.
+  - Vollständige Architektur- & Kunden-Dokumentation (`docs/01-05`) enthalten.
+- **Master Testsuite:** 248/248 Tests zu 100% grün.
+
+---
+
 ## Stand & Changelog (2026-08-15 — Core Plattform Extraktion & Docker Appliance)
 
 - **Release-Tag:** `roadmap/2026-08-15-p4-core-platform-extraction-docker-appliance`
