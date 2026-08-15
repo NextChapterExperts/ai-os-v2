@@ -2057,8 +2057,51 @@ GATE-COMMS-04  Bestehende Person per E-Mail wird gemerged, nicht blind überschr
 | **time-agent** | Calendar-MCP → `org:Meeting` (Termin-Metadaten, nicht Enrichment) |
 | **email-agent** | Rechnungen, Steuer-Export — nicht Teilnehmer/Kontakte |
 | **comms-manager** | Personen, Organisationen, Meeting-Teilnehmer, LinkedIn/Web-Anreicherung |
+| **paper-architect** | Wissenschaftliche Papers, RFCs, 300 DPI Grafiken, Zweisprachige Typst/PDF-Satzung |
+
+### 9.5 Papers Architect Agent (`paper-architect-agent`) [High-Priority Flagship]
+
+**SKU / Paket:** `agents/papers/` · Compose: `deploy/agents/papers.yml` · **Spec:** [docs/24-PAPER-ARCHITECT-AGENT-SPEC.md](docs/24-PAPER-ARCHITECT-AGENT-SPEC.md)  
+**Status (2026-08-14):** 📌 High-Priority Flagship Fach-Agent für wissenschaftliche Publikationen, RFC-Referenzspezifikationen & Whitepaper.  
+**Release-Tag:** `roadmap/2026-08-14-p4-paper-architect-agent`
+
+> **Architekturkonformität (P5, P8, P15, P17, P18):**
+> 1. **P5 (MCP Only):** Externe Recherche (arXiv, IEEE, ACM, SAP Docs) ausschließlich über `self.mcp.call` via `mcp_arxiv`, `docker_brave_search` und `mcp_sap_docs`.
+> 2. **P15 (PGE-Trinity):** Bild-Rendering (Matplotlib 300 DPI), Typst PDF-Kompilierung und Pangram 4.0 Humanization-Scan laufen isoliert im PGE-Trinity Executor in ephemeren Docker MicroVM Sandboxes.
+> 3. **P18 (Company Brain DataProducts):** Speicherung ausschließlich über typisierte DataProducts (`ResearchSourceSet`, `PaperSpecification`, `PaperArtifact`) per `POST /v1/dataproduct/commit` (atomarer Commit in `G`, `K`, `L1`, `A`).
+
+**Konsumiert (Input-DPs):**
+
+| Input-DP | Quelle | Beschreibung |
+| :--- | :--- | :--- |
+| `paper:RawTopicInput` | Console / User Prompt | Thema, Rohentwürfe, Notizen, Code-Snippets, Invarianten |
+| `ResearchSourceSet` | `paper-architect-agent` via MCP | Geerntete Literatur-Quellen, Preprints, BibTeX |
+| `PaperSpecification` | `paper-architect-agent` | Inhaltliche Spezifikation & Axiome nach Human-Alignment |
+
+**Liefert (Output-DPs → Atomarer Commit):**
+
+| Output-DP | storage_target | Beschreibung / Artefakte |
+| :--- | :--- | :--- |
+| `ResearchSourceSet` | `G`, `L1` | Fakten- & Zitationsknoten im Graph + Qdrant Index |
+| `PaperSpecification` | `G`, `K` | Gliederung & Axiome in `content/papers/[slug]/` |
+| `PaperArtifact` | `G`, `K`, `L1`, `A` | Finale `.pdf`, `.typ`, `.md`, 300 DPI Grafiken in `/de` & `/en` + Pangram Score + SHA-256 Hash |
+
+**2-Pipeline Arbeitsweise:**
+1. **Pipeline 1 (Inhalt & Dialog):** Context Harvesting $\to$ Deep Research (MCP) $\to$ Interactive Dialogue im Chat $\to$ Pangram 4.0 Humanization Scan ($>95\%$) $\to$ Plain Business & Engineering English Translation.
+2. **Pipeline 2 (Technische Umsetzung & Audit):** Sandbox Figure Engine (300 DPI Clockwise-Grid) $\to$ Sandboxed Typst Compilation $\to$ QA Layout Check $\to$ SHA-256 Audit Commit (`manifest.json`).
+
+**Abnahme-Kriterien:**
+
+```
+GATE-PAPERS-01  Agent nutzt für externe SOTA-Suche ausschließlich self.mcp (keine direkten HTTP-Calls)
+GATE-PAPERS-02  Rendering und Typst-Build laufen zu 100% in ephemerer Docker MicroVM Sandbox
+GATE-PAPERS-03  Speicherung erfolgt ausnahmslos über POST /v1/dataproduct/commit (DataProducts: ResearchSourceSet, PaperSpecification, PaperArtifact)
+GATE-PAPERS-04  Manifest-Ledger in S5 speichert SHA-256 Hashes aller generierten Artefakte
+GATE-PAPERS-05  Pangram 4.0 Human-Written Score liegt nachweislich bei >95% (keine KI-Floskeln)
+```
 
 ---
+
 
 ## 10. Phase 5 — Console vollständig
 
@@ -3302,6 +3345,17 @@ Jeder abgeschlossene Roadmap-Meilenstein erhält einen **annotierten Git-Tag** i
 git tag -l 'roadmap/*'
 git show roadmap/2026-08-03-p4-email-invoices --stat
 ```
+
+## Stand & Changelog (2026-08-15 — 5-Schichten-Memory-Modell Referenz-Dokumentation & Code-Mapping)
+
+- **Release-Tag:** `roadmap/2026-08-15-p4-formal-memory-mapping-doc`
+- **Wissenschaftliches Paper & Code-Mapping ([docs/25-COMPANY-BRAIN-MEMORY-MAPPING.md](docs/25-COMPANY-BRAIN-MEMORY-MAPPING.md)):**
+  - Vollständige Referenz-Dokumentation der 5 Speicherzustände ($\mathcal{S}_1$ bis $\mathcal{S}_5$) aus dem Formal Research Paper (`company_brain_formal_memory_model_rfc.md`).
+  - Umgangssprachliche Erklärung aller Schichten (Klebezettel, Tagebuch, Aktenschrank, Kochbuch, Stempelbuch) für maximalen Überblick.
+  - Direkter Schnellfinder für Entwickler mit allen relevanten Dateipfaden in `core/memory`, `core/memory_gateway`, `core/orchestrator` und `core/ingest_agent`.
+- **Master Testsuite:** 34 Memory- & Router-Tests zu 100% grün (0 Failed).
+
+---
 
 ## Stand & Changelog (2026-08-11 — Company Brain Synthese, Knowledge Finder & Run Context UI Restauration)
 

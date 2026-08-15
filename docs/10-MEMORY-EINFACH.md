@@ -1,8 +1,8 @@
 # AI-OS v2 — Memory-Konzept (einfach erklärt)
 
-**Stand:** Juli 2026  
+**Stand:** August 2026  
 **Für:** Menschen, die das System verstehen wollen — ohne Architektur-Jargon  
-**Detail-Specs:** [09-COMPANY-BRAIN.md](09-COMPANY-BRAIN.md) · [ROADMAP.md §12](../ROADMAP.md#12-datenschicht-im-detail) · [01-ARCHITEKTUR.md](01-ARCHITEKTUR.md)
+**Detail-Specs:** [25-COMPANY-BRAIN-MEMORY-MAPPING.md](25-COMPANY-BRAIN-MEMORY-MAPPING.md) (Code-Mapping & Schnellfinder) · [09-COMPANY-BRAIN.md](09-COMPANY-BRAIN.md) · [Formal Research RFC Paper](file:///home/peter/Projekte/active/papers/company_brain_memory_model/de/company_brain_formal_memory_model_rfc.md) · [01-ARCHITEKTUR.md](01-ARCHITEKTUR.md)
 
 ---
 
