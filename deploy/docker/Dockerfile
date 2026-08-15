@@ -9,7 +9,7 @@ FROM node:22-alpine AS web-builder
 WORKDIR /app/console-web
 
 COPY core/console-web/package*.json ./
-RUN npm install --legacy-peer-deps
+RUN npm install --legacy-peer-deps --ignore-scripts
 
 COPY core/console-web/ ./
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -21,20 +21,20 @@ RUN npm run build
 # ------------------------------------------------------------------------------
 FROM python:3.12-slim-bookworm AS runner
 
-# System-Abhängigkeiten installieren (Node.js 22 LTS, Curl, SQLite)
+# Node.js 22 LTS Runtime direkt aus offiziellem Image übernehmen
+COPY --from=node:22-bookworm-slim /usr/local/ /usr/local/
+
+# System-Abhängigkeiten installieren (Curl, Git, SQLite)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     git \
     sqlite3 \
     ca-certificates \
-    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-    && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 # Python Abhängigkeiten installieren
-COPY pyproject.toml ./
 RUN python3 -m pip install --no-cache-dir --upgrade pip && \
     python3 -m pip install --no-cache-dir \
     fastapi \
@@ -45,8 +45,10 @@ RUN python3 -m pip install --no-cache-dir --upgrade pip && \
     sentence-transformers \
     fastembed
 
-# Python Orchestrator Source kopieren
+# Plattform Module kopieren
 COPY core/ /app/core/
+COPY sdk/ /app/sdk/
+COPY config/ /app/config/
 COPY scripts/ /app/scripts/
 
 # Vorkompiliertes Web-Frontend aus Stage 1 übernehmen
@@ -61,21 +63,7 @@ ENV HOST=0.0.0.0
 RUN mkdir -p /app/data
 
 # Entrypoint Skript
-RUN cat << "EOF" > /app/entrypoint.sh
-#!/bin/bash
-set -e
-
-echo "🚀 Starte AI-OS v2 Core Platform Appliance..."
-echo "📁 Persistentes Datenverzeichnis: ${DATA_DIR}"
-
-# 1. FastAPI Orchestrator im Hintergrund starten (Port 8091)
-python3 -m uvicorn core.orchestrator.server:app --host 0.0.0.0 --port 8091 &
-
-# 2. Next.js Console Web starten (Port 8090)
-cd /app/core/console-web
-npx next start -p 8090 -H 0.0.0.0
-EOF
-
+COPY deploy/docker/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 8090 8091

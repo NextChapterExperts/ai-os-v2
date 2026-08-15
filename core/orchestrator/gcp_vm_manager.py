@@ -92,46 +92,23 @@ def create_customer_vm(
     sanitized_tenant = re.sub(r"[^a-z0-9\-]", "", tenant_id.lower().replace("_", "-"))
     instance_name = f"aios-{sanitized_tenant}"
 
-    # Startup-Script für automatische Zero-Touch Installation
+    # Startup-Script für automatische Zero-Touch Docker Installation
     startup_script = f"""#!/bin/bash
 set -e
-echo "🚀 Initialisiere AI-OS v2 Appliance für {company_name} ({tenant_id})..."
-curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
-apt-get update && apt-get install -y git curl docker.io docker-compose python3 python3-venv nodejs build-essential
+echo "🚀 Initialisiere AI-OS Core Platform Appliance für {company_name} ({tenant_id})..."
+apt-get update && apt-get install -y git curl docker.io docker-compose
 
-# AI-OS v2 Repository klonen
+# Virgi Platform Distribution klonen
 mkdir -p /opt
-if [ ! -d "/opt/ai-os-v2" ]; then
-  git clone https://github.com/NextChapterExperts/ai-os-v2.git /opt/ai-os-v2
-fi
+rm -rf /opt/virgi-platform-dist
+git clone https://github.com/NextChapterExperts/virgi-platform-dist.git /opt/virgi-platform-dist
 
-# Console Web Abhängigkeiten installieren
-cd /opt/ai-os-v2/core/console-web
-npm install --ignore-scripts
+# Docker Compose Appliance im Hintergrund starten
+cd /opt/virgi-platform-dist/deploy/docker
+docker-compose down || true
+docker-compose up -d --build
 
-# Systemd Service für permanente Verfügbarkeit
-cat << "EOF" > /etc/systemd/system/aios-console.service
-[Unit]
-Description=AI-OS Console Web
-After=network.target
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/opt/ai-os-v2/core/console-web
-ExecStart=/bin/bash -c "export PATH=/usr/bin:/bin:\\$PATH && /opt/ai-os-v2/core/console-web/node_modules/.bin/next dev -p 8090 -H 0.0.0.0"
-Restart=always
-RestartSec=3
-Environment=PORT=8090
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-systemctl daemon-reload
-systemctl enable --now aios-console.service
-
-echo "✅ System-Setup abgeschlossen für {company_name}!"
+echo "✅ Docker Appliance Setup abgeschlossen für {company_name}!"
 """
 
     args = [
