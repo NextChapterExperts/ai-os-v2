@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from agents.email.agent import EmailAgent, InvoiceExportAgent
-from agents.email.dataproducts import InvoiceExportRequest, InvoiceRunRequest
 from sdk.mcp_adapter import MCPAdapter
 from sdk.tenant_context import TenantContext
 
@@ -16,6 +14,15 @@ async def run_invoice_pipeline(
     params: dict[str, Any],
 ) -> dict[str, Any]:
     del context_bundle
+    try:
+        from agents.email.agent import EmailAgent
+        from agents.email.dataproducts import InvoiceRunRequest
+    except (ImportError, ModuleNotFoundError):
+        return {
+            "answer": "Email-Agent Modul ist auf dieser Appliance nicht installiert.",
+            "status": "skipped",
+        }
+
     ctx = TenantContext.for_tenant(tenant_id)
     mcp = MCPAdapter(tenant_id=tenant_id, agent_id="email-agent")
     agent = EmailAgent(ctx=ctx, mcp=mcp)
@@ -41,6 +48,15 @@ async def run_invoice_export(
     params: dict[str, Any],
 ) -> dict[str, Any]:
     del context_bundle
+    try:
+        from agents.email.agent import InvoiceExportAgent
+        from agents.email.dataproducts import InvoiceExportRequest
+    except (ImportError, ModuleNotFoundError):
+        return {
+            "answer": "InvoiceExportAgent Modul ist auf dieser Appliance nicht installiert.",
+            "status": "skipped",
+        }
+
     ctx = TenantContext.for_tenant(tenant_id)
     mcp = MCPAdapter(tenant_id=tenant_id, agent_id="email-agent")
     agent = InvoiceExportAgent(ctx=ctx, mcp=mcp)
