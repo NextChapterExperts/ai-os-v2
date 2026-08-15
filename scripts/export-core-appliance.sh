@@ -43,91 +43,67 @@ cp -f "${SRC_DIR}/scripts/ingest_documents.py" "${TARGET_DIR}/scripts/"
 cp -f "${SRC_DIR}/scripts/manage_company_profile.py" "${TARGET_DIR}/scripts/"
 chmod +x "${TARGET_DIR}"/scripts/*.py
 
-# 6. Top-Tier Plattform-Dokumentation erstellen & kopieren
-echo "📚 Erstelle umfassende Plattform-Dokumentation..."
+# 6. Vollständige Original-Plattform-Dokumentation kopieren
+echo "📚 Kopiere alle vollständigen Original-Dokumente aus docs/..."
 
-cat << "EOF" > "${TARGET_DIR}/docs/01-ARCHITEKTUR-UEBERSICHT.md"
-# 01 — AI-OS Core Platform Architektur-Übersicht
+DOC_FILES=(
+  "00-VISION.md"
+  "01-ARCHITEKTUR.md"
+  "02-AGENT-SDK.md"
+  "03-DATENPRODUKTE.md"
+  "04-DEPLOYMENT.md"
+  "05-CONSOLE-IA.md"
+  "06-PRODUKT-DEPLOYMENT.md"
+  "07-LOKALES-MODELL-TESTPROTOKOLL.md"
+  "08-MARKTVERGLEICH.md"
+  "09-COMPANY-BRAIN.md"
+  "10-MEMORY-EINFACH.md"
+  "11-PLATFORM-VM.md"
+  "12-LEITPRINZIPIEN.md"
+  "13-IST-STAND.md"
+  "14-KONTEXT.md"
+  "15-FILE-INGESTION.md"
+  "16-VM-PACKAGING.md"
+  "22-RELEASE-TAGS.md"
+  "23-DOCKER-MCP-SANDBOX-INTEGRATION.md"
+  "25-COMPANY-BRAIN-MEMORY-MAPPING.md"
+  "26-ARTEN-VON-RAG.md"
+  "27-ROLLEN-UND-RECHTE-KONZEPT.md"
+  "28-PLATFORM-VS-CUSTOM-AGENTS-MODELL.md"
+  "29-STAGING-UND-VM-RELEASE-WORKFLOW.md"
+  "30-CORE-PLATFORM-EXTRACTION-UND-DOCKER-CONTAINER.md"
+  "31-CORE-PLATFORM-DISTRIBUTION-REPO.md"
+  "32-PLATFORM-AUDITLOG-UND-DISTRIBUTION-GIT.md"
+  "company_brain_paper_DE.pdf"
+)
 
-AI-OS Core ist eine hochperformante, DSGVO-konforme Enterprise-Appliance für das Wissens- und Memory-Management von Unternehmen.
+for doc in "${DOC_FILES[@]}"; do
+  if [ -f "${SRC_DIR}/docs/${doc}" ]; then
+    cp -f "${SRC_DIR}/docs/${doc}" "${TARGET_DIR}/docs/"
+  fi
+done
 
-## Kernkomponenten:
-1. **5-Layer Memory Model:** Deterministisches Gedächtnis von Live-Arbeitskontext bis zur Unternehmens-DNA.
-2. **Hybrid Graph-RAG:** Multi-Hop Wissensgraph kombiniert mit dichter Vektorsuche für halluzinationsfreie Antworten.
-3. **Enterprise Identity Root:** Zentrales, kanonisches Unternehmensprofil als Fundament für alle Workflows.
-4. **Sovereign Multi-Tenant Isolation:** Vollständige Trennung von Mandantendaten auf Dateisystem- und Datenbankebene.
-EOF
+if [ -d "${SRC_DIR}/docs/adr" ]; then
+  rsync -av "${SRC_DIR}/docs/adr/" "${TARGET_DIR}/docs/adr/"
+fi
 
-cat << "EOF" > "${TARGET_DIR}/docs/02-5-SCHICHTEN-MEMORY-MODELL.md"
-# 02 — Das 5-Schichten-Memory-Modell
+# Zusätzliches Handbuch für CLI Tools
+cat << "EOF" > "${TARGET_DIR}/docs/00-CLI-UND-ADMIN-HANDBUCH.md"
+# 00 — CLI- & Administrations-Handbuch
 
-Die Plattform implementiert ein hierarchisches, kognitives Speichermodell:
+Die Plattform verfügt über dedizierte Skripte im Verzeichnis \`scripts/\`:
 
-| Schicht | Name | Funktion | Technologie |
-|---|---|---|---|
-| **L1** | Working Memory | Aktuelle Interaktion / Chat-Session | RAM / Redis / FastCache |
-| **L2** | Episodic Memory | Ereignisse, Meetings, Protokolle | SQLite / JSONL |
-| **L3** | Semantic Chunks | Dokumente, PDFs, Rechnungen, Verträge | Dense Vector Embeddings |
-| **L4** | Knowledge Graph | Beziehungen, Entitäten, Multi-Hop | Property Graph |
-| **L5** | Enterprise Core | Statuten, Richtlinien, Organigramm | Kanonisches YAML / Graph Root |
-EOF
-
-cat << "EOF" > "${TARGET_DIR}/docs/03-HYBRID-GRAPH-RAG-SUCHE.md"
-# 03 — Hybrid Graph-RAG Sucharchitektur
-
-Die Suche verbindet zwei komplementäre Retrieval-Verfahren:
-- **Dichte Vektorsuche:** Findet semantisch ähnliche Textabschnitte auch bei ungenauen Suchbegriffen.
-- **Wissensgraph-Traversal:** Folgt expliziten Relationen (z.B. Person -> Projekt -> Vertrag) mit 100% Faktentreue.
-- **Fusion:** Ein Reciprocal Rank Fusion (RRF) Algorithmus vereint beide Ergebnisse zu einer optimalen Rangfolge.
-EOF
-
-cat << "EOF" > "${TARGET_DIR}/docs/04-UNTERNEHMENS-IDENTITAET.md"
-# 04 — Unternehmens-Identität (Company Brain Root)
-
-Jeder Mandant besitzt ein kanonisches Profil (`00-company-profile.yaml`):
-- Offizieller Firmenname, Marke, Rechtsform, USt-ID
-- Stundensätze und Standard-Zahlungsbedingungen
-- Mitarbeiter, Rollen und Fähigkeiten
-- Kern-Dienstleistungen und Tätigkeitsfelder
-
-Dieses Profil wird automatisch in jeden Abfragekontext (`ContextBundle.enterprise`) injiziert.
-EOF
-
-cat << "EOF" > "${TARGET_DIR}/docs/05-DOCKER-UND-PROVISIONIERUNG.md"
-# 05 — Docker & Cloud Provisionierung
-
-## 1. Lokaler Start via Docker Compose:
-\`\`\`bash
-cd deploy/docker
-docker compose up -d
-\`\`\`
-Die Konsole ist sofort erreichbar unter: `http://localhost:8090`
-
-## 2. Google Cloud Run Deployment:
-\`\`\`bash
-gcloud run deploy aios-core-appliance \
-  --image=gcr.io/PROJECT_ID/aios-core-appliance:latest \
-  --region=europe-west3 \
-  --allow-unauthenticated
-\`\`\`
-EOF
-
-cat << "EOF" > "${TARGET_DIR}/docs/06-CLI-UND-ADMIN-TOOLS.md"
-# 06 — CLI- & Administrations-Werkzeuge
-
-Die Plattform verfügt über dedizierte Skripte im Verzeichnis `scripts/`:
-
-### 1. Wissenssuche im Terminal (`scripts/search_company_brain.py`)
+### 1. Wissenssuche im Terminal (\`scripts/search_company_brain.py\`)
 \`\`\`bash
 python3 scripts/search_company_brain.py "Welche Zahlungsfristen gelten für Großkunden?" --tenant default
 \`\`\`
 
-### 2. Memory- & Speicherverwaltung (`scripts/manage_memory.py`)
+### 2. Memory- & Speicherverwaltung (\`scripts/manage_memory.py\`)
 \`\`\`bash
 python3 scripts/manage_memory.py --status
 \`\`\`
 
-### 3. Dokumenten- & PDF-Ingestion (`scripts/ingest_documents.py`)
+### 3. Dokumenten- & PDF-Ingestion (\`scripts/ingest_documents.py\`)
 \`\`\`bash
 # Einzelne Datei ingestieren
 python3 scripts/ingest_documents.py /pfad/zum/vertrag.pdf --tenant default
@@ -136,7 +112,7 @@ python3 scripts/ingest_documents.py /pfad/zum/vertrag.pdf --tenant default
 python3 scripts/ingest_documents.py /pfad/zu/dokumenten/ --tenant default
 \`\`\`
 
-### 4. Firmenprofil per CLI (`scripts/manage_company_profile.py`)
+### 4. Firmenprofil per CLI (\`scripts/manage_company_profile.py\`)
 \`\`\`bash
 # Profil anzeigen
 python3 scripts/manage_company_profile.py --tenant default
