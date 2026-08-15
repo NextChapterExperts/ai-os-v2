@@ -493,6 +493,57 @@ async def provision_tenant_endpoint(req: dict[str, Any]) -> dict[str, Any]:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
+@app.get("/v1/platform/gcp/vms")
+async def list_gcp_vms_endpoint() -> dict[str, Any]:
+    from core.orchestrator.gcp_vm_manager import list_customer_vms
+    vms = list_customer_vms()
+    return {"status": "ok", "vms": vms, "count": len(vms)}
+
+
+@app.post("/v1/platform/gcp/vms/create")
+async def create_gcp_vm_endpoint(req: dict[str, Any]) -> dict[str, Any]:
+    from core.orchestrator.gcp_vm_manager import create_customer_vm
+    tenant_id = req.get("tenant_id")
+    company_name = req.get("company_name")
+    admin_email = req.get("admin_email", "admin@example.com")
+    if not tenant_id or not company_name:
+        raise HTTPException(status_code=400, detail="tenant_id und company_name sind erforderlich")
+    try:
+        res = create_customer_vm(
+            tenant_id=tenant_id,
+            company_name=company_name,
+            admin_email=admin_email,
+            zone=req.get("zone", "europe-west3-a"),
+            machine_type=req.get("machine_type", "e2-standard-4"),
+        )
+        return {"status": "ok", "result": res}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.post("/v1/platform/gcp/vms/stop")
+async def stop_gcp_vm_endpoint(req: dict[str, Any]) -> dict[str, Any]:
+    from core.orchestrator.gcp_vm_manager import stop_customer_vm
+    instance_name = req.get("instance_name")
+    if not instance_name:
+        raise HTTPException(status_code=400, detail="instance_name erforderlich")
+    try:
+        res = stop_customer_vm(instance_name, zone=req.get("zone", "europe-west3-a"))
+        return {"status": "ok", "result": res}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.delete("/v1/platform/gcp/vms/{instance_name}")
+async def delete_gcp_vm_endpoint(instance_name: str, zone: str = "europe-west3-a") -> dict[str, Any]:
+    from core.orchestrator.gcp_vm_manager import delete_customer_vm
+    try:
+        res = delete_customer_vm(instance_name, zone=zone)
+        return {"status": "ok", "result": res}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
 @app.get("/v1/kg/stats")
 async def get_kg_stats(tenant_id: str = "nextchapter") -> dict[str, Any]:
     return kg_stats(tenant_id)

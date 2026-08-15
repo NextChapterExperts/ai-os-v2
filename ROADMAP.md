@@ -3346,6 +3346,18 @@ git tag -l 'roadmap/*'
 git show roadmap/2026-08-03-p4-email-invoices --stat
 ```
 
+## Stand & Changelog (2026-08-15 — GCP Compute Engine VM Management & Kostenkontrolle-UI)
+
+- **Release-Tag:** `roadmap/2026-08-15-p4-gcp-vm-provisioning-and-billing-ui`
+- **Google Cloud Platform Integration (`strong-zephyr-505611-k4`):**
+  - Google Cloud CLI und Compute Engine API in Frankfurt (`europe-west3-a`) autorisiert & aktiviert.
+  - Modul `core/orchestrator/gcp_vm_manager.py` für automatisches VM-Erstellen, Auflisten, Pausieren und Löschen.
+  - API Endpoints `GET /v1/platform/gcp/vms`, `POST /v1/platform/gcp/vms/create` und `POST /v1/platform/gcp/vms/stop`.
+  - Dedizierte Admin-Seite `/platform/vms` in Console Web mit Direktlink zum **Google Cloud Billing Dashboard** für volle Ausgabenkontrolle.
+- **Master Testsuite:** 3/3 Tests in `tests/test_gcp_vm_manager.py` und 248/248 Tests zu 100% grün (0 Failed).
+
+---
+
 ## Stand & Changelog (2026-08-15 — 2-Säulen-Produktmodell, Entflechtung & Tenant Provisioning)
 
 - **Release-Tag:** `roadmap/2026-08-15-p4-platform-vs-custom-agents-provisioning`

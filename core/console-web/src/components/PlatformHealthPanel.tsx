@@ -89,11 +89,14 @@ export function PlatformHealthPanel() {
               <span className="mono text-xs">{mem.dbPath}</span>
             </div>
           </div>
-          <p className="muted mt-4 mb-0 text-sm">
+          <div className="muted mt-4 mb-0 flex flex-wrap gap-4 text-sm">
             <Link href="/platform/storage" className="underline underline-offset-2">
               Speicherverbrauch aller Memory-Stacks →
             </Link>
-          </p>
+            <Link href="/platform/vms" className="underline underline-offset-2 text-signal font-semibold">
+              Kunden-VMs & Google Cloud Hosting (GCP) →
+            </Link>
+          </div>
         </div>
       ) : null}
 

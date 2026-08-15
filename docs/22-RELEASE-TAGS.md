@@ -40,6 +40,7 @@ git push origin roadmap/2026-08-03-p4-email-invoices
 
 | Tag | Datum | Roadmap | Kurzbeschreibung | Commit |
 |-----|-------|---------|------------------|--------|
+| `roadmap/2026-08-15-p4-gcp-vm-provisioning-and-billing-ui` | 2026-08-15 | §9, §15, GCP | GCP Compute Engine VM Management (Frankfurt), Kostenkontrolle/Billing-Link & Web-UI /platform/vms | *(siehe `git show`)* |
 | `roadmap/2026-08-15-p4-platform-vs-custom-agents-provisioning` | 2026-08-15 | §9, §10, §15 | 2-Säulen-Modell (docs/28), Entflechtung Platform/Custom Agents, Tenant Provisioning Engine & CLI | *(siehe `git show`)* |
 | `roadmap/2026-08-15-p4-rbac-agent-permissions-concept` | 2026-08-15 | §9, §10, §15 | Rollen- & Rechte-Konzept für isolierte Fachagenten (docs/27) & Multi-User RBAC Matrix | *(siehe `git show`)* |
 | `roadmap/2026-08-15-p4-admin-layout-company-role-separation` | 2026-08-15 | §9, §10, UI | 1:1 Admin Nordic/Sovereign Design für /company, strikte Rollentrennung (User=nur Fachagenten, Admin=Plattform) | *(siehe `git show`)* |
