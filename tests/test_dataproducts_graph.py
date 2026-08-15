@@ -18,6 +18,7 @@ from core.orchestrator.dataproducts import (
     OrgClaim,
     OrgDecision,
     OrgEngagement,
+    OrgEnterpriseProfile,
     OrgKnowledgeAsset,
     OrgMeeting,
     OrgOffering,
@@ -29,10 +30,11 @@ from core.orchestrator.dp_service import _edges_for, _node_type_and_external_id,
 
 
 def test_dataproduct_class_mappings():
-    assert len(NODE_TYPE_BY_CLASS) == 9
-    assert len(DP_CLASS_BY_NODE_TYPE) == 9
+    assert len(NODE_TYPE_BY_CLASS) == 10
+    assert len(DP_CLASS_BY_NODE_TYPE) == 10
     assert DP_CLASS_BY_NODE_TYPE["org:Offering"] == OrgOffering
     assert DP_CLASS_BY_NODE_TYPE["org:Claim"] == OrgClaim
+    assert DP_CLASS_BY_NODE_TYPE["org:EnterpriseProfile"] == OrgEnterpriseProfile
 
 
 def test_org_offering_validation():
