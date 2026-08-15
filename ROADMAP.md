@@ -3346,6 +3346,20 @@ git tag -l 'roadmap/*'
 git show roadmap/2026-08-03-p4-email-invoices --stat
 ```
 
+## Stand & Changelog (2026-08-15 — Vollständige Admin & CLI Toolbox für Distributions-Projekt)
+
+- **Release-Tag:** `roadmap/2026-08-15-p4-distribution-admin-cli-toolbox`
+- **CLI Toolbox für Betreiber & Admins:**
+  - `scripts/search_company_brain.py`: Terminal-Suche im Wissensgraphen & L1–L5 Memory.
+  - `scripts/manage_memory.py`: Inspektion von Festplatten- und Memory-Schichten (L1–L5 Stacks).
+  - `scripts/ingest_documents.py`: Automatisierter Ingestion-Runner für Einzeldateien & ganze Ordner (PDF, MD, TXT, JSON, DOCX).
+  - `scripts/manage_company_profile.py`: Profil-Inspektion und YAML-Import per CLI.
+  - `docs/06-CLI-UND-ADMIN-TOOLS.md`: Ausführliches Handbuch für die Terminal-Bedienung.
+- **Export Engine:** Automatische Synchronisation nach `/home/peter/Projekte/1110-AI-OS-Core-Platform` via `./scripts/export-core-appliance.sh`.
+- **Master Testsuite:** 248/248 Tests grün.
+
+---
+
 ## Stand & Changelog (2026-08-15 — Autarkes Distributions-Repo 1110-AI-OS-Core-Platform)
 
 - **Release-Tag:** `roadmap/2026-08-15-p4-core-platform-distribution-repo`

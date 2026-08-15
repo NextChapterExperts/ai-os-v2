@@ -35,7 +35,15 @@ rsync -av --exclude 'node_modules' --exclude '.next' --exclude '.git' \
 echo "🐳 Kopiere Docker Appliance Stack..."
 rsync -av "${SRC_DIR}/deploy/docker/" "${TARGET_DIR}/deploy/docker/"
 
-# 5. Top-Tier Plattform-Dokumentation erstellen & kopieren
+# 5. CLI & Administrations-Skripte kopieren
+echo "🛠️ Kopiere CLI- & Management-Skripte..."
+cp -f "${SRC_DIR}/scripts/search_company_brain.py" "${TARGET_DIR}/scripts/"
+cp -f "${SRC_DIR}/scripts/manage_memory.py" "${TARGET_DIR}/scripts/"
+cp -f "${SRC_DIR}/scripts/ingest_documents.py" "${TARGET_DIR}/scripts/"
+cp -f "${SRC_DIR}/scripts/manage_company_profile.py" "${TARGET_DIR}/scripts/"
+chmod +x "${TARGET_DIR}"/scripts/*.py
+
+# 6. Top-Tier Plattform-Dokumentation erstellen & kopieren
 echo "📚 Erstelle umfassende Plattform-Dokumentation..."
 
 cat << "EOF" > "${TARGET_DIR}/docs/01-ARCHITEKTUR-UEBERSICHT.md"
@@ -104,7 +112,41 @@ gcloud run deploy aios-core-appliance \
 \`\`\`
 EOF
 
-# 6. Readme für das Distributions-Repo
+cat << "EOF" > "${TARGET_DIR}/docs/06-CLI-UND-ADMIN-TOOLS.md"
+# 06 — CLI- & Administrations-Werkzeuge
+
+Die Plattform verfügt über dedizierte Skripte im Verzeichnis `scripts/`:
+
+### 1. Wissenssuche im Terminal (`scripts/search_company_brain.py`)
+\`\`\`bash
+python3 scripts/search_company_brain.py "Welche Zahlungsfristen gelten für Großkunden?" --tenant default
+\`\`\`
+
+### 2. Memory- & Speicherverwaltung (`scripts/manage_memory.py`)
+\`\`\`bash
+python3 scripts/manage_memory.py --status
+\`\`\`
+
+### 3. Dokumenten- & PDF-Ingestion (`scripts/ingest_documents.py`)
+\`\`\`bash
+# Einzelne Datei ingestieren
+python3 scripts/ingest_documents.py /pfad/zum/vertrag.pdf --tenant default
+
+# Ganzen Ordner batch-ingestieren
+python3 scripts/ingest_documents.py /pfad/zu/dokumenten/ --tenant default
+\`\`\`
+
+### 4. Firmenprofil per CLI (`scripts/manage_company_profile.py`)
+\`\`\`bash
+# Profil anzeigen
+python3 scripts/manage_company_profile.py --tenant default
+
+# Profil aktualisieren
+python3 scripts/manage_company_profile.py --update-from neues_profil.yaml --tenant default
+\`\`\`
+EOF
+
+# 7. Readme für das Distributions-Repo
 cat << "EOF" > "${TARGET_DIR}/README.md"
 # AI-OS Core Platform Appliance (v1.0.0)
 
@@ -122,27 +164,21 @@ docker compose up -d
 - **Web-Konsole:** [http://localhost:8090](http://localhost:8090)
 - **Orchestrator API:** [http://localhost:8091/docs](http://localhost:8091/docs)
 
+## 🛠️ CLI & Management Werkzeuge
+
+- **Suche im Unternehmenswissen:** `python3 scripts/search_company_brain.py "<Query>"`
+- **Speicherstatus & Memory Stacks:** `python3 scripts/manage_memory.py --status`
+- **Dokumenten-Ingestion:** `python3 scripts/ingest_documents.py <Pfad>`
+- **Unternehmensprofil:** `python3 scripts/manage_company_profile.py`
+
 ## 📚 Dokumentation
 Die vollständige Architektur-Dokumentation befindet sich im Verzeichnis [`docs/`](docs/).
 EOF
 
-# 7. Git Initialisierung im Ziel-Repo (falls noch nicht geschehen)
+# 8. Git Sync im Ziel-Repo
 cd "${TARGET_DIR}"
-if [ ! -d ".git" ]; then
-  git init
-  git config user.name "Peter Alexander"
-  git config user.email "peter.alexander@nextchapterexperts.de"
-fi
-
 git add .
-git commit -m "feat(release): initialize AI-OS Core Platform Distribution v1.0.0
-
-- Extracted clean platform sources from 1100-AI-OS-V2
-- 5-layer cognitive memory architecture & hybrid Graph-RAG
-- Dynamic enterprise profile management (/company)
-- Unified multi-stage production Dockerfile & compose stack
-- Comprehensive customer and admin documentation" || true
-
+git commit -m "feat(cli): add complete management toolbox (search, memory, ingest, company profile) and docs" || true
 git tag -f v1.0.0-core-appliance -m "AI-OS Core Platform Appliance v1.0.0"
 
-echo "✅ Core Plattform Appliance erfolgreich nach ${TARGET_DIR} exportiert!"
+echo "✅ Core Plattform Appliance & CLI-Skripte erfolgreich nach ${TARGET_DIR} exportiert!"
