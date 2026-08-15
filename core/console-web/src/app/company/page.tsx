@@ -63,12 +63,7 @@ export default function CompanyProfilePage() {
   useEffect(() => {
     const currentAuth = getStoredAuth();
     setAuth(currentAuth);
-
-    if (currentAuth.role === "admin") {
-      loadProfile();
-    } else {
-      setLoading(false);
-    }
+    loadProfile();
   }, []);
 
   const EMPTY_PROFILE: CompanyProfile = {
@@ -193,28 +188,6 @@ export default function CompanyProfilePage() {
       core_services: profile.core_services.filter((_, i) => i !== idx),
     });
   };
-
-  // 1. Check Role Permission: Only Admin allowed!
-  if (auth && auth.role !== "admin") {
-    return (
-      <div className="rise mx-auto max-w-3xl space-y-6 py-12 text-center">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 border border-amber-500/30">
-          <IconLock size={32} />
-        </div>
-        <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-ink">Zugriff verweigert (Administrator erforderlich)</h1>
-          <p className="text-sm text-ink-soft max-w-lg mx-auto">
-            Die Unternehmens-Identität, Stundensätze und Plattform-Stammdaten dürfen ausschließlich vom <strong>Administrator</strong> eingesehen und verändert werden.
-          </p>
-        </div>
-        <div>
-          <Link href="/agents" className="btn-primary inline-flex items-center gap-2">
-            Zu den Fachagenten wechseln →
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   if (loading) {
     return (

@@ -7,8 +7,8 @@ services:
     container_name: aios-core-appliance
     restart: unless-stopped
     ports:
-      - "8090:8090"
-      - "8091:8091"
+      - "8190:8090"
+      - "8191:8091"
     environment:
       - NODE_ENV=production
       - PORT=8090

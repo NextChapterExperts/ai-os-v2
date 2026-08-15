@@ -159,3 +159,27 @@ def test_handwerk_angebot_intent_routing():
         assert intent == "handwerk_angebot", f"Failed for prompt: '{prompt}' (got {intent})"
 
 
+@pytest.mark.asyncio
+async def test_intent_endpoints_and_catalog():
+    from core.orchestrator.server import classify_intent_endpoint, list_intent_catalog
+
+    # Classify via query param
+    res1 = await classify_intent_endpoint(query="Was steht heute an?")
+    assert res1["status"] == "ok"
+    assert res1["intent"] == "daily_open_loops"
+
+    # Classify via JSON body
+    res2 = await classify_intent_endpoint(req={"prompt": "Ich suche nach Rechnungen"})
+    assert res2["status"] == "ok"
+    assert res2["intent"] == "unified_search"
+
+    # Catalog listing
+    cat = await list_intent_catalog()
+    assert cat["status"] == "ok"
+    assert len(cat["intents"]) >= 5
+    ids = {item["id"] for item in cat["intents"]}
+    assert "unified_search" in ids
+    assert "memory_ask" in ids
+
+
+

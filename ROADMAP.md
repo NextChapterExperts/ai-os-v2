@@ -2,7 +2,7 @@
 
 **Für:** LLMs, Entwickler, die das System von Grund auf bauen  
 **Zweck:** Vollständige technische Spezifikation — ausreichend detailliert um ohne zusätzlichen Kontext zu starten  
-**Stand:** August 2026 (aktualisiert 2026-08-12 — Autonomer Deep Research Agent Paradigm: Interactive WebUI-Style Suggested Follow-up Questions Chips `💡`, Entrümpelte High-Contrast Quellenliste `🌐 Quelle öffnen ↗`, Live Fortschrittsbalken HUD, In-Text Citations [1], [2], 100vw/100vh React Portal Desktop-Workspace, automatischer Company Brain Sicherung und 23/23 bestandenen Testfällen)  
+**Stand:** August 2026 (aktualisiert 2026-08-15 — Strikte Port-Entkopplung DEV Port 8090/8091 vs. DIST Port 8190/8191, Intent Router Klassifikations-Endpoints `/v1/intent/classify` & `/v1/intent/catalog`, Reparatur des Company-Cockpits `/company` für autarken Standalone-Betrieb, 200/200 bestandene Tests)  
 **Detail-Spec Company Brain:** [docs/09-COMPANY-BRAIN.md](docs/09-COMPANY-BRAIN.md) · **Memory einfach:** [docs/10-MEMORY-EINFACH.md](docs/10-MEMORY-EINFACH.md) · **Kontext Lagebild→LLM:** [docs/14-KONTEXT.md](docs/14-KONTEXT.md)  
 **Erstes Lizenzprodukt (VM):** [docs/11-PLATFORM-VM.md](docs/11-PLATFORM-VM.md)  
 **Leitprinzipien detailliert:** [docs/12-LEITPRINZIPIEN.md](docs/12-LEITPRINZIPIEN.md)  

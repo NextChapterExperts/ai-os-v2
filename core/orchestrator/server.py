@@ -53,8 +53,9 @@ class DispatchResponse(BaseModel):
 
 
 @app.get("/health")
+@app.get("/v1/health")
 async def health() -> dict[str, str]:
-    return {"status": "ok", "service": "orchestrator"}
+    return {"status": "ok", "service": "orchestrator", "engine": "ai-os-orchestrator", "version": "2.0.0"}
 
 
 @app.post("/v1/dispatch", response_model=DispatchResponse)
@@ -148,6 +149,46 @@ async def dispatch_intent(req: DispatchRequest) -> DispatchResponse:
             context_bundle={},
             run_id=run_id,
         )
+
+
+@app.get("/v1/intent/classify")
+@app.post("/v1/intent/classify")
+async def classify_intent_endpoint(req: dict[str, Any] | None = None, query: str | None = None) -> dict[str, Any]:
+    """Deterministische Intent-Klassifikation für Anfragen & Prompts (P4)."""
+    raw_query = ""
+    params = {}
+    if req:
+        raw_query = str(req.get("query") or req.get("prompt") or req.get("intent") or "")
+        params = req.get("params") or {}
+    elif query:
+        raw_query = query
+
+    detected_intent = route_intent(raw_query, params)
+    return {
+        "status": "ok",
+        "query": raw_query,
+        "intent": detected_intent,
+        "handler": detected_intent,
+        "routing_mode": "deterministic_p4",
+    }
+
+
+@app.get("/v1/intent/catalog")
+async def list_intent_catalog() -> dict[str, Any]:
+    """Katalog aller nativ unterstützten Plattform-Intents."""
+    return {
+        "status": "ok",
+        "intents": [
+            {"id": "unified_search", "name": "Wissens- & Dokumentensuche", "description": "FTS & Semantische Suche über Unternehmensinhalte"},
+            {"id": "memory_ask", "name": "Memory Abfrage", "description": "Fragen an das Gedächtnis & Wissen des Systems"},
+            {"id": "daily_open_loops", "name": "Offene Punkte & Meetings", "description": "Tagesfokus, Aufgaben und Meeting-Zusammenfassungen"},
+            {"id": "research", "name": "Deep Web Recherche", "description": "Multi-Step Internet- & Markt-Recherche"},
+            {"id": "handwerk_angebot", "name": "Angebotserstellung", "description": "Generierung strukturierter Angebote"},
+            {"id": "invoice_run", "name": "Rechnungspipeline", "description": "Validierung und Import von Eingangsrechnungen"},
+            {"id": "invoice_export", "name": "Steuerexport", "description": "Export für Steuerberater / Buchhaltung"},
+            {"id": "mail_triage", "name": "E-Mail Triage", "description": "Kategorisierung und Entwurferstellung für Mails"},
+        ],
+    }
 
 
 @app.get("/v1/runs/{run_id}/context")
