@@ -55,7 +55,7 @@ class DispatchResponse(BaseModel):
 @app.get("/health")
 @app.get("/v1/health")
 async def health() -> dict[str, str]:
-    return {"status": "ok", "service": "orchestrator", "engine": "ai-os-orchestrator", "version": "2.0.0"}
+    return {"status": "ok", "service": "orchestrator"}
 
 
 @app.post("/v1/dispatch", response_model=DispatchResponse)

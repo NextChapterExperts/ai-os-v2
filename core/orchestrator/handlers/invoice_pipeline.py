@@ -7,6 +7,15 @@ from typing import Any
 from sdk.mcp_adapter import MCPAdapter
 from sdk.tenant_context import TenantContext
 
+try:
+    from agents.email.agent import EmailAgent, InvoiceExportAgent
+    from agents.email.dataproducts import InvoiceRunRequest, InvoiceExportRequest
+except (ImportError, ModuleNotFoundError):
+    EmailAgent = None  # type: ignore
+    InvoiceExportAgent = None  # type: ignore
+    InvoiceRunRequest = None  # type: ignore
+    InvoiceExportRequest = None  # type: ignore
+
 
 async def run_invoice_pipeline(
     context_bundle: dict[str, Any],
@@ -14,10 +23,7 @@ async def run_invoice_pipeline(
     params: dict[str, Any],
 ) -> dict[str, Any]:
     del context_bundle
-    try:
-        from agents.email.agent import EmailAgent
-        from agents.email.dataproducts import InvoiceRunRequest
-    except (ImportError, ModuleNotFoundError):
+    if EmailAgent is None or InvoiceRunRequest is None:
         return {
             "answer": "Email-Agent Modul ist auf dieser Appliance nicht installiert.",
             "status": "skipped",
