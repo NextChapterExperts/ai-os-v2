@@ -3346,6 +3346,18 @@ git tag -l 'roadmap/*'
 git show roadmap/2026-08-03-p4-email-invoices --stat
 ```
 
+## Stand & Changelog (2026-08-15 — 2-Säulen-Produktmodell, Entflechtung & Tenant Provisioning)
+
+- **Release-Tag:** `roadmap/2026-08-15-p4-platform-vs-custom-agents-provisioning`
+- **2-Säulen-Modell & Architektur-Spezifikation ([docs/28-PLATFORM-VS-CUSTOM-AGENTS-MODELL.md](docs/28-PLATFORM-VS-CUSTOM-AGENTS-MODELL.md)):**
+  - Strikte Trennung zwischen **Säule 1 (Lizenzierbare AI-OS Core Appliance)** und **Säule 2 (Mandanten-Fachagenten / Custom SKUs)**.
+  - Veralteter Handwerker-Angebots-Agent aus der Console Web UI entfernt.
+  - **Tenant Provisioning Engine:** `core/orchestrator/tenant_provisioning.py`, Endpoints `GET /v1/platform/tenants` & `POST /v1/platform/tenant/provision`, CLI-Script `scripts/provision-tenant.sh`.
+  - Jeder neue Mandant erhält ein neutrales, isoliertes `00-company-profile.yaml` und eigenes Dateisystemverzeichnis ohne NextChapter-Artefakte.
+- **Master Testsuite:** 3/3 Tests in `tests/test_tenant_provisioning.py` und alle Gesamttests grün.
+
+---
+
 ## Stand & Changelog (2026-08-15 — Rollen- und Rechte-Konzept für Fachagenten & Multi-User RBAC)
 
 - **Release-Tag:** `roadmap/2026-08-15-p4-rbac-agent-permissions-concept`

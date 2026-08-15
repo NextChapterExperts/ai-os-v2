@@ -462,6 +462,37 @@ async def save_company_profile_endpoint(req: dict[str, Any], tenant_id: str = "n
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
+@app.get("/v1/platform/tenants")
+async def list_tenants_endpoint() -> dict[str, Any]:
+    from core.orchestrator.tenant_provisioning import list_tenants
+    return {"status": "ok", "tenants": list_tenants()}
+
+
+@app.post("/v1/platform/tenant/provision")
+async def provision_tenant_endpoint(req: dict[str, Any]) -> dict[str, Any]:
+    from core.orchestrator.tenant_provisioning import provision_tenant
+    tenant_id = req.get("tenant_id")
+    company_name = req.get("company_name")
+    if not tenant_id or not company_name:
+        raise HTTPException(status_code=400, detail="tenant_id und company_name sind erforderlich")
+    try:
+        res = provision_tenant(
+            tenant_id=tenant_id,
+            company_name=company_name,
+            brand_name=req.get("brand_name"),
+            industry=req.get("industry"),
+            founder_or_owner=req.get("founder_or_owner"),
+            website=req.get("website"),
+            tax_id=req.get("tax_id"),
+            hourly_rates=req.get("hourly_rates"),
+            core_services=req.get("core_services"),
+            standard_payment_days=req.get("standard_payment_days", 14),
+        )
+        return {"status": "ok", "result": res}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
 @app.get("/v1/kg/stats")
 async def get_kg_stats(tenant_id: str = "nextchapter") -> dict[str, Any]:
     return kg_stats(tenant_id)

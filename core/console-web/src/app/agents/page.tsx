@@ -24,42 +24,6 @@ interface AgentItem {
   output_schema: any;
 }
 
-const SAMPLE_HANDWERK_AGENT: AgentItem = {
-  workflow_id: "handwerk-angebot",
-  name: "Handwerker Angebots-Agent",
-  description: "Spezialisierter Fachagent zur automatischen Angebotserstellung für Maler-, Bau- und Handwerksbetriebe. Berechnet Netto-/Bruttopreise und committed das Angebot-DataProduct in den Knowledge Graph.",
-  input_schema: {
-    title: "AngebotInput",
-    description: "Kunden- & Auftragsdaten zur Berechnung des Handwerkerangebots",
-    required: ["kunden_name", "projekt_titel", "umfang_qm", "stundensatz"],
-    properties: {
-      kunden_name: {
-        type: "string",
-        title: "Kunden Name",
-        description: "Name des Auftraggebers / Unternehmens",
-      },
-      projekt_titel: {
-        type: "string",
-        title: "Projekt Titel",
-        description: "Bezeichnung der auszuführenden Handwerksleistung",
-      },
-      umfang_qm: {
-        type: "number",
-        title: "Umfang (qm)",
-        description: "Gesamtfläche in Quadratmetern",
-      },
-      stundensatz: {
-        type: "number",
-        title: "Stundensatz (€)",
-        description: "Vereinbarter Stundensatz in EUR",
-      },
-    },
-  },
-  output_schema: {
-    title: "AngebotOutput",
-    description: "Kalkuliertes Angebot-DataProduct mit Ausweis von Netto & Brutto",
-  },
-};
 
 
 const EMAIL_INVOICES_AGENT: AgentItem = {
@@ -186,22 +150,11 @@ const CORE_FACHAGENTS: Record<string, AgentItem> = {
   "meetings-agent": MEETINGS_AGENT,
 };
 
-const AGENT_DISPLAY_ORDER = ["research-agent", "email-invoices", "meetings-agent", "handwerk-angebot"];
+const AGENT_DISPLAY_ORDER = ["research-agent", "email-invoices", "meetings-agent"];
 
-const SAMPLE_PREFILLS: Record<string, Record<string, any>> = {
-  "handwerk-angebot": {
-    kunden_name: "Malerbetrieb Schulze GmbH",
-    projekt_titel: "Fassadenanstrich & Gerüstbau",
-    umfang_qm: 120.0,
-    stundensatz: 70.0,
-  },
-};
+const SAMPLE_PREFILLS: Record<string, Record<string, any>> = {};
 
 const AGENT_ACTION_LABELS: Record<string, { submit: string; loading: string }> = {
-  "handwerk-angebot": {
-    submit: "Angebot erstellen",
-    loading: "Angebot wird berechnet…",
-  },
   "email-invoices": {
     submit: "Rechnungen extrahieren",
     loading: "Gmail wird gescannt…",
@@ -224,7 +177,6 @@ type InvoiceResources = {
 export default function AgentsPage() {
   const [agents, setAgents] = useState<Record<string, AgentItem>>({
     ...CORE_FACHAGENTS,
-    "handwerk-angebot": SAMPLE_HANDWERK_AGENT,
   });
   const [selectedAgentId, setSelectedAgentId] = useState<string>("research-agent");
   const [loading, setLoading] = useState(false);
@@ -232,9 +184,7 @@ export default function AgentsPage() {
   const [lastResult, setLastResult] = useState<any>(null);
   const [history, setHistory] = useState<Array<{ time: string; name: string; dp: any }>>([]);
   const [activeTab, setActiveTab] = useState<"agents" | "ingest">("agents");
-  const [overrideFormData, setOverrideFormData] = useState<Record<string, any> | null>(
-    SAMPLE_PREFILLS["handwerk-angebot"]
-  );
+  const [overrideFormData, setOverrideFormData] = useState<Record<string, any> | null>(null);
   const [invoiceResources, setInvoiceResources] = useState<InvoiceResources | null>(null);
   const [agentFormData, setAgentFormData] = useState<Record<string, any>>({});
 
