@@ -3346,6 +3346,17 @@ git tag -l 'roadmap/*'
 git show roadmap/2026-08-03-p4-email-invoices --stat
 ```
 
+## Stand & Changelog (2026-08-15 — Rollen- und Rechte-Konzept für Fachagenten & Multi-User RBAC)
+
+- **Release-Tag:** `roadmap/2026-08-15-p4-rbac-agent-permissions-concept`
+- **Rollen- & Rechte-Spezifikation ([docs/27-ROLLEN-UND-RECHTE-KONZEPT.md](docs/27-ROLLEN-UND-RECHTE-KONZEPT.md)):**
+  - Isolierte Fachagenten: Datenprodukte konsumieren, Datenprodukte abliefern, ausschließliche Kommunikation via MCP-Server (P5).
+  - RBAC / ABAC Architektur für Multi-User-Erweiterung: 1 Admin pro Tenant, N Benutzer (Mitarbeiter, Werkstudenten, Vertrieb, Partner) mit selektiven Agenten-Zuweisungen (`assigned_agents`) und MCP-Tool-Scopes.
+  - Defense-in-Depth Durchsetzung: UI Filterung in `AppShell`, Dispatch-Gate-Validierung (`POST /v1/workflow/execute`) und MCP Tool-Proxy-Scoping.
+- **Roadmap-Integration:** Spezifiziert für den systematischen Multi-User-Ausbau in Phase 4 und Phase 5.
+
+---
+
 ## Stand & Changelog (2026-08-15 — Konsistentes Admin-Design für Unternehmens-Identität & Strikte Rollentrennung)
 
 - **Release-Tag:** `roadmap/2026-08-15-p4-admin-layout-company-role-separation`
