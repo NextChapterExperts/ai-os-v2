@@ -96,13 +96,19 @@ def create_customer_vm(
     startup_script = f"""#!/bin/bash
 set -e
 echo "🚀 Initialisiere AI-OS v2 Kunden-VM für {company_name} ({tenant_id})..."
-apt-get update && apt-get install -y git curl ufw docker.io docker-compose python3 python3-venv
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+apt-get update && apt-get install -y git curl docker.io docker-compose python3 python3-venv nodejs
 
-# Firewall Ports für Web-Konsole & Orchestrator
-ufw allow 22/tcp
-ufw allow 8090/tcp
-ufw allow 8091/tcp
-ufw --force enable
+# AI-OS v2 Repository klonen
+mkdir -p /opt
+if [ ! -d "/opt/ai-os-v2" ]; then
+  git clone https://github.com/NextChapterExperts/ai-os-v2.git /opt/ai-os-v2
+fi
+
+# Console Web installieren & starten
+cd /opt/ai-os-v2/core/console-web
+npm install --legacy-peer-deps
+nohup ./node_modules/.bin/next dev -p 8090 -H 0.0.0.0 > /tmp/console.log 2>&1 &
 
 echo "✅ System-Setup abgeschlossen für {company_name}!"
 """
@@ -128,7 +134,7 @@ echo "✅ System-Setup abgeschlossen für {company_name}!"
     raw = _run_gcloud(args)
     log.info("VM '%s' erfolgreich in GCP erstellt: %s", instance_name, raw)
 
-    # Firewall Rule für Port 8090 sicherstellen (falls noch nicht vorhanden)
+    # Firewall Rule für Port 8090/8091 sicherstellen
     try:
         _run_gcloud([
             "compute",
@@ -136,12 +142,12 @@ echo "✅ System-Setup abgeschlossen für {company_name}!"
             "create",
             "allow-aios-console",
             f"--project={project}",
-            "--allow=tcp:8090,tcp:8091",
-            "--target-tags=aios-console",
-            "--description=Allow access to AI-OS Console and Orchestrator",
+            "--allow=tcp:8090,tcp:8091,tcp:80,tcp:443",
+            "--source-ranges=0.0.0.0/0",
+            "--description=Allow global access to AI-OS Console and Orchestrator",
         ])
     except Exception:
-        pass  # Regel existiert möglicherweise bereits
+        pass
 
     # Status der frisch erstellten VM abrufen
     vms = list_customer_vms(project)
