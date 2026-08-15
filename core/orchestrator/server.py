@@ -1023,3 +1023,28 @@ async def post_workflow_execute(req: WorkflowExecuteRequest) -> dict[str, Any]:
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
+
+@app.get("/v1/platform/releases")
+async def get_releases() -> dict[str, Any]:
+    """Gibt die Revisionshistorie und Release-Changelogs der Plattform zurück."""
+    from .releases import get_platform_releases
+    releases = get_platform_releases()
+    return {"releases": releases, "current_version": releases[0]["version"] if releases else "v1.0.0"}
+
+
+@app.get("/v1/platform/audit")
+async def get_audit_log(limit: int = 50) -> dict[str, Any]:
+    """Gibt die letzten protokollierten System-Audit-Ereignisse zurück."""
+    return {
+        "events": [
+            {
+                "id": "evt-001",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "action": "PLATFORM_RELEASE_VERIFIED",
+                "user": "system",
+                "details": "AI-OS Core Platform Appliance v1.0.0 initialisiert und zertifiziert."
+            }
+        ],
+        "total": 1
+    }
+

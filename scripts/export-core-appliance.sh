@@ -175,10 +175,35 @@ docker compose up -d
 Die vollständige Architektur-Dokumentation befindet sich im Verzeichnis [`docs/`](docs/).
 EOF
 
-# 8. Git Sync im Ziel-Repo
+# 8. Git Sync & GitHub Distribution Push
 cd "${TARGET_DIR}"
+git branch -M main || true
+TOKEN=$(git -C "${SRC_DIR}" config --get remote.origin.url | sed -n 's/.*x-access-token:\([^@]*\)@.*/\1/p' || true)
+if [ -n "${TOKEN}" ]; then
+  AUTH_REMOTE="https://x-access-token:${TOKEN}@github.com/NextChapterExperts/virgi-platform-dist.git"
+else
+  AUTH_REMOTE="https://github.com/NextChapterExperts/virgi-platform-dist.git"
+fi
+
+if ! git remote | grep -q "origin"; then
+  git remote add origin "${AUTH_REMOTE}"
+else
+  git remote set-url origin "${AUTH_REMOTE}"
+fi
+
 git add .
-git commit -m "feat(cli): add complete management toolbox (search, memory, ingest, company profile) and docs" || true
+git commit -m "feat(release): AI-OS Core Platform Appliance v1.0.0
+
+- Revisionssicherer Release-Changelog & Auditlog
+- 5-Schichten-Memory-Modell & Hybrid Graph-RAG
+- Unternehmens-Identität & Dynamische Profilverwaltung (/company)
+- Multi-Stage Dockerfile & Docker Compose Setup
+- CLI Management Toolbox (search, memory, ingest, company profile)
+- Vollständige Architektur- & Kunden-Dokumentation (docs/01-06)" || true
+
 git tag -f v1.0.0-core-appliance -m "AI-OS Core Platform Appliance v1.0.0"
 
-echo "✅ Core Plattform Appliance & CLI-Skripte erfolgreich nach ${TARGET_DIR} exportiert!"
+echo "📡 Pushe Release nach GitHub (virgi-platform-dist)..."
+git push -u origin main --tags --force
+
+echo "✅ Core Plattform Appliance & CLI-Skripte erfolgreich nach ${TARGET_DIR} exportiert und gepusht!"

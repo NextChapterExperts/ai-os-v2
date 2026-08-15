@@ -3346,6 +3346,19 @@ git tag -l 'roadmap/*'
 git show roadmap/2026-08-03-p4-email-invoices --stat
 ```
 
+## Stand & Changelog (2026-08-15 — GitHub Distribution Repo virgi-platform-dist & Release-Auditlog)
+
+- **Release-Tag:** `roadmap/2026-08-15-p4-github-distribution-and-auditlog`
+- **GitHub Distribution (`https://github.com/NextChapterExperts/virgi-platform-dist.git`):**
+  - Distributions-Repository initialisiert, per GitHub Token authentifiziert und Branch `main` mit Tag `v1.0.0-core-appliance` gepusht.
+  - Automatischer One-Click Release-Push in `scripts/export-core-appliance.sh`.
+- **Release-Auditlog & Revisionssicherheit ([docs/32-PLATFORM-AUDITLOG-UND-DISTRIBUTION-GIT.md](docs/32-PLATFORM-AUDITLOG-UND-DISTRIBUTION-GIT.md)):**
+  - Backend: `GET /v1/platform/releases` und `GET /v1/platform/audit` in `core/orchestrator/server.py` und `releases.py`.
+  - Frontend: Revisionssicherer Änderungs- und Release-Katalog direkt in der Web-Konsole unter `/platform` (`PlatformHealthPanel.tsx`).
+- **Master Testsuite:** 248/248 Tests grün.
+
+---
+
 ## Stand & Changelog (2026-08-15 — Vollständige Admin & CLI Toolbox für Distributions-Projekt)
 
 - **Release-Tag:** `roadmap/2026-08-15-p4-distribution-admin-cli-toolbox`

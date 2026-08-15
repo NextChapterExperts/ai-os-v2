@@ -40,6 +40,7 @@ git push origin roadmap/2026-08-03-p4-email-invoices
 
 | Tag | Datum | Roadmap | Kurzbeschreibung | Commit |
 |-----|-------|---------|------------------|--------|
+| `roadmap/2026-08-15-p4-github-distribution-and-auditlog` | 2026-08-15 | §9, §15, Dist | GitHub Remote virgi-platform-dist, Release-Changelog & Audit-Panel in Web-UI (/platform) | *(siehe `git show`)* |
 | `roadmap/2026-08-15-p4-distribution-admin-cli-toolbox` | 2026-08-15 | §9, §15, CLI | Vollständige CLI Management Toolbox (search, memory, ingest, company profile) & docs/06 | *(siehe `git show`)* |
 | `roadmap/2026-08-15-p4-core-platform-distribution-repo` | 2026-08-15 | §9, §15, Dist | Eigenständiges Distributions-Repo 1110-AI-OS-Core-Platform, Export-Engine & v1.0.0 Tag | *(siehe `git show`)* |
 | `roadmap/2026-08-15-p4-core-platform-extraction-docker-appliance` | 2026-08-15 | §9, §15, Docker | Core-Plattform Extraktion (docs/30), Bereinigung Alt-Projekte/Agenten, Dockerfile & Compose | *(siehe `git show`)* |

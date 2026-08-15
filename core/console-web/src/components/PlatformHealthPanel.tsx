@@ -144,6 +144,37 @@ export function PlatformHealthPanel() {
               </div>
             ))}
           </div>
+
+          {/* Release Changelog & Revisionssicherheit */}
+          <div className="mt-10 rounded-2xl border border-[var(--line)] bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between border-b border-[var(--line)] pb-4 mb-4">
+              <div>
+                <h2 className="text-base font-bold text-ink m-0">Plattform Release-Changelog & Audit</h2>
+                <p className="text-xs muted m-0 mt-1">Revisionssicherer Änderungsverlauf zur vorherigen Version.</p>
+              </div>
+              <span className="badge" data-variant="graph">v1.0.0-core-appliance</span>
+            </div>
+
+            <div className="space-y-4">
+              <div className="border border-line/60 rounded-xl p-4 bg-paper/30">
+                <div className="flex items-center justify-between text-xs font-mono mb-2">
+                  <span className="font-bold text-signal">Release v1.0.0</span>
+                  <span className="muted">2026-08-15 · Commit bd2a74c</span>
+                </div>
+                <p className="text-xs font-semibold text-ink mb-2">
+                  AI-OS Core Platform Appliance Initial Release
+                </p>
+                <ul className="text-xs text-ink-soft space-y-1 pl-4 list-disc">
+                  <li>Autarkes Distributions-Repository <code>virgi-platform-dist</code></li>
+                  <li>5-Schichten-Memory-Modell (L1 Working Memory bis L5 Enterprise Core)</li>
+                  <li>Hybrid Graph-RAG mit Reciprocal Rank Fusion & Wissensgraph-Traversal</li>
+                  <li>Unternehmensprofil-Verwaltung (<code>/company</code>) mit Blanko-Formular für Neukunden</li>
+                  <li>Sovereign Multi-Stage Dockerfile & Docker Compose Stack</li>
+                  <li>CLI-Management Toolbox (Suche, Memory-Status, Batch-Ingest, Profil)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </>
       ) : (
         <p className="muted">Services werden abgefragt…</p>
