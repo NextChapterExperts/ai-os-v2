@@ -16,9 +16,10 @@ from pydantic import BaseModel, Field, ValidationError
 
 from .audit import write_agent_run
 from .context_resolution import resolve_context, resolve_context_async
-from .dataproducts import DP_CLASS_BY_NODE_TYPE
+from .dataproducts import DP_CLASS_BY_NODE_TYPE, OrgEnterpriseProfile
 from .dispatch import dispatch
 from .dp_service import DPCommitError, commit_dataproduct, kg_stats, resolve_node_by_id
+from .enterprise_profile_store import get_enterprise_profile, save_enterprise_profile
 from .intent_router import route_intent
 from .kg_search import list_nodes, search_nodes
 from .run_context_store import load_run_context, save_run_context
@@ -440,6 +441,25 @@ async def resolve_dataproduct(node_id: str, tenant_id: str = "nextchapter") -> d
     if node is None:
         raise HTTPException(status_code=404, detail="Node nicht gefunden")
     return node
+
+
+@app.get("/v1/company/profile")
+async def get_company_profile_endpoint(tenant_id: str = "nextchapter") -> dict[str, Any]:
+    profile = get_enterprise_profile(tenant_id)
+    return {"status": "ok", "tenant_id": tenant_id, "profile": profile.model_dump(mode="json")}
+
+
+@app.post("/v1/company/profile")
+async def save_company_profile_endpoint(req: dict[str, Any], tenant_id: str = "nextchapter") -> dict[str, Any]:
+    try:
+        req["tenant_id"] = tenant_id
+        profile = OrgEnterpriseProfile.model_validate(req)
+        result = save_enterprise_profile(profile, commit_to_graph=True)
+        return {"status": "ok", "tenant_id": tenant_id, "result": result}
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=exc.errors()) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @app.get("/v1/kg/stats")

@@ -3346,6 +3346,18 @@ git tag -l 'roadmap/*'
 git show roadmap/2026-08-03-p4-email-invoices --stat
 ```
 
+## Stand & Changelog (2026-08-15 — Enterprise Profile & Unternehmens-Identität im Company Brain)
+
+- **Release-Tag:** `roadmap/2026-08-15-p4-enterprise-profile-company-root`
+- **Unternehmens-Identität (`OrgEnterpriseProfile` & `00-company-profile.yaml`):**
+  - Neues DataProduct `OrgEnterpriseProfile` mit Firmenname, Rechtsform, USt-IdNr, Webseite, Stundensätzen, Team & Skills.
+  - Automatischer `enterprise` Context-Slice in `ContextBundle` für alle Agenten & Chats.
+  - Endpoints `GET /v1/company/profile` & `POST /v1/company/profile` mit atomarem DP-Commit.
+  - Console Web UI unter `/company` zur interaktiven Verwaltung der Unternehmens-DNA.
+- **Master Testsuite:** Dedizierte Tests in `tests/test_enterprise_profile.py`.
+
+---
+
 ## Stand & Changelog (2026-08-15 — Arten von RAG & Hybrid Graph-RAG Architektur-Spezifikation)
 
 - **Release-Tag:** `roadmap/2026-08-15-p4-rag-taxonomy-graph-rag-doc`

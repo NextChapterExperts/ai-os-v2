@@ -11,7 +11,7 @@ LLM-Entscheid).
 from __future__ import annotations
 
 from datetime import date
-from typing import ClassVar, Literal
+from typing import Any, ClassVar, Literal
 
 from pydantic import BaseModel, Field
 
@@ -129,6 +129,28 @@ class OrgClaim(DataProduct):
     supports_refs: list[str] = Field(default_factory=list)
 
 
+class OrgEnterpriseProfile(DataProduct):
+    """Kanonische Unternehmens-Identität & Stammdaten (Wurzel des Company Brain)."""
+
+    produced_by: str = "enterprise-admin"
+    storage_target: ClassVar[list[str]] = ["G", "K"]
+    ingest_recommended: ClassVar[bool] = True
+
+    enterprise_id: str = "org:enterprise:main"
+    legal_name: str
+    brand_name: str
+    tax_id: str | None = None
+    website: str | None = None
+    industry: str | None = None
+    description: str | None = None
+    founder_or_owner: str | None = None
+    hourly_rates: dict[str, float] = Field(default_factory=dict)
+    team_members: list[dict[str, Any]] = Field(default_factory=list)
+    standard_terms: dict[str, Any] = Field(default_factory=dict)
+    core_services: list[str] = Field(default_factory=list)
+    path: str | None = None
+
+
 # node_type-Praefix + external_id-Feld je DP-Klasse (§3.1 09-COMPANY-BRAIN.md)
 NODE_TYPE_BY_CLASS: dict[type[DataProduct], tuple[str, str]] = {
     OrgOffering: ("org:Offering", "offering_id"),
@@ -140,8 +162,10 @@ NODE_TYPE_BY_CLASS: dict[type[DataProduct], tuple[str, str]] = {
     OrgPolicy: ("org:Policy", "policy_id"),
     OrgKnowledgeAsset: ("org:KnowledgeAsset", "asset_id"),
     OrgClaim: ("org:Claim", "claim_id"),
+    OrgEnterpriseProfile: ("org:EnterpriseProfile", "enterprise_id"),
 }
 
 DP_CLASS_BY_NODE_TYPE: dict[str, type[DataProduct]] = {
     node_type: cls for cls, (node_type, _) in NODE_TYPE_BY_CLASS.items()
 }
+

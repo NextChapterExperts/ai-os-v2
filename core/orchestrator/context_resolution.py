@@ -10,6 +10,7 @@ from core.memory.tactical_memory import get_snapshot as get_tactical_snapshot
 from core.memory.working_memory import get_snapshot as get_working_snapshot
 
 from .brain_store import active_engagements, list_offerings
+from .enterprise_profile_store import get_enterprise_profile
 from .kg_search import search_nodes
 
 _CACHE_TTL_SEC = 15
@@ -132,6 +133,7 @@ async def resolve_context_async(
             "skills": [],
             "note": "Skill-Loop Phase 2",
         },
+        "enterprise": get_enterprise_profile(tenant_id).model_dump(mode="json"),
     }
 
 
@@ -176,6 +178,7 @@ def resolve_context(
             "episodic": {"recent_runs": [], "note": "L2 Letta Archival"},
             "guardrail": {"policies": ["sovereign_default", "sources_on_demand"]},
             "skill": {"skills": [], "note": "Skill-Loop Phase 2"},
+            "enterprise": get_enterprise_profile(tenant_id).model_dump(mode="json"),
         }
 
     return asyncio.run(resolve_context_async(intent, tenant_id, params))

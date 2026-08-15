@@ -23,6 +23,7 @@ from .dataproducts import (
     OrgClaim,
     OrgDecision,
     OrgEngagement,
+    OrgEnterpriseProfile,
     OrgKnowledgeAsset,
     OrgMeeting,
     OrgPolicy,
