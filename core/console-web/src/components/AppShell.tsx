@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { getStoredAuth, logoutUser, AuthUser } from "@/lib/auth";
+import { getStoredAuth, logoutUser, switchRole, AuthUser } from "@/lib/auth";
 import { IconLogout, IconUserCheck, IconShieldLock } from "@tabler/icons-react";
 
 const USER_NAV = [
@@ -12,9 +12,12 @@ const USER_NAV = [
 
 const ADMIN_NAV = [
   { href: "/", label: "Lagebild" },
+  { href: "/agents", label: "Fachagenten" },
+  { href: "/workflows", label: "Workflows" },
   { href: "/company", label: "Unternehmen" },
   { href: "/search", label: "Suche" },
   { href: "/platform", label: "Plattform" },
+  { href: "/platform/vms", label: "VM & Docker" },
 ] as const;
 
 function matchLength(pathname: string, href: string): number {
@@ -120,18 +123,28 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex items-center gap-3 text-right text-xs text-ink-soft">
           {auth ? (
             <div className="flex items-center gap-2 bg-[color-mix(in_oklab,white_85%,transparent)] border border-[var(--line)] rounded-xl px-2.5 py-1 text-xs">
-              {auth.role === "admin" ? (
-                <IconShieldLock size={14} className="text-amber-500" />
-              ) : (
-                <IconUserCheck size={14} className="text-[var(--signal)]" />
-              )}
-              <span className="font-bold text-[var(--ink)]">
-                {auth.username} ({auth.role === "admin" ? "Admin" : "Endanwender"})
-              </span>
+              <button
+                type="button"
+                onClick={() => switchRole(auth.role === "admin" ? "user" : "admin")}
+                className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer text-left"
+                title={`Klicken um zu ${auth.role === "admin" ? "Endanwender" : "Admin"} zu wechseln`}
+              >
+                {auth.role === "admin" ? (
+                  <IconShieldLock size={14} className="text-amber-500" />
+                ) : (
+                  <IconUserCheck size={14} className="text-[var(--signal)]" />
+                )}
+                <span className="font-bold text-[var(--ink)]">
+                  {auth.username} ({auth.role === "admin" ? "Admin" : "Endanwender"})
+                </span>
+                <span className="text-[10px] text-signal font-mono uppercase bg-signal/10 px-1 py-0.5 rounded">
+                  ⇄ Wechseln
+                </span>
+              </button>
               <button
                 type="button"
                 onClick={handleLogout}
-                className="btn-ghost py-0.5 px-1.5 text-[11px] text-danger hover:underline inline-flex items-center gap-1 cursor-pointer"
+                className="btn-ghost py-0.5 px-1.5 text-[11px] text-danger hover:underline inline-flex items-center gap-1 cursor-pointer ml-1"
                 title="Abmelden"
               >
                 <IconLogout size={12} />

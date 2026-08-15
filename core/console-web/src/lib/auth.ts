@@ -78,6 +78,18 @@ export function loginUser(usernameInput: string, passwordInput: string): AuthUse
   return null;
 }
 
+export function switchRole(targetRole: UserRole) {
+  if (typeof window !== "undefined") {
+    const targetUser = targetRole === "admin" ? "admin" : "peter";
+    const cred = VALID_CREDENTIALS[targetUser];
+    localStorage.setItem(AUTH_USER_KEY, targetUser);
+    localStorage.setItem(AUTH_ROLE_KEY, targetRole);
+    localStorage.setItem("aios_active_user_id", cred.personId);
+    localStorage.setItem("aios_active_user_name", cred.name);
+    window.dispatchEvent(new CustomEvent("aios-auth-changed", { detail: { username: targetUser, role: targetRole } }));
+  }
+}
+
 export function logoutUser() {
   if (typeof window !== "undefined") {
     localStorage.removeItem(AUTH_USER_KEY);
